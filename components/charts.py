@@ -15,7 +15,6 @@ def _base_layout(figure, height: int = 330):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={"family": "Arial, sans-serif", "color": "#17212b"},
-        title=None,
         legend={"orientation": "h", "y": 1.08, "yanchor": "bottom", "x": 0, "xanchor": "left"},
     )
     return figure
