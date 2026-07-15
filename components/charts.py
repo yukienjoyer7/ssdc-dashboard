@@ -9,13 +9,15 @@ COLORS = ["#087f8c", "#b56b00", "#b42318", "#18794e", "#61707d"]
 
 
 def _base_layout(figure, height: int = 330):
+    title_text = figure.layout.title.text if figure.layout.title else None
     figure.update_layout(
         height=height,
-        margin={"l": 10, "r": 10, "t": 30, "b": 10},
+        margin={"l": 10, "r": 10, "t": 82, "b": 10},
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={"family": "Arial, sans-serif", "color": "#17212b"},
-        legend={"orientation": "h", "y": 1.12, "x": 0},
+        title={"text": title_text, "x": 0, "xanchor": "left", "y": 1.0, "yanchor": "bottom"},
+        legend={"orientation": "h", "y": 1.24, "yanchor": "bottom", "x": 0, "xanchor": "left"},
     )
     return figure
 
