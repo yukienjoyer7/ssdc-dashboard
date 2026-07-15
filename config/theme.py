@@ -21,6 +21,14 @@ def inject_theme() -> None:
             border-radius: 6px;
             padding: 0.85rem 1rem;
             background: #ffffff;
+            color: var(--ssdc-ink);
+            color-scheme: light;
+        }
+        [data-testid="stMetric"] [data-testid="stMetricLabel"],
+        [data-testid="stMetric"] [data-testid="stMetricValue"],
+        [data-testid="stMetric"] [data-testid="stMetricValue"] div,
+        [data-testid="stMetric"] [data-testid="stMetricDelta"] {
+            color: var(--ssdc-ink) !important;
         }
         .ssdc-kicker {
             color: var(--ssdc-cyan);
