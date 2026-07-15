@@ -50,6 +50,13 @@ def inject_theme() -> None:
             background: #fff8eb;
         }
         .ssdc-section { margin: 1.5rem 0 0.5rem; }
+        .ssdc-chart-title {
+            color: var(--ssdc-ink);
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.25;
+            margin: 0.45rem 0 0.15rem;
+        }
         </style>
         """,
         unsafe_allow_html=True,
