@@ -30,7 +30,7 @@ def render_bar(frame: pd.DataFrame, x: str, y: str, title: str, color: str | Non
         return
     _chart_title(title)
     figure = px.bar(frame, x=x, y=y, color=color, color_discrete_sequence=COLORS, text_auto=True)
-    figure.update_layout(xaxis_title=None, yaxis_title=None)
+    figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
 
@@ -40,7 +40,7 @@ def render_horizontal_bar(frame: pd.DataFrame, x: str, y: str, title: str, color
         return
     _chart_title(title)
     figure = px.bar(frame, x=x, y=y, color=color, color_discrete_sequence=COLORS, orientation="h", text_auto=True)
-    figure.update_layout(xaxis_title=None, yaxis_title=None)
+    figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
 
@@ -50,7 +50,7 @@ def render_line(frame: pd.DataFrame, x: str, y: str, title: str, color: str | No
         return
     _chart_title(title)
     figure = px.line(frame, x=x, y=y, color=color, markers=True, color_discrete_sequence=COLORS)
-    figure.update_layout(xaxis_title=None, yaxis_title=None)
+    figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
 
@@ -60,5 +60,5 @@ def render_histogram(frame: pd.DataFrame, x: str, title: str, color: str | None 
         return
     _chart_title(title)
     figure = px.histogram(frame, x=x, color=color, nbins=12, color_discrete_sequence=COLORS)
-    figure.update_layout(xaxis_title=None, yaxis_title="Records")
+    figure.update_layout(xaxis_title="", yaxis_title="Records")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
