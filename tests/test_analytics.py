@@ -3,7 +3,7 @@ from datetime import date
 from data.contracts import FilterState
 from data.loaders import DashboardData
 from data.mock_data import build_mock_tables
-from services.analytics import matching_table, placement_table, request_table, selection_table
+from services.analytics import canonical_kpis, dataset_as_of_date, matching_table, placement_table, request_table, selection_table
 
 
 def _mock_dashboard() -> DashboardData:
@@ -14,8 +14,23 @@ def test_request_service_derives_action_fields() -> None:
     result = request_table(_mock_dashboard(), FilterState(date_start=date(2026, 1, 1), date_end=date(2026, 3, 1)))
 
     assert len(result) == 6
-    assert {"headcount_gap", "aging_days", "priority_category", "priority_reason"}.issubset(result.columns)
+    assert {"headcount_gap", "request_aging_days", "action_label", "placements"}.issubset(result.columns)
     assert result["headcount_gap"].ge(0).all()
+    assert "priority_score" not in result.columns
+
+
+def test_canonical_kpis_use_canonical_denominators_and_as_of_date() -> None:
+    dashboard = _mock_dashboard()
+    kpis = canonical_kpis(dashboard, FilterState())
+    selection = selection_table(dashboard, FilterState())
+    requests = request_table(dashboard, FilterState())
+
+    assert kpis["KPI-04"] == len(selection)
+    assert kpis["KPI-05"] == selection["NIM"].nunique()
+    assert kpis["KPI-06"] == int(selection["canonical_outcome"].eq("Placement").sum())
+    assert kpis["KPI-07"] == kpis["KPI-06"] / kpis["KPI-04"] * 100
+    assert kpis["KPI-09"] == kpis["KPI-06"] / requests["requested_headcount"].sum() * 100
+    assert kpis["as_of_date"] == dataset_as_of_date(dashboard).date().isoformat()
 
 
 def test_matching_service_returns_explanations_and_eligibility() -> None:

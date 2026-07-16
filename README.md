@@ -37,8 +37,8 @@ The five pages follow the intended workflow:
 4. Selection Monitoring
 5. Placement Performance
 
-Metrics and matching rules marked as prototype or pending validation are
-presentation-layer previews, not final business definitions.
+The dashboard KPI cards follow `docs/kpi_dictionary.md`. Semantic matching and
+source outcome mappings remain explicitly marked as pending upstream validation.
 
 ## Checks
 

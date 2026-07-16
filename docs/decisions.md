@@ -7,20 +7,24 @@ emails, phone numbers, and student identifiers, so neither raw nor cleaned CSVs
 are committed. Local data is loaded from `SSDC_DATA_DIR`; missing data falls back
 to deterministic anonymized rows.
 
-## Provisional analytical rules
+## V2 KPI alignment
 
-The first prototype uses transparent, dashboard-owned previews for rules that
-are not yet approved:
+The dashboard now centralizes KPI-01 through KPI-13 in
+`services/analytics.py`:
 
-- active requests exclude `Closed` and `Draft`;
-- request aging uses the selected date-end and a 14-day overdue threshold;
-- fulfilment uses `Placement` records linked through tracking-company IDs;
-- request priority combines overdue status, headcount gap, and candidate supply;
-- matching scores study/interest match, minimum semester, and availability;
-- selection aging uses the current record's `last_update` date;
-- `Ghosting` source status is surfaced as a warning;
-- placement duration and placement date use the current tracking record's last update;
-- placement-rate denominator is unique placed candidates in the filtered view.
+- placement rate = `Placements / Candidate Applications`;
+- ghosting rate = `Ghosting / Candidate Applications`;
+- fulfillment rate = `Placements / Requested Headcount`;
+- headcount gap = `max(requested_headcount - placements, 0)`;
+- request aging and selection aging use the dataset `as_of_date`;
+- sync freshness uses `as_of_date - sync_date`;
+- request action labels are deterministic and do not use a weighted priority score.
 
-These rules are presentation previews and must be replaced or approved by the
-PM/Data Engineer before final KPI validation.
+The current source mapping is a dashboard integration contract pending final
+Data Engineer approval: `Placement`, `Rejected`, and `Ghosting` retain their
+source outcomes; `Finish` and other non-terminal source stages map to
+`On Progress`.
+
+Semantic matching remains a separate follow-up integration. The current page's
+rule-based prototype score is not treated as a canonical KPI or acceptance
+probability until precomputed semantic scores are available upstream.

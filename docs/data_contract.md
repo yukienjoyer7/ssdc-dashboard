@@ -25,6 +25,10 @@ so the public repository still launches without personal data.
 Pages depend on `services/analytics.py`, not on raw file paths. This keeps page
 code stable when the Data Engineer changes the upstream export location.
 
+The analytics layer also exposes the canonical KPI-01 through KPI-13 contract.
+All aging and freshness values use the maximum relevant dataset date as
+`as_of_date`, so historical results remain reproducible.
+
 ## Sensitive data
 
 CSV files are ignored by Git and are never included in the public repository.

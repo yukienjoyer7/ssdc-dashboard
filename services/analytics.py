@@ -8,7 +8,12 @@ from data.loaders import DashboardData
 
 TERMINAL_SELECTION_STAGES = {"Rejected", "Finish", "Placement"}
 PROTOTYPE_OVERDUE_DAYS = 14
-PROTOTYPE_STRONG_MATCH_SCORE = 75
+CANONICAL_OUTCOME_MAP = {
+    "Placement": "Placement",
+    "Rejected": "Rejected",
+    "Ghosting": "Ghosting",
+    "Finish": "On Progress",
+}
 
 
 def _numeric(series: pd.Series) -> pd.Series:
@@ -19,11 +24,24 @@ def _dates(series: pd.Series) -> pd.Series:
     return pd.to_datetime(series, errors="coerce")
 
 
-def _reference_date(filters: FilterState, series: pd.Series) -> pd.Timestamp:
-    if filters.date_end:
-        return pd.Timestamp(filters.date_end)
-    parsed = _dates(series).dropna()
-    return parsed.max() if not parsed.empty else pd.Timestamp(date.today())
+def dataset_as_of_date(data: DashboardData) -> pd.Timestamp:
+    """Return the reproducible maximum relevant date across the six tables."""
+    date_columns = (
+        ("company.csv", "created_at"),
+        ("talent_request.csv", "request_date"),
+        ("tracking_company.csv", "request_date"),
+        ("tracking_company.csv", "send_date"),
+        ("tracking_student.csv", "last_update"),
+        ("status_student.csv", "sync_date"),
+    )
+    values: list[pd.Timestamp] = []
+    for table_name, column in date_columns:
+        values.extend(_dates(data.table(table_name)[column]).dropna().tolist())
+    return max(values) if values else pd.NaT
+
+
+def _canonical_outcome(series: pd.Series) -> pd.Series:
+    return series.map(CANONICAL_OUTCOME_MAP).fillna("On Progress")
 
 
 def _apply_date_filter(frame: pd.DataFrame, column: str, filters: FilterState) -> pd.DataFrame:
@@ -51,7 +69,12 @@ def request_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
         selection.loc[selection["progress_student"].eq("Placement")]
         .groupby("id_tracking_company", as_index=False)
         .size()
-        .rename(columns={"size": "fulfilled_headcount"})
+        .rename(columns={"size": "placements"})
+    )
+    applications = (
+        selection.groupby("id_tracking_company", as_index=False)
+        .size()
+        .rename(columns={"size": "candidate_applications"})
     )
     tracking_columns = [
         "id_talent_req", "id_tracking_company", "progress", "jumlah_dikirimkan",
@@ -59,40 +82,45 @@ def request_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     ]
     frame = requests.merge(tracking[tracking_columns], on="id_talent_req", how="left", suffixes=("", "_tracking"))
     frame = frame.merge(placements, on="id_tracking_company", how="left")
+    frame = frame.merge(applications, on="id_tracking_company", how="left")
     frame["company_name"] = frame["nama_perusahaan"].fillna(frame["id_company"])
     frame["request_status"] = frame["progress"].fillna("Untracked")
     frame["request_date"] = frame["request_date"].fillna(frame["request_date_tracking"])
     frame["requested_headcount"] = _numeric(frame["headcount"])
     frame["candidates_sent"] = _numeric(frame["jumlah_dikirimkan"])
-    frame["fulfilled_headcount"] = _numeric(frame["fulfilled_headcount"])
-    frame["headcount_gap"] = (frame["requested_headcount"] - frame["fulfilled_headcount"]).clip(lower=0)
+    frame["candidate_applications"] = _numeric(frame["candidate_applications"])
+    frame["placements"] = _numeric(frame["placements"])
+    frame["headcount_gap"] = (frame["requested_headcount"] - frame["placements"]).clip(lower=0)
     frame["candidate_supply_ratio"] = (
-        frame["candidates_sent"].div(frame["requested_headcount"].replace(0, pd.NA)).fillna(0)
+        frame["candidate_applications"].div(frame["requested_headcount"].replace(0, pd.NA)).fillna(0)
     )
-    reference = _reference_date(filters, frame["request_date"])
-    frame["aging_days"] = (_dates(frame["request_date"]).rsub(reference).dt.days).clip(lower=0)
-    frame["overdue"] = frame["aging_days"] > PROTOTYPE_OVERDUE_DAYS
-    frame["priority_score"] = (
-        frame["overdue"].astype(int) * 35
-        + (frame["headcount_gap"] > 0).astype(int) * 35
-        + (frame["candidate_supply_ratio"] < 1).astype(int) * 30
-    )
-    frame["priority_category"] = "Monitor"
-    frame.loc[frame["priority_score"] >= 35, "priority_category"] = "Action"
-    frame.loc[frame["priority_score"] >= 70, "priority_category"] = "Urgent"
-    frame["priority_reason"] = "No prototype warning condition"
-    frame.loc[frame["overdue"], "priority_reason"] = "Request aging exceeds prototype threshold"
-    frame.loc[(~frame["overdue"]) & (frame["headcount_gap"] > 0), "priority_reason"] = "Headcount gap remains"
+    reference = dataset_as_of_date(data)
+    frame["request_aging_days"] = (_dates(frame["request_date"]).rsub(reference).dt.days).clip(lower=0)
+    frame["aging_days"] = frame["request_aging_days"]
+    frame["overdue"] = frame["request_aging_days"] > PROTOTYPE_OVERDUE_DAYS
+    frame["action_label"] = "Terpenuhi"
+    frame.loc[frame["request_status"] == "Closed", "action_label"] = "Closed"
     frame.loc[
-        (~frame["overdue"]) & (frame["headcount_gap"] <= 0) & (frame["candidate_supply_ratio"] < 1),
-        "priority_reason",
-    ] = "Candidate supply below requested headcount"
-
+        (frame["request_status"] != "Closed") & frame["candidate_applications"].eq(0),
+        "action_label",
+    ] = "Belum Dikirim"
+    frame.loc[
+        (frame["request_status"] != "Closed")
+        & frame["candidate_applications"].gt(0)
+        & frame["candidate_applications"].lt(frame["requested_headcount"]),
+        "action_label",
+    ] = "Kurang Kandidat"
+    frame.loc[
+        (frame["request_status"] != "Closed")
+        & frame["candidate_applications"].ge(frame["requested_headcount"])
+        & frame["headcount_gap"].gt(0),
+        "action_label",
+    ] = "Belum Terpenuhi"
     frame = _apply_date_filter(frame, "request_date", filters)
     frame = _apply_company(frame, filters)
     if filters.request_status != "All request statuses":
         frame = frame.loc[frame["request_status"] == filters.request_status].copy()
-    return frame.sort_values(["priority_score", "aging_days"], ascending=False).reset_index(drop=True)
+    return frame.sort_values(["headcount_gap", "request_aging_days"], ascending=False).reset_index(drop=True)
 
 
 def selection_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
@@ -108,13 +136,15 @@ def selection_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     frame["study_program"] = frame["program_studi"].fillna("Unknown")
     frame["placement_type"] = frame["jenis_penempatan"].fillna(frame["jenis_penempatan_request"])
     frame["last_update"] = _dates(frame["last_update"])
-    reference = _reference_date(filters, frame["last_update"])
-    frame["stage_aging_days"] = (reference - frame["last_update"]).dt.days.clip(lower=0)
+    frame["canonical_outcome"] = _canonical_outcome(frame["progress_student"])
+    reference = dataset_as_of_date(data)
+    frame["selection_aging_days"] = (reference - frame["last_update"]).dt.days.clip(lower=0)
+    frame["stage_aging_days"] = frame["selection_aging_days"]
+    frame["stale_flag"] = frame["selection_aging_days"].gt(PROTOTYPE_OVERDUE_DAYS)
     frame["follow_up_overdue"] = (
-        frame["stage_aging_days"].gt(PROTOTYPE_OVERDUE_DAYS)
-        & ~frame["progress_student"].isin(TERMINAL_SELECTION_STAGES)
+        frame["stale_flag"] & frame["canonical_outcome"].eq("On Progress")
     )
-    frame["ghosting_warning"] = frame["progress_student"].eq("Ghosting")
+    frame["ghosting_warning"] = frame["canonical_outcome"].eq("Ghosting")
     frame = _apply_date_filter(frame, "last_update", filters)
     frame = _apply_company(frame, filters)
     if filters.study_program != "All study programs":
@@ -123,15 +153,49 @@ def selection_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
         frame = frame.loc[frame["placement_type"] == filters.placement_type].copy()
     if filters.request_status != "All request statuses":
         frame = frame.loc[frame["request_status"] == filters.request_status].copy()
-    return frame.sort_values(["ghosting_warning", "follow_up_overdue", "stage_aging_days"], ascending=False).reset_index(drop=True)
+    return frame.sort_values(["ghosting_warning", "stale_flag", "selection_aging_days"], ascending=False).reset_index(drop=True)
 
 
 def placement_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     frame = selection_table(data, filters)
-    frame = frame.loc[frame["progress_student"].eq("Placement")].copy()
+    frame = frame.loc[frame["canonical_outcome"].eq("Placement")].copy()
     frame["placement_date"] = frame["last_update"]
     frame["time_to_placement_days"] = frame["stage_aging_days"]
     return frame
+
+
+def canonical_kpis(data: DashboardData, filters: FilterState) -> dict[str, float | int | str]:
+    """Calculate KPI-01 through KPI-13 at their canonical grains."""
+    requests = request_table(data, filters).drop_duplicates("id_talent_req")
+    selection = selection_table(data, filters)
+    companies = data.table("company.csv")
+    if filters.company != "All companies":
+        companies = companies.loc[companies["company_name"] == filters.company]
+
+    applications = len(selection)
+    placements = int(selection["canonical_outcome"].eq("Placement").sum())
+    ghosting = int(selection["canonical_outcome"].eq("Ghosting").sum())
+    requested_headcount = requests["requested_headcount"].sum()
+    as_of = dataset_as_of_date(data)
+    sync_dates = _dates(data.table("status_student.csv")["sync_date"])
+    sync_freshness = (as_of - sync_dates).dt.days.max() if not pd.isna(as_of) else 0
+
+    return {
+        "KPI-01": int(companies["id_company"].nunique()),
+        "KPI-02": int(requests["id_talent_req"].nunique()),
+        "KPI-03": int(requested_headcount),
+        "KPI-04": int(applications),
+        "KPI-05": int(selection["NIM"].nunique()),
+        "KPI-06": placements,
+        "KPI-07": placements / applications * 100 if applications else 0,
+        "KPI-08": ghosting / applications * 100 if applications else 0,
+        "KPI-09": placements / requested_headcount * 100 if requested_headcount else 0,
+        "KPI-10": int(requests["headcount_gap"].sum()),
+        "KPI-11": float(requests["request_aging_days"].mean()) if not requests.empty else 0,
+        "KPI-12": float(selection["selection_aging_days"].mean()) if not selection.empty else 0,
+        "KPI-13": int(sync_freshness) if pd.notna(sync_freshness) else 0,
+        "as_of_date": as_of.date().isoformat() if not pd.isna(as_of) else "Unavailable",
+    }
 
 
 def matching_table(data: DashboardData, request_id: str, filters: FilterState) -> tuple[pd.DataFrame, pd.Series | None]:
@@ -184,8 +248,8 @@ def date_bounds(data: DashboardData) -> tuple[date, date]:
     ):
         values.extend(_dates(data.table(filename)[column]).dropna().tolist())
     if not values:
-        today = date.today()
-        return today, today
+        fallback = date(1970, 1, 1)
+        return fallback, fallback
     return min(values).date(), max(values).date()
 
 

@@ -3,9 +3,9 @@ import streamlit as st
 from components.charts import render_bar, render_horizontal_bar
 from components.states import render_empty, render_provisional_note
 from components.tables import render_downloadable_table
-from components.ui import format_count, format_days, render_kpis, render_section
+from components.ui import format_count, render_kpis, render_section
 from pages.common import start_page
-from services.analytics import selection_table
+from services.analytics import canonical_kpis, selection_table
 
 
 def main() -> None:
@@ -15,6 +15,7 @@ def main() -> None:
         "Which candidate-selection records are stalled, overdue for follow-up, or at risk of ghosting?",
     )
     selection = selection_table(data, filters)
+    kpis = canonical_kpis(data, filters)
     show_follow_up = st.checkbox("Follow-up overdue only", key="selection_follow_up_only")
     show_ghosting = st.checkbox("Ghosting warning only", key="selection_ghosting_only")
     stage_options = ["All stages", *sorted(selection["progress_student"].dropna().unique().tolist())]
@@ -27,19 +28,23 @@ def main() -> None:
     if stage != "All stages":
         filtered = filtered.loc[filtered["progress_student"] == stage].copy()
 
-    active = filtered.loc[~filtered["progress_student"].isin(["Rejected", "Finish", "Placement"])]
-    average_aging = active["stage_aging_days"].mean() if not active.empty else 0
-    overdue = int(filtered["follow_up_overdue"].sum()) if not filtered.empty else 0
-    ghosting = int(filtered["ghosting_warning"].sum()) if not filtered.empty else 0
-    median_duration = filtered["stage_aging_days"].median() if not filtered.empty else 0
+    on_progress = int(filtered["canonical_outcome"].eq("On Progress").sum()) if not filtered.empty else 0
+    placements = int(filtered["canonical_outcome"].eq("Placement").sum()) if not filtered.empty else 0
+    rejected = int(filtered["canonical_outcome"].eq("Rejected").sum()) if not filtered.empty else 0
+    ghosting = int(filtered["canonical_outcome"].eq("Ghosting").sum()) if not filtered.empty else 0
+    stale = int(filtered["stale_flag"].sum()) if not filtered.empty else 0
+    fu_counts = filtered["progress_student"].value_counts()
     render_kpis([
-        {"label": "Active selection", "value": format_count(len(active))},
-        {"label": "Average stage aging", "value": format_days(average_aging)},
-        {"label": "Follow-up overdue", "value": format_count(overdue)},
-        {"label": "Ghosting warning", "value": format_count(ghosting)},
-        {"label": "Median selection duration", "value": format_days(median_duration)},
-    ])
-    render_provisional_note("Stage aging uses last-update dates; ghosting uses the source status plus a 14-day follow-up proxy.")
+        {"label": "On Progress", "value": format_count(on_progress)},
+        {"label": "Placement", "value": format_count(placements)},
+        {"label": "Rejected", "value": format_count(rejected)},
+        {"label": "Ghosting", "value": format_count(ghosting)},
+        {"label": "Stale cases", "value": format_count(stale)},
+        {"label": "FU1", "value": format_count(fu_counts.get("FU 1", 0))},
+        {"label": "FU2", "value": format_count(fu_counts.get("FU 2", 0))},
+        {"label": "FU3", "value": format_count(fu_counts.get("FU 3", 0))},
+    ], columns_per_row=4)
+    render_provisional_note(f"Selection Aging uses dataset as-of date {kpis['as_of_date']}; stale threshold remains configurable at {14} days.")
 
     stages = filtered["progress_student"].value_counts().rename_axis("stage").reset_index(name="count")
     aging = filtered.groupby("progress_student", as_index=False)["stage_aging_days"].mean().rename(columns={"progress_student": "stage", "stage_aging_days": "average_days"}).sort_values("average_days")
@@ -58,7 +63,7 @@ def main() -> None:
     else:
         columns = [
             "id_tracking_student", "NIM", "student_name", "id_talent_req", "company_name", "position",
-            "study_program", "progress_student", "last_update", "stage_aging_days", "follow_up_overdue", "ghosting_warning",
+            "study_program", "progress_student", "canonical_outcome", "last_update", "selection_aging_days", "stale_flag", "ghosting_warning",
         ]
         render_downloadable_table(filtered[columns], "ssdc-selection-follow-up.csv", "selection-table")
 

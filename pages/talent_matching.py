@@ -5,7 +5,7 @@ from components.states import render_empty, render_provisional_note
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
 from pages.common import start_page
-from services.analytics import matching_table, request_table, PROTOTYPE_STRONG_MATCH_SCORE
+from services.analytics import matching_table, request_table
 
 
 def main() -> None:
@@ -49,13 +49,12 @@ def main() -> None:
     if eligibility_only:
         displayed = displayed.loc[displayed["eligible"]].copy()
     eligible_count = int(ranked["eligible"].sum())
-    strong_count = int((ranked["eligible"] & ranked["match_score"].ge(PROTOTYPE_STRONG_MATCH_SCORE)).sum())
     eligibility_rate = eligible_count / len(ranked) * 100 if len(ranked) else 0
     render_kpis([
         {"label": "Evaluated candidates", "value": format_count(len(ranked))},
         {"label": "Eligible candidates", "value": format_count(eligible_count)},
         {"label": "Eligibility rate", "value": format_percent(eligibility_rate)},
-        {"label": "Strong matches", "value": format_count(strong_count)},
+        {"label": "Top-k candidates", "value": format_count(len(displayed))},
     ])
 
     render_section("Ranked shortlist", "Every score includes criterion-level explanation for review.")
