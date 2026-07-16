@@ -62,9 +62,7 @@ def main() -> None:
 
     render_section("Action table", "Select a request ID to preserve it for the matching page.")
     request_ids = ["Select a request", *filtered["id_talent_req"].tolist()]
-    selected = st.selectbox("Request context", request_ids, key="selected_request_id")
-    if selected != "Select a request":
-        st.session_state["selected_request_id"] = selected
+    st.selectbox("Request context", request_ids, key="selected_request_id")
     columns = [
         "id_talent_req", "company_name", "nama_posisi", "request_status", "requested_headcount",
         "candidate_applications", "placements", "headcount_gap", "request_aging_days", "action_label",
