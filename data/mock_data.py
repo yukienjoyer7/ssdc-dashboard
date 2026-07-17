@@ -31,6 +31,7 @@ def build_mock_tables() -> dict[str, pd.DataFrame]:
             "working_arrangement": "Hybrid", "working_arrangement_detail": "Prototype arrangement", "durasi": "3 Bulan",
             "renumerasi": "Rp 1.000.000/bulan", "request_date": request_date.isoformat(), "sumber_baris_form": "Prototype",
             "renumerasi_category": "Paid", "durasi_months": str(3),
+            "bidang_studi_dibutuhkan_normalized": ["Manajemen, Statistika", "Manajemen, Teknik Industri", "Informatika"][index % 3],
         })
         sent = max(0, headcount - index % 3)
         tracking.append({
@@ -38,7 +39,9 @@ def build_mock_tables() -> dict[str, pd.DataFrame]:
             "nama_perusahaan": company["company_name"], "posisi": requests[-1]["nama_posisi"], "jenis_penempatan": requests[-1]["jenis_penempatan"],
             "bidang_studi_dicari": requests[-1]["bidang_studi_dibutuhkan"], "progress": progress,
             "request_date": request_date.isoformat(), "send_date": (request_date + timedelta(days=12)).isoformat(),
-            "jumlah_permintaan": str(headcount), "jumlah_dikirimkan": str(sent), "list_nim": ", ".join(f"2026000{index}{n}" for n in range(sent)),
+            "jumlah_permintaan": str(headcount), "jumlah_dikirimkan": str(sent),
+            "list_nim": ", ".join(f"2026000{index}{n}" for n in range(sent)),
+            "bidang_studi_dicari_normalized": ["Manajemen, Statistika", "Manajemen, Teknik Industri", "Informatika"][index % 3],
         })
 
     candidates = []
@@ -50,12 +53,14 @@ def build_mock_tables() -> dict[str, pd.DataFrame]:
             "NIM": nim, "nama": f"Candidate {index:02d}", "program_studi": program, "semester": str(2 + index % 6),
             "hp": "0000000000", "email_pribadi": f"candidate{index}@example.invalid", "email_kampus": f"candidate{index}@campus.invalid",
             "bidang_minat": program, "jenis_penempatan_diminati": "Magang", "bulan_masuk": "2026-01",
+            "bulan_masuk_month": "01", "bulan_masuk_year": "2026",
         })
         statuses.append({
             "id_status": f"SS{index:04d}", "NIM": nim, "email": f"candidate{index}@campus.invalid", "nama": f"Candidate {index:02d}",
             "semester": str(2 + index % 6), "program_studi": program, "no_whatsapp": "0000000000", "CV": "Ada",
             "portofolio": "Ada", "IPK": f"{3.0 + (index % 10) / 10:.2f}", "status": "Active", "domisili": "Surakarta",
             "ketersediaan": "Available", "tools": "Excel, Python", "sync_date": "2026-01-10",
+            "placement_verified": "Tidak", "eligible": "Ya", "tools_normalized": "Excel, Python",
         })
 
     selection = []
