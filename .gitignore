@@ -8,4 +8,5 @@ htmlcov/
 .env
 data/*.csv
 data/raw/
+data/processed/
 *.log
