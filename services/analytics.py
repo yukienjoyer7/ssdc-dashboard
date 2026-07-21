@@ -67,7 +67,7 @@ def compute_headcount_gap(requested_headcount: pd.Series, placements: pd.Series)
 def compute_fulfillment_rate(placements: pd.Series, requested_headcount: pd.Series) -> pd.Series:
     pl = _numeric(placements)
     hc = _numeric(requested_headcount)
-    return (pl / hc.replace(0, pd.NA) * 100).fillna(0).round(1)
+    return (pl / hc.replace(0, pd.NA) * 100).fillna(0)
 
 
 def _apply_date_filter(frame: pd.DataFrame, column: str, filters: FilterState) -> pd.DataFrame:
@@ -126,15 +126,15 @@ def request_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     frame["candidates_sent"] = _numeric(frame["jumlah_dikirimkan"])
     frame["candidate_applications"] = _numeric(frame["candidate_applications"])
     frame["placements"] = _numeric(frame["placements"])
-    frame["headcount_gap"] = (
-        frame["requested_headcount"]
-        - frame.groupby("id_talent_req")["placements"].transform("sum")
-    ).clip(lower=0)
+    frame["headcount_gap"] = compute_headcount_gap(
+        frame["requested_headcount"],
+        frame.groupby("id_talent_req")["placements"].transform("sum"),
+    )
     frame["candidate_supply_ratio"] = (
         frame["candidate_applications"].div(frame["requested_headcount"].replace(0, pd.NA)).fillna(0)
     )
     reference = dataset_as_of_date(data)
-    frame["request_aging_days"] = (_dates(frame["request_date"]).rsub(reference).dt.days).clip(lower=0)
+    frame["request_aging_days"] = compute_request_aging(frame["request_date"], reference)
     frame["aging_days"] = frame["request_aging_days"]
     frame["overdue"] = frame["request_aging_days"] > PROTOTYPE_OVERDUE_DAYS
     frame["action_label"] = "Terpenuhi"
@@ -245,7 +245,7 @@ def canonical_kpis(data: DashboardData, filters: FilterState) -> dict[str, float
         "KPI-06": placements,
         "KPI-07": placements / applications * 100 if applications else 0,
         "KPI-08": ghosting / applications * 100 if applications else 0,
-        "KPI-09": placements / scoped_headcount * 100 if scoped_headcount else 0,
+        "KPI-09": float(compute_fulfillment_rate(pd.Series(placements), pd.Series(scoped_headcount)).iloc[0]),
         "KPI-10": int(requests["headcount_gap"].sum()),
         "KPI-11": float(requests["request_aging_days"].mean()) if not requests.empty else 0,
         "KPI-12": float(selection["selection_aging_days"].mean()) if not selection.empty else 0,
