@@ -18,16 +18,10 @@ import pandas as pd
 
 from config.settings import resolve_data_dir
 from data.contracts import EXPECTED_COLUMNS, TABLE_FILES
-from services.analytics import compute_headcount_gap, compute_request_aging
+from services.analytics import compute_headcount_gap, compute_request_aging, resolve_outcome
 
 PROCESSED_DIR = Path(__file__).resolve().parents[1] / "data" / "processed"
 
-_OUTCOME_MAP: dict[str, str] = {
-    "Placement": "Placement",
-    "Rejected": "Rejected",
-    "Ghosting": "Ghosting",
-    "Finish": "On Progress",
-}
 _OVERDUE_DAYS = 14
 
 _DATE_COLUMNS = (
@@ -57,22 +51,6 @@ def _compute_as_of_date(tables: dict[str, pd.DataFrame]) -> pd.Timestamp:
     if not values:
         return pd.NaT
     return max(values)
-
-
-def _resolve_outcome(row: pd.Series) -> str:
-    rejection = row.get("rejection")
-    if pd.notna(rejection) and str(rejection).strip():
-        value = str(rejection).strip()
-        if value == "Placement":
-            return "Placement"
-        if value == "Ghosting":
-            return "Ghosting"
-        if value == "On Progress":
-            pass
-        elif value.startswith("Rejection"):
-            return "Rejected"
-    progress = row.get("progress_student", "")
-    return _OUTCOME_MAP.get(str(progress).strip(), "On Progress")
 
 
 def _drop_columns(frame: pd.DataFrame, *columns: str) -> pd.DataFrame:
@@ -264,7 +242,7 @@ def build_selection_table(
     frame["study_program"] = frame["program_studi"].fillna("Unknown")
     frame["placement_type"] = frame["jenis_penempatan"].fillna(frame["request_placement_type"])
     frame["last_update"] = _dates(frame["last_update"])
-    frame["canonical_outcome"] = frame.apply(_resolve_outcome, axis=1)
+    frame["canonical_outcome"] = resolve_outcome(frame["progress_student"], frame["rejection"])
     if not pd.isna(as_of):
         frame["selection_aging_days"] = (as_of - frame["last_update"]).dt.days.clip(lower=0)
     else:

@@ -5,13 +5,12 @@ import pandas as pd
 from data.contracts import FilterState
 from data.mock_data import build_mock_tables
 from services.analytical_tables import (
-    _OUTCOME_MAP,
-    _resolve_outcome,
     build_company_performance,
     build_request_table,
     build_selection_table,
     build_student_profile,
 )
+from services.analytics import resolve_outcome
 
 
 def _dummy_as_of() -> pd.Timestamp:
@@ -134,23 +133,35 @@ def test_company_performance_grain_is_unique_company_id() -> None:
 
 
 def test_resolve_outcome_maps_placement() -> None:
-    row = pd.Series({"rejection": "Placement", "progress_student": "Finish"})
-    assert _resolve_outcome(row) == "Placement"
+    result = resolve_outcome(
+        pd.Series(["Finish"]),
+        pd.Series(["Placement"]),
+    )
+    assert result.iloc[0] == "Placement"
 
 
 def test_resolve_outcome_maps_rejection_prefix() -> None:
-    row = pd.Series({"rejection": "Rejection Interview User", "progress_student": "Interview User"})
-    assert _resolve_outcome(row) == "Rejected"
+    result = resolve_outcome(
+        pd.Series(["Interview User"]),
+        pd.Series(["Rejection Interview User"]),
+    )
+    assert result.iloc[0] == "Rejected"
 
 
 def test_resolve_outcome_falls_back_to_progress() -> None:
-    row = pd.Series({"rejection": "", "progress_student": "Finish"})
-    assert _resolve_outcome(row) == "On Progress"
+    result = resolve_outcome(
+        pd.Series(["Finish"]),
+        pd.Series([""]),
+    )
+    assert result.iloc[0] == "On Progress"
 
 
 def test_resolve_outcome_rejection_on_progress_falls_back() -> None:
-    row = pd.Series({"rejection": "On Progress", "progress_student": "Interview User"})
-    assert _resolve_outcome(row) == "On Progress"
+    result = resolve_outcome(
+        pd.Series(["Interview User"]),
+        pd.Series(["On Progress"]),
+    )
+    assert result.iloc[0] == "On Progress"
 
 
 def test_request_table_no_kurang_kandidat_when_0_apps() -> None:

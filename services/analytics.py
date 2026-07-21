@@ -40,13 +40,13 @@ def dataset_as_of_date(data: DashboardData) -> pd.Timestamp:
     return max(values) if values else pd.NaT
 
 
-def _canonical_outcome(frame: pd.DataFrame) -> pd.Series:
+def resolve_outcome(progress_student: pd.Series, rejection: pd.Series) -> pd.Series:
     """Resolve canonical outcome using rejection as source of truth, fallback to progress_student."""
-    result = frame["progress_student"].map(CANONICAL_OUTCOME_MAP).fillna("On Progress")
-    mask = frame["rejection"].notna() & (frame["rejection"].astype(str).str.strip() != "")
+    result = progress_student.map(CANONICAL_OUTCOME_MAP).fillna("On Progress")
+    mask = rejection.notna() & (rejection.astype(str).str.strip() != "")
     if not mask.any():
         return result
-    rejection_values = frame.loc[mask, "rejection"].astype(str).str.strip()
+    rejection_values = rejection.loc[mask].astype(str).str.strip()
     result.loc[mask & rejection_values.eq("Placement")] = "Placement"
     result.loc[mask & rejection_values.eq("Ghosting")] = "Ghosting"
     result.loc[mask & rejection_values.str.startswith("Rejection")] = "Rejected"
@@ -196,7 +196,7 @@ def selection_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     frame["study_program"] = frame["program_studi"].fillna("Unknown")
     frame["placement_type"] = frame["jenis_penempatan"].fillna(frame["jenis_penempatan_request"])
     frame["last_update"] = _dates(frame["last_update"])
-    frame["canonical_outcome"] = _canonical_outcome(frame)
+    frame["canonical_outcome"] = resolve_outcome(frame["progress_student"], frame["rejection"])
     reference = dataset_as_of_date(data)
     frame["selection_aging_days"] = (reference - frame["last_update"]).dt.days.clip(lower=0)
     frame["stage_aging_days"] = frame["selection_aging_days"]
