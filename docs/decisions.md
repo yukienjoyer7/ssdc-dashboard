@@ -47,4 +47,39 @@ which aggregates placements across all tracking_company rows per request first
 Both paths now use the aggregate pattern, ensuring requests with multiple
 tracking_company rows produce the same headcount_gap value.
 
+## Outcome resolution unification
+
+Canonical outcome resolution was duplicated in two implementations:
+`_canonical_outcome()` (vectorized) in `analytics.py` and `_resolve_outcome()` (row-level
+`apply`) in `analytical_tables.py`. Both were replaced by a single public function
+`resolve_outcome(progress_student, rejection)` in `services/analytics.py`.
+
+The function resolves outcomes using rejection as the source of truth, falling back
+to `progress_student` mapped through `CANONICAL_OUTCOME_MAP`. Tests live in
+`tests/test_analytical_tables.py` and `tests/test_selection_monitoring.py`.
+
+## Ghosting detection
+
+Ghosting cases are classified from the source data, not derived via heuristics.
+`classify_ghosting(canonical_outcome)` returns a boolean Series where the resolved
+outcome is `Ghosting`. This aligns with PRD BT-05: ghosting is reported from the
+data, not predicted. Future phases may add staleness-based risk scoring if
+requested.
+
+## Follow-up action classification
+
+`classify_follow_up(canonical_outcome, stale_flag, progress_student)` generates
+action labels per selection record with cascading priority:
+
+| Priority | Condition | Label |
+| --- | --- | --- |
+| 1 (highest) | Canonical outcome = Ghosting | Contact student |
+| 2 | Stale (>14d) AND stage is FU1/FU2/FU3 | Escalate |
+| 3 | Stale (>14d) AND canonical outcome = On Progress | Follow up with company |
+| 4 (default) | All other cases | Monitor |
+
+Selection aging is computed via `compute_selection_aging(last_update, as_of)`,
+mirroring the request aging pattern. The stale threshold (14 days) remains
+configurable. All related tests live in `tests/test_selection_monitoring.py`.
+
 
