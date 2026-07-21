@@ -60,6 +60,13 @@ def compute_request_aging(request_date: pd.Series, as_of: pd.Timestamp) -> pd.Se
     return (as_of - dates).dt.days.clip(lower=0).fillna(0).astype(int)
 
 
+def compute_selection_aging(last_update: pd.Series, as_of: pd.Timestamp) -> pd.Series:
+    dates = _dates(last_update)
+    if pd.isna(as_of):
+        return pd.Series(0, index=dates.index)
+    return (as_of - dates).dt.days.clip(lower=0).fillna(0).astype(int)
+
+
 def compute_headcount_gap(requested_headcount: pd.Series, placements: pd.Series) -> pd.Series:
     return (_numeric(requested_headcount) - _numeric(placements)).clip(lower=0).astype(int)
 
