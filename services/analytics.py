@@ -57,6 +57,24 @@ def classify_ghosting(canonical_outcome: pd.Series) -> pd.Series:
     return canonical_outcome.eq("Ghosting")
 
 
+_FU_STAGES = {"FU 1", "FU 2", "FU 3"}
+
+
+def classify_follow_up(
+    canonical_outcome: pd.Series,
+    stale_flag: pd.Series,
+    progress_student: pd.Series,
+) -> pd.Series:
+    result = pd.Series("Monitor", index=canonical_outcome.index, dtype=str)
+    mask_on_progress = canonical_outcome.eq("On Progress") & stale_flag
+    mask_fu = progress_student.isin(_FU_STAGES) & stale_flag
+    mask_ghosting = canonical_outcome.eq("Ghosting")
+    result.loc[mask_on_progress] = "Follow up with company"
+    result.loc[mask_fu] = "Escalate"
+    result.loc[mask_ghosting] = "Contact student"
+    return result
+
+
 def compute_request_aging(request_date: pd.Series, as_of: pd.Timestamp) -> pd.Series:
     dates = _dates(request_date)
     if pd.isna(as_of):
