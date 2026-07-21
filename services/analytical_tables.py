@@ -18,7 +18,14 @@ import pandas as pd
 
 from config.settings import resolve_data_dir
 from data.contracts import EXPECTED_COLUMNS, TABLE_FILES
-from services.analytics import compute_headcount_gap, compute_request_aging, resolve_outcome
+from services.analytics import (
+    classify_follow_up,
+    classify_ghosting,
+    compute_headcount_gap,
+    compute_request_aging,
+    compute_selection_aging,
+    resolve_outcome,
+)
 
 PROCESSED_DIR = Path(__file__).resolve().parents[1] / "data" / "processed"
 
@@ -243,13 +250,13 @@ def build_selection_table(
     frame["placement_type"] = frame["jenis_penempatan"].fillna(frame["request_placement_type"])
     frame["last_update"] = _dates(frame["last_update"])
     frame["canonical_outcome"] = resolve_outcome(frame["progress_student"], frame["rejection"])
-    if not pd.isna(as_of):
-        frame["selection_aging_days"] = (as_of - frame["last_update"]).dt.days.clip(lower=0)
-    else:
-        frame["selection_aging_days"] = 0
+    frame["selection_aging_days"] = compute_selection_aging(frame["last_update"], as_of)
     frame["stale_flag"] = frame["selection_aging_days"] > _OVERDUE_DAYS
+    frame["ghosting_warning"] = classify_ghosting(frame["canonical_outcome"])
     frame["follow_up_overdue"] = frame["stale_flag"] & frame["canonical_outcome"].eq("On Progress")
-    frame["ghosting_warning"] = frame["canonical_outcome"].eq("Ghosting")
+    frame["follow_up_action"] = classify_follow_up(
+        frame["canonical_outcome"], frame["stale_flag"], frame["progress_student"],
+    )
     frame = _drop_columns(
         frame,
         "company",
@@ -277,6 +284,7 @@ def build_selection_table(
         "stale_flag",
         "follow_up_overdue",
         "ghosting_warning",
+        "follow_up_action",
         "rejection",
         "ketersediaan",
         "status",

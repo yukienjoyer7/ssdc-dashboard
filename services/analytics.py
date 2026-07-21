@@ -196,6 +196,10 @@ def selection_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     if frame is not None:
         frame["stage_aging_days"] = frame["selection_aging_days"]
         frame["last_update"] = _dates(frame["last_update"])
+        if "follow_up_action" not in frame.columns:
+            frame["follow_up_action"] = classify_follow_up(
+                frame["canonical_outcome"], frame["stale_flag"], frame["progress_student"],
+            )
         frame = _apply_date_filter(frame, "last_update", filters)
         frame = _apply_company(frame, filters)
         if filters.study_program != "All study programs":
@@ -220,13 +224,16 @@ def selection_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     frame["last_update"] = _dates(frame["last_update"])
     frame["canonical_outcome"] = resolve_outcome(frame["progress_student"], frame["rejection"])
     reference = dataset_as_of_date(data)
-    frame["selection_aging_days"] = (reference - frame["last_update"]).dt.days.clip(lower=0)
+    frame["selection_aging_days"] = compute_selection_aging(frame["last_update"], reference)
     frame["stage_aging_days"] = frame["selection_aging_days"]
     frame["stale_flag"] = frame["selection_aging_days"].gt(PROTOTYPE_OVERDUE_DAYS)
+    frame["ghosting_warning"] = classify_ghosting(frame["canonical_outcome"])
     frame["follow_up_overdue"] = (
         frame["stale_flag"] & frame["canonical_outcome"].eq("On Progress")
     )
-    frame["ghosting_warning"] = frame["canonical_outcome"].eq("Ghosting")
+    frame["follow_up_action"] = classify_follow_up(
+        frame["canonical_outcome"], frame["stale_flag"], frame["progress_student"],
+    )
     frame = _apply_date_filter(frame, "last_update", filters)
     frame = _apply_company(frame, filters)
     if filters.study_program != "All study programs":
