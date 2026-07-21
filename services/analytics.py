@@ -53,6 +53,23 @@ def _canonical_outcome(frame: pd.DataFrame) -> pd.Series:
     return result
 
 
+def compute_request_aging(request_date: pd.Series, as_of: pd.Timestamp) -> pd.Series:
+    dates = _dates(request_date)
+    if pd.isna(as_of):
+        return pd.Series(0, index=dates.index)
+    return (as_of - dates).dt.days.clip(lower=0).fillna(0).astype(int)
+
+
+def compute_headcount_gap(requested_headcount: pd.Series, placements: pd.Series) -> pd.Series:
+    return (_numeric(requested_headcount) - _numeric(placements)).clip(lower=0).astype(int)
+
+
+def compute_fulfillment_rate(placements: pd.Series, requested_headcount: pd.Series) -> pd.Series:
+    pl = _numeric(placements)
+    hc = _numeric(requested_headcount)
+    return (pl / hc.replace(0, pd.NA) * 100).fillna(0).round(1)
+
+
 def _apply_date_filter(frame: pd.DataFrame, column: str, filters: FilterState) -> pd.DataFrame:
     parsed = _dates(frame[column])
     mask = parsed.notna()
