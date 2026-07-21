@@ -25,6 +25,26 @@ Data Engineer approval: `Placement`, `Rejected`, and `Ghosting` retain their
 source outcomes; `Finish` and other non-terminal source stages map to
 `On Progress`.
 
-Semantic matching remains a separate follow-up integration. The current page's
-rule-based prototype score is not treated as a canonical KPI or acceptance
-probability until precomputed semantic scores are available upstream.
+## Pure function extraction
+
+Request aging, headcount gap, and fulfillment rate calculations were extracted into
+three pure functions in `services/analytics.py` to replace duplicated inline logic
+in both `analytics.py` and `analytical_tables.py`:
+
+- `compute_request_aging(request_date, as_of_date)` — `(as_of - request_date).days`, clipped >=0, null-safe
+- `compute_headcount_gap(requested_headcount, placements)` — `max(headcount - placements, 0)`, placement values aggregated at request level
+- `compute_fulfillment_rate(placements, requested_headcount)` — `placements / headcount * 100`, divide-by-zero returns 0
+
+Tests live in `tests/test_metrics.py`.
+
+## Headcount gap aggregation
+
+The `build_request_table()` ETL previously subtracted row-level placements from
+the request headcount. This was inconsistent with the runtime `request_table()` path,
+which aggregates placements across all tracking_company rows per request first
+(`groupby("id_talent_req")["placements"].transform("sum")`).
+
+Both paths now use the aggregate pattern, ensuring requests with multiple
+tracking_company rows produce the same headcount_gap value.
+
+
