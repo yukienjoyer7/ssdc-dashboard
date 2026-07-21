@@ -109,7 +109,10 @@ def request_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     frame["candidates_sent"] = _numeric(frame["jumlah_dikirimkan"])
     frame["candidate_applications"] = _numeric(frame["candidate_applications"])
     frame["placements"] = _numeric(frame["placements"])
-    frame["headcount_gap"] = (frame["requested_headcount"] - frame["placements"]).clip(lower=0)
+    frame["headcount_gap"] = (
+        frame["requested_headcount"]
+        - frame.groupby("id_talent_req")["placements"].transform("sum")
+    ).clip(lower=0)
     frame["candidate_supply_ratio"] = (
         frame["candidate_applications"].div(frame["requested_headcount"].replace(0, pd.NA)).fillna(0)
     )
@@ -208,7 +211,10 @@ def canonical_kpis(data: DashboardData, filters: FilterState) -> dict[str, float
     applications = len(selection)
     placements = int(selection["canonical_outcome"].eq("Placement").sum())
     ghosting = int(selection["canonical_outcome"].eq("Ghosting").sum())
-    requested_headcount = requests["requested_headcount"].sum()
+    request_ids_in_scope = selection["id_talent_req"].unique()
+    scoped_headcount = requests.loc[
+        requests["id_talent_req"].isin(request_ids_in_scope), "requested_headcount"
+    ].sum()
     as_of = dataset_as_of_date(data)
     sync_dates = _dates(data.table("status_student.csv")["sync_date"])
     sync_freshness = (as_of - sync_dates).dt.days.max() if not pd.isna(as_of) else 0
@@ -216,13 +222,13 @@ def canonical_kpis(data: DashboardData, filters: FilterState) -> dict[str, float
     return {
         "KPI-01": int(companies["id_company"].nunique()),
         "KPI-02": int(requests["id_talent_req"].nunique()),
-        "KPI-03": int(requested_headcount),
+        "KPI-03": int(requests["requested_headcount"].sum()),
         "KPI-04": int(applications),
         "KPI-05": int(selection["NIM"].nunique()),
         "KPI-06": placements,
         "KPI-07": placements / applications * 100 if applications else 0,
         "KPI-08": ghosting / applications * 100 if applications else 0,
-        "KPI-09": placements / requested_headcount * 100 if requested_headcount else 0,
+        "KPI-09": placements / scoped_headcount * 100 if scoped_headcount else 0,
         "KPI-10": int(requests["headcount_gap"].sum()),
         "KPI-11": float(requests["request_aging_days"].mean()) if not requests.empty else 0,
         "KPI-12": float(selection["selection_aging_days"].mean()) if not selection.empty else 0,
