@@ -53,6 +53,10 @@ def resolve_outcome(progress_student: pd.Series, rejection: pd.Series) -> pd.Ser
     return result
 
 
+def classify_ghosting(canonical_outcome: pd.Series) -> pd.Series:
+    return canonical_outcome.eq("Ghosting")
+
+
 def compute_request_aging(request_date: pd.Series, as_of: pd.Timestamp) -> pd.Series:
     dates = _dates(request_date)
     if pd.isna(as_of):
