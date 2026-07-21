@@ -18,6 +18,7 @@ import pandas as pd
 
 from config.settings import resolve_data_dir
 from data.contracts import EXPECTED_COLUMNS, TABLE_FILES
+from services.analytics import compute_headcount_gap, compute_request_aging
 
 PROCESSED_DIR = Path(__file__).resolve().parents[1] / "data" / "processed"
 
@@ -165,15 +166,15 @@ def build_request_table(
     frame["candidates_sent"] = _numeric(frame["jumlah_dikirimkan"])
     frame["candidate_applications"] = _numeric(frame["candidate_applications"])
     frame["placements"] = _numeric(frame["placements"])
-    frame["headcount_gap"] = (frame["requested_headcount"] - frame["placements"]).clip(lower=0)
+    frame["headcount_gap"] = compute_headcount_gap(
+        frame["requested_headcount"],
+        frame.groupby("id_talent_req")["placements"].transform("sum"),
+    )
     frame["candidate_supply_ratio"] = (
         frame["candidate_applications"] / frame["requested_headcount"].replace(0, pd.NA)
     )
     frame["candidate_supply_ratio"] = frame["candidate_supply_ratio"].fillna(0)
-    if not pd.isna(as_of):
-        frame["request_aging_days"] = (as_of - frame["request_date"]).dt.days.clip(lower=0)
-    else:
-        frame["request_aging_days"] = 0
+    frame["request_aging_days"] = compute_request_aging(frame["request_date"], as_of)
     frame["overdue"] = frame["request_aging_days"] > _OVERDUE_DAYS
     frame["action_label"] = "Terpenuhi"
     frame.loc[frame["request_status"] == "Closed", "action_label"] = "Closed"
