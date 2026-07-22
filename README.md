@@ -40,9 +40,28 @@ The five pages follow the intended workflow:
 The dashboard KPI cards follow `docs/kpi_dictionary.md`. Semantic matching and
 source outcome mappings remain explicitly marked as pending upstream validation.
 
+## Carbon implementation
+
+The app uses a hybrid Carbon architecture: the shell, global filter toolbar,
+KPI tiles, feedback states, and data-table wrapper are Carbon Web Components
+rendered through Streamlit Components v2. Plotly remains the charting surface,
+with Carbon chart colors and IBM Plex typography applied globally. The Carbon
+light theme is defined in `.streamlit/config.toml` and `config/theme.py`.
+
+When changing the custom component, rebuild its frontend assets before running
+the app:
+
+```bash
+cd components/ssdc-carbon-components/ssdc_carbon_components/frontend
+npm ci
+npm run build
+cd ../../../..
+uv sync
+```
+
 ## Checks
 
 ```bash
 uv run pytest
-uv run python -m compileall app.py config components data services pages
+uv run python -m compileall app.py config components data services app_pages
 ```

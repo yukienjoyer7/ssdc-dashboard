@@ -19,14 +19,18 @@ uv pip install -e . --force-reinstall
 ## Usage instructions
 
 ```python
-import streamlit as st
+from ssdc_carbon_components import render_surface
 
-from ssdc_carbon_components import ssdc_carbon_components
-
-value = ssdc_carbon_components()
-
-st.write(value)
+action = render_surface(
+    "kpis",
+    {"items": [{"label": "Requests", "value": "128"}]},
+    key="preview-kpis",
+)
 ```
+
+The package exposes one typed surface renderer. The dashboard supplies a view
+name and serializable data; user interactions are returned as an action
+dictionary through the Streamlit Components v2 trigger channel.
 
 ## Build a wheel
 

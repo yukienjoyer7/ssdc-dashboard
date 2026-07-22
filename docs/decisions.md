@@ -28,3 +28,19 @@ source outcomes; `Finish` and other non-terminal source stages map to
 Semantic matching remains a separate follow-up integration. The current page's
 rule-based prototype score is not treated as a canonical KPI or acceptance
 probability until precomputed semantic scores are available upstream.
+
+## Carbon migration architecture
+
+The dashboard uses Carbon Web Components directly through the official
+Streamlit Components v2 API. React and CDN dependencies are intentionally not
+introduced: the frontend is packaged with the repository and its compiled
+assets are included in the Python package.
+
+The migration is deliberately hybrid. Carbon owns navigation, filters, KPI
+tiles, feedback states, and table framing, while Plotly remains responsible
+for data visualization. This keeps existing chart behavior and analytics
+contracts stable while replacing the most visible Streamlit-default surfaces.
+
+Global filters use explicit Apply semantics. The component keeps edits local in
+the browser and emits an action only when the user applies or resets filters;
+the Python app stores the resulting `FilterState` in session state.
