@@ -1,61 +1,71 @@
 import streamlit as st
 
 
+CARBON_CHART_COLORS = [
+    "#6929c4",
+    "#1192e8",
+    "#005d5d",
+    "#9f1853",
+    "#fa4d56",
+    "#198038",
+    "#002d9c",
+    "#ee538b",
+    "#b28600",
+    "#009d9a",
+    "#012749",
+    "#8a3800",
+    "#a56eff",
+]
+
+CARBON_STATUS_COLORS = {
+    "info": "#0f62fe",
+    "success": "#198038",
+    "warning": "#f1c21b",
+    "error": "#da1e28",
+}
+
+
 def inject_theme() -> None:
     st.markdown(
         """
         <style>
-        :root {
-            --ssdc-ink: #17212b;
-            --ssdc-muted: #61707d;
-            --ssdc-line: #dfe5e8;
-            --ssdc-cyan: #087f8c;
-            --ssdc-amber: #b56b00;
-            --ssdc-red: #b42318;
-            --ssdc-green: #18794e;
+        :root { color-scheme: light; }
+        [data-testid="stHeader"], [data-testid="stDecoration"],
+        [data-testid="stSidebar"] { display: none; }
+        [data-testid="stAppViewContainer"] { background: #f4f4f4; }
+        .block-container {
+            max-width: none;
+            padding: 5.5rem 2rem 3rem 18rem;
         }
-        .block-container { max-width: 1440px; padding-top: 2rem; }
-        [data-testid="stSidebar"] { border-right: 1px solid var(--ssdc-line); }
-        [data-testid="stMetric"] {
-            border: 1px solid var(--ssdc-line);
-            border-radius: 6px;
-            padding: 0.85rem 1rem;
-            background: #ffffff;
-            color: var(--ssdc-ink);
-            color-scheme: light;
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+            font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
         }
-        [data-testid="stMetric"] [data-testid="stMetricLabel"],
-        [data-testid="stMetric"] [data-testid="stMetricValue"],
-        [data-testid="stMetric"] [data-testid="stMetricValue"] div,
-        [data-testid="stMetric"] [data-testid="stMetricDelta"] {
-            color: var(--ssdc-ink) !important;
-        }
-        .ssdc-kicker {
-            color: var(--ssdc-cyan);
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+        .carbon-page-header { margin: 1rem 0 1.5rem; }
+        .carbon-page-header > div:first-child {
+            color: #525252;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
             margin-bottom: 0.25rem;
         }
-        .ssdc-source {
-            border-left: 3px solid var(--ssdc-cyan);
-            background: #f3f8f9;
-            color: var(--ssdc-ink);
-            padding: 0.65rem 0.8rem;
-            margin: 0.5rem 0 1.25rem;
+        .carbon-source {
+            border-left: 3px solid #0f62fe;
+            background: #ffffff;
+            color: #161616;
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0 1.5rem;
         }
-        .ssdc-warning {
-            border-left-color: var(--ssdc-amber);
-            background: #fff8eb;
-        }
-        .ssdc-section { margin: 1.5rem 0 0.5rem; }
-        .ssdc-chart-title {
-            color: var(--ssdc-ink);
-            font-size: 0.95rem;
-            font-weight: 700;
+        .carbon-source-warning { border-left-color: #f1c21b; }
+        .carbon-section { margin: 2rem 0 0.75rem; }
+        .carbon-chart-title {
+            color: #161616;
+            font-size: 0.875rem;
+            font-weight: 600;
             line-height: 1.25;
-            margin: 0.45rem 0 0.15rem;
+            margin: 0.75rem 0 0.25rem;
+        }
+        @media (max-width: 48rem) {
+            .block-container { padding: 4.5rem 1rem 2rem; }
         }
         </style>
         """,
