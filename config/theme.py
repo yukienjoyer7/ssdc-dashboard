@@ -41,7 +41,7 @@ def inject_theme() -> None:
             font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
         }
         .carbon-page-header { margin: 1rem 0 1.5rem; }
-        .carbon-page-header > div:first-child {
+        .carbon-page-header > span {
             color: #525252;
             font-size: 0.75rem;
             font-weight: 600;
