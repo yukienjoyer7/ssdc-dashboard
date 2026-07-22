@@ -6,6 +6,7 @@ import "@carbon/web-components/es/components/button/index.js";
 import "@carbon/web-components/es/components/data-table/index.js";
 import "@carbon/web-components/es/components/date-picker/index.js";
 import "@carbon/web-components/es/components/notification/index.js";
+import "@carbon/web-components/es/components/pagination/index.js";
 import "@carbon/web-components/es/components/select/index.js";
 import "@carbon/web-components/es/components/tag/index.js";
 import "@carbon/web-components/es/components/tile/index.js";
@@ -36,6 +37,11 @@ type ComponentData = {
   subtitle?: string;
   rows?: TableRow[];
   columns?: TableColumn[];
+  page?: number;
+  page_size?: number;
+  total_pages?: number;
+  total_rows?: number;
+  row_offset?: number;
   empty_title?: string;
   empty_detail?: string;
 };
@@ -340,13 +346,37 @@ const renderTable = (
   table.append(head, body);
   root.appendChild(table);
 
+  const pagination = carbon("cds-pagination") as HTMLElement;
+  pagination.setAttribute("aria-label", "Table pagination");
+  pagination.setAttribute("page", String(data.page ?? 1));
+  pagination.setAttribute("page-size", String(data.page_size ?? 50));
+  pagination.setAttribute("total-pages", String(data.total_pages ?? 1));
+  pagination.setAttribute("total-items", String(data.total_rows ?? 0));
+  pagination.setAttribute("start", String(data.row_offset ?? 0));
+  pagination.setAttribute("page-size-input-disabled", "");
+  pagination.setAttribute("items-per-page-text", "Rows per page");
+  pagination.setAttribute("forward-text", "Next page");
+  pagination.setAttribute("backward-text", "Previous page");
+  pagination.className = "table-pagination";
+  root.appendChild(pagination);
+
   const onRow = (event: Event) => {
     const row = (event.target as HTMLElement).closest<HTMLElement>("[data-row]")
       ?.dataset.row;
     if (row) emit(args, { type: "select_row", row: Number(row) });
   };
+  const onPageChange = (event: Event) => {
+    const detail = (event as CustomEvent<{ page?: number }>).detail;
+    if (typeof detail?.page === "number") {
+      emit(args, { type: "table_page", page: detail.page });
+    }
+  };
   body.addEventListener("click", onRow);
-  return () => body.removeEventListener("click", onRow);
+  pagination.addEventListener("cds-pagination-changed-current", onPageChange);
+  return () => {
+    body.removeEventListener("click", onRow);
+    pagination.removeEventListener("cds-pagination-changed-current", onPageChange);
+  };
 };
 
 const CarbonComponent: FrontendRenderer<Record<string, unknown>, ComponentData> = (

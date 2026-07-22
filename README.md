@@ -39,6 +39,8 @@ The five pages follow the intended workflow:
 
 The dashboard KPI cards follow `docs/kpi_dictionary.md`. Semantic matching and
 source outcome mappings remain explicitly marked as pending upstream validation.
+Carbon data tables use server-side 50-row pagination; downloads still contain
+the full filtered result set.
 
 ## Carbon implementation
 

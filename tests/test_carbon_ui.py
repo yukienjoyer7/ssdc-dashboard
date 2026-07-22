@@ -1,10 +1,13 @@
 from datetime import date
 from pathlib import Path
 
+import pandas as pd
+
 from components.carbon_ui import (
     PAGE_SPECS,
     _filter_state,
     _json_safe,
+    _table_rows,
     default_filters,
     page_spec_for_slug,
     page_spec_for_title,
@@ -59,6 +62,16 @@ def test_table_values_are_json_safe_for_component_transport() -> None:
     assert _json_safe(42) == 42
 
 
+def test_table_rows_are_sliced_before_component_transport() -> None:
+    frame = pd.DataFrame({"id": range(120), "label": [f"Row {value}" for value in range(120)]})
+
+    rows = _table_rows(frame.iloc[50:100], ["id", "label"])
+
+    assert len(rows) == 50
+    assert rows[0] == {"id": 50, "label": "Row 50"}
+    assert rows[-1]["id"] == 99
+
+
 def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     frontend = Path("components/ssdc-carbon-components/ssdc_carbon_components/frontend")
     build = frontend / "build"
@@ -68,3 +81,5 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'setAttribute("aria-label", "Dashboard navigation")' in source
     assert 'button-label-inactive' in source
     assert 'type: "apply_filters"' in source
+    assert 'cds-pagination-changed-current' in source
+    assert 'type: "table_page"' in source

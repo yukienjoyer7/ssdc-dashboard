@@ -124,6 +124,11 @@ cds-table-row:hover {
   background: var(--cds-background-hover);
 }
 
+cds-pagination {
+  display: block;
+  margin-block-start: 1px;
+}
+
 cds-inline-notification {
   display: block;
 }

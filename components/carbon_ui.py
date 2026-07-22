@@ -3,6 +3,7 @@ from datetime import date, datetime
 from typing import Any
 
 import pandas as pd
+import streamlit as st
 
 from data.contracts import FilterState
 from data.loaders import DashboardData
@@ -45,6 +46,7 @@ ALL_FILTER_VALUES = {
     "request_status": "All request statuses",
     "placement_type": "All placement types",
 }
+DEFAULT_TABLE_PAGE_SIZE = 50
 
 
 def page_spec_for_title(title: str) -> PageSpec:
@@ -158,23 +160,46 @@ def render_table(
     *,
     columns: list[tuple[str, str]],
     key: str,
+    page_size: int = DEFAULT_TABLE_PAGE_SIZE,
     empty_title: str = "No records match",
     empty_detail: str = "Adjust the active filters and try again.",
 ) -> dict[str, Any] | None:
     safe_columns = [key for key, _ in columns]
-    rows = []
-    for record in frame[safe_columns].to_dict("records"):
-        rows.append({column: _json_safe(value) for column, value in record.items()})
-    return _render_surface(
+    page_size = max(1, int(page_size))
+    total_rows = len(frame)
+    total_pages = max(1, (total_rows + page_size - 1) // page_size)
+    page_state_key = f"carbon-table-page:{key}"
+    page = min(max(1, int(st.session_state.get(page_state_key, 1))), total_pages)
+    st.session_state[page_state_key] = page
+    start = (page - 1) * page_size
+    rows = _table_rows(frame.iloc[start : start + page_size], safe_columns)
+    action = _render_surface(
         "table",
         {
             "columns": [{"key": column, "label": label} for column, label in columns],
             "rows": rows,
+            "page": page,
+            "page_size": page_size,
+            "total_rows": total_rows,
+            "row_offset": start,
             "empty_title": empty_title,
             "empty_detail": empty_detail,
         },
         key=key,
     )
+    if action and action.get("type") == "table_page":
+        next_page = min(max(1, int(action.get("page", page))), total_pages)
+        if next_page != page:
+            st.session_state[page_state_key] = next_page
+            st.rerun()
+    return action
+
+
+def _table_rows(frame: pd.DataFrame, columns: list[str]) -> list[dict[str, Any]]:
+    return [
+        {column: _json_safe(value) for column, value in record.items()}
+        for record in frame[columns].to_dict("records")
+    ]
 
 
 def _json_safe(value: Any) -> Any:
