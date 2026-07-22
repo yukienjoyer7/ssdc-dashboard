@@ -68,7 +68,7 @@ def main() -> None:
         "candidate_applications", "placements", "headcount_gap", "request_aging_days", "action_label",
     ]
     render_downloadable_table(filtered[columns], "ssdc-talent-requests.csv", "request-table")
-    st.page_link("pages/talent_matching.py", label="Open Talent Matching", icon=":material/person_search:")
+    st.page_link("app_pages/talent_matching.py", label="Open Talent Matching", icon=":material/person_search:")
 
 
 if __name__ == "__main__":

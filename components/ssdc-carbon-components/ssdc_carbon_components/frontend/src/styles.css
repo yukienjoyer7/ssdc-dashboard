@@ -1,9 +1,22 @@
 :host {
-  --cds-interactive: var(--st-primary-color, #0f62fe);
-  --cds-text-primary: var(--st-text-color, #161616);
   --cds-background: var(--st-background-color, #f4f4f4);
+  --cds-background-hover: #e8e8e8;
+  --cds-field-01: var(--st-background-color, #f4f4f4);
+  --cds-interactive-01: var(--st-primary-color, #0f62fe);
+  --cds-interactive-02: #393939;
   --cds-layer: var(--st-secondary-background-color, #ffffff);
-  --cds-border-subtle: var(--st-border-color, #e0e0e0);
+  --cds-layer-01: var(--st-secondary-background-color, #ffffff);
+  --cds-layer-hover-01: #e8e8e8;
+  --cds-border-subtle-00: var(--st-border-color, #e0e0e0);
+  --cds-border-subtle-01: var(--st-border-color, #e0e0e0);
+  --cds-border-strong-01: #8d8d8d;
+  --cds-text-primary: var(--st-text-color, #161616);
+  --cds-text-secondary: #525252;
+  --cds-support-info: #0f62fe;
+  --cds-support-warning: #f1c21b;
+  --cds-support-error: #da1e28;
+  --cds-support-success: #198038;
+  --cds-focus: #0f62fe;
   display: block;
   color: var(--cds-text-primary);
   font-family: var(--st-font, "IBM Plex Sans", sans-serif);
@@ -99,6 +112,16 @@ cds-side-nav {
 cds-table {
   display: block;
   overflow-x: auto;
+  background: var(--cds-layer);
+}
+
+cds-table-row {
+  cursor: pointer;
+}
+
+cds-table-row:focus-within,
+cds-table-row:hover {
+  background: var(--cds-background-hover);
 }
 
 cds-inline-notification {

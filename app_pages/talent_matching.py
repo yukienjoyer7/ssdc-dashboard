@@ -1,6 +1,7 @@
 import streamlit as st
 
 from components.charts import render_histogram
+from components.carbon_ui import render_feedback
 from components.states import render_empty, render_provisional_note
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
@@ -28,18 +29,20 @@ def main() -> None:
         render_empty("Request not found", "Choose a request from the current filtered list.")
         return
 
-    left, middle, right = st.columns(3)
-    with left:
-        st.metric("Company", request["company_name"])
-    with middle:
-        st.metric("Position", request["nama_posisi"])
-    with right:
-        st.metric("Requested headcount", int(request["requested_headcount"]))
-    st.info(
-        f"Requirements: {request['bidang_studi_dibutuhkan']} | "
-        f"Minimum semester: {request['minimum_semester']} | "
+    render_kpis(
+        [
+            {"label": "Company", "value": str(request["company_name"])},
+            {"label": "Position", "value": str(request["nama_posisi"])},
+            {"label": "Requested headcount", "value": format_count(request["requested_headcount"])},
+        ],
+        key="matching-request-context",
+    )
+    render_feedback(
+        "Request requirements",
+        f"Study program: {request['bidang_studi_dibutuhkan']} · "
+        f"Minimum semester: {request['minimum_semester']} · "
         f"Placement: {request['jenis_penempatan']}",
-        icon=":material/description:",
+        key="matching-request-requirements",
     )
     render_provisional_note("Eligibility requires a study-program/interest match, minimum semester, and Available status.")
 

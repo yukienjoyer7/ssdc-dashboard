@@ -3,13 +3,14 @@ from collections.abc import Iterable
 import pandas as pd
 import streamlit as st
 
+from components.carbon_ui import render_feedback, render_kpi_row
 from data.loaders import DashboardData
 from services.analytics import dataset_as_of_date
 
 
 def render_page_header(kicker: str, title: str, question: str) -> None:
-    st.markdown(f'<div class="ssdc-kicker">{kicker}</div>', unsafe_allow_html=True)
-    st.title(title)
+    st.markdown(f'<div class="carbon-page-header"><span>{kicker}</span></div>', unsafe_allow_html=True)
+    st.header(title)
     st.caption(question)
 
 
@@ -18,17 +19,18 @@ def render_source_banner(data: DashboardData) -> None:
     record_count = sum(len(frame) for frame in data.tables.values())
     as_of_label = as_of.date().isoformat() if not pd.isna(as_of) else "Unavailable"
     if data.is_mock:
-        st.markdown(
-            f"<div class=\"ssdc-source ssdc-warning\"><strong>Prototype preview:</strong> "
-            f"Local cleaned tables were not found, so this page is using anonymized deterministic data. "
-            f"Records: {record_count:,} | As-of date: {as_of_label}</div>",
-            unsafe_allow_html=True,
+        render_feedback(
+            "Prototype preview",
+            "Local cleaned tables were not found; this page is using anonymized deterministic data. "
+            f"Records: {record_count:,} · As-of date: {as_of_label}",
+            kind="warning",
+            key="source-warning",
         )
     else:
-        st.markdown(
-            f"<div class=\"ssdc-source\"><strong>Local cleaned data:</strong> {data.source}. "
-            f"Records: {record_count:,} | As-of date: {as_of_label}.</div>",
-            unsafe_allow_html=True,
+        render_feedback(
+            "Local cleaned data",
+            f"{data.source} · Records: {record_count:,} · As-of date: {as_of_label}",
+            key="source-status",
         )
     if data.warnings:
         with st.expander("Data contract notes", expanded=False):
@@ -36,18 +38,18 @@ def render_source_banner(data: DashboardData) -> None:
                 st.write(f"- {warning}")
 
 
-def render_kpis(items: Iterable[dict[str, str]], columns_per_row: int | None = None) -> None:
+def render_kpis(items: Iterable[dict[str, str]], columns_per_row: int | None = None, key: str | None = None) -> None:
     items = list(items)
-    per_row = columns_per_row or len(items)
-    for start in range(0, len(items), per_row):
-        columns = st.columns(min(per_row, len(items) - start))
-        for column, item in zip(columns, items[start : start + per_row]):
-            with column:
-                st.metric(item["label"], item["value"], help=item.get("help"))
+    if not items:
+        return
+    render_kpi_row(
+        items,
+        key=key or "carbon-kpis-" + "-".join(item["label"].lower().replace(" ", "-") for item in items),
+    )
 
 
 def render_section(title: str, note: str | None = None) -> None:
-    st.markdown(f'<div class="ssdc-section"><h3>{title}</h3></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="carbon-section"><h3>{title}</h3></div>', unsafe_allow_html=True)
     if note:
         st.caption(note)
 
