@@ -4,7 +4,7 @@ from components.charts import render_bar, render_horizontal_bar
 from components.states import render_empty, render_provisional_note
 from components.tables import render_downloadable_table
 from components.ui import format_count, render_kpis, render_section
-from pages.common import start_page
+from app_pages.common import start_page
 from services.analytics import canonical_kpis, selection_table
 
 

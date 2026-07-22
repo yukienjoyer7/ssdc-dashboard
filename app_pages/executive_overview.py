@@ -5,7 +5,7 @@ from components.charts import render_bar, render_horizontal_bar, render_line
 from components.states import render_provisional_note
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
-from pages.common import start_page
+from app_pages.common import start_page
 from services.analytics import canonical_kpis, request_table, selection_table, placement_table
 
 
@@ -62,7 +62,7 @@ def main() -> None:
         "headcount_gap", "request_aging_days", "action_label",
     ]
     render_downloadable_table(actions[action_columns], "ssdc-action-requests.csv", "overview-actions")
-    st.page_link("pages/talent_request_management.py", label="Open Talent Request Management", icon=":material/arrow_forward:")
+    st.page_link("app_pages/talent_request_management.py", label="Open Talent Request Management", icon=":material/arrow_forward:")
 
 
 if __name__ == "__main__":

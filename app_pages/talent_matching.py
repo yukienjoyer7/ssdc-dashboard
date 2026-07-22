@@ -4,7 +4,7 @@ from components.charts import render_histogram
 from components.states import render_empty, render_provisional_note
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
-from pages.common import start_page
+from app_pages.common import start_page
 from services.analytics import matching_table, request_table
 
 
