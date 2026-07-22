@@ -9,3 +9,8 @@ htmlcov/
 data/*.csv
 data/raw/
 *.log
+
+# Carbon custom-component development artifacts
+components/ssdc-carbon-components/ssdc_carbon_components/frontend/node_modules/
+components/ssdc-carbon-components/build/
+components/ssdc-carbon-components/*.egg-info/

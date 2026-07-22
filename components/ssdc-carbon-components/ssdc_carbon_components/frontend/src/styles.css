@@ -1,0 +1,120 @@
+:host {
+  --cds-interactive: var(--st-primary-color, #0f62fe);
+  --cds-text-primary: var(--st-text-color, #161616);
+  --cds-background: var(--st-background-color, #f4f4f4);
+  --cds-layer: var(--st-secondary-background-color, #ffffff);
+  --cds-border-subtle: var(--st-border-color, #e0e0e0);
+  display: block;
+  color: var(--cds-text-primary);
+  font-family: var(--st-font, "IBM Plex Sans", sans-serif);
+}
+
+.component-root {
+  display: block;
+  min-width: 0;
+}
+
+cds-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 1000;
+}
+
+cds-side-nav {
+  position: fixed;
+  inset: 3rem auto 0 0;
+  z-index: 999;
+}
+
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: var(--cds-layer);
+  border-bottom: 1px solid var(--cds-border-subtle);
+}
+
+.toolbar-heading {
+  display: grid;
+  gap: 0.125rem;
+  margin-right: auto;
+}
+
+.toolbar-heading span,
+.kpi-label,
+.kpi-grid small {
+  color: var(--st-gray-text-color, #525252);
+  font-size: 0.75rem;
+}
+
+.toolbar-actions,
+.active-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-panel {
+  padding: 1rem;
+  background: var(--cds-layer);
+  border-bottom: 1px solid var(--cds-border-subtle);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.filter-control {
+  min-width: 0;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+}
+
+.kpi-grid cds-tile {
+  min-height: 7rem;
+}
+
+.kpi-grid cds-tile,
+.kpi-label,
+.kpi-value {
+  display: block;
+}
+
+.kpi-value {
+  margin-top: 0.5rem;
+  font-size: 1.75rem;
+  line-height: 1.1;
+}
+
+cds-table {
+  display: block;
+  overflow-x: auto;
+}
+
+cds-inline-notification {
+  display: block;
+}
+
+@media (max-width: 48rem) {
+  cds-side-nav {
+    transform: translateX(-100%);
+  }
+
+  cds-side-nav[expanded] {
+    transform: translateX(0);
+  }
+
+  .filter-toolbar {
+    align-items: flex-start;
+  }
+}

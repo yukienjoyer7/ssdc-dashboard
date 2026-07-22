@@ -7,8 +7,12 @@ requires-python = ">=3.13"
 dependencies = [
     "pandas>=2.2",
     "plotly>=5.24",
-    "streamlit>=1.42",
+    "ssdc-carbon-components",
+    "streamlit>=1.59",
 ]
+
+[tool.uv.sources]
+ssdc-carbon-components = { path = "components/ssdc-carbon-components" }
 
 [dependency-groups]
 dev = [
