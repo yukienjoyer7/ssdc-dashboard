@@ -155,6 +155,30 @@ def render_feedback(
     )
 
 
+def render_data_status_surface(
+    *,
+    mode: str,
+    record_count: int,
+    as_of_date: str,
+    kpi_status: str,
+    detail_items: list[dict[str, str]],
+    warnings: list[str],
+    key: str,
+) -> None:
+    _render_surface(
+        "data_status",
+        {
+            "mode": mode,
+            "record_count": record_count,
+            "as_of_date": as_of_date,
+            "kpi_status": kpi_status,
+            "detail_items": detail_items,
+            "warnings": warnings,
+        },
+        key=key,
+    )
+
+
 def render_table(
     frame,
     *,

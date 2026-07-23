@@ -2,7 +2,7 @@ import streamlit as st
 
 from components.charts import render_histogram
 from components.carbon_ui import render_feedback
-from components.states import render_empty, render_provisional_note
+from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
@@ -14,6 +14,10 @@ def main() -> None:
         "03 / Candidate shortlist",
         "Talent Matching",
         "Which eligible students are the strongest matches for a selected talent request, and why?",
+        provisional_note=(
+            "Eligibility requires a study-program/interest match, minimum semester, "
+            "and Available status."
+        ),
     )
     requests = request_table(data, filters)
     if requests.empty:
@@ -44,7 +48,6 @@ def main() -> None:
         f"Placement: {request['jenis_penempatan']}",
         key="matching-request-requirements",
     )
-    render_provisional_note("Eligibility requires a study-program/interest match, minimum semester, and Available status.")
 
     eligibility_only = st.checkbox("Show eligible candidates only", value=True, key="matching_eligible_only")
     min_score = st.slider("Minimum match score", 0, 100, 0, key="matching_min_score")

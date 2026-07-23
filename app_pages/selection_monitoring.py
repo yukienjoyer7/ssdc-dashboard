@@ -1,7 +1,7 @@
 import streamlit as st
 
 from components.charts import render_bar, render_horizontal_bar
-from components.states import render_empty, render_provisional_note
+from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import format_count, render_kpis, render_section
 from app_pages.common import start_page
@@ -13,6 +13,10 @@ def main() -> None:
         "04 / Follow-up queue",
         "Selection Monitoring",
         "Which candidate-selection records are stalled, overdue for follow-up, or at risk of ghosting?",
+        provisional_note=(
+            "Selection Aging uses dataset as-of date {as_of_date}; "
+            "stale threshold remains configurable at 14 days."
+        ),
     )
     selection = selection_table(data, filters)
     kpis = canonical_kpis(data, filters)
@@ -44,7 +48,6 @@ def main() -> None:
         {"label": "FU2", "value": format_count(fu_counts.get("FU 2", 0))},
         {"label": "FU3", "value": format_count(fu_counts.get("FU 3", 0))},
     ], columns_per_row=4)
-    render_provisional_note(f"Selection Aging uses dataset as-of date {kpis['as_of_date']}; stale threshold remains configurable at {14} days.")
 
     stages = filtered["progress_student"].value_counts().rename_axis("stage").reset_index(name="count")
     aging = filtered.groupby("progress_student", as_index=False)["stage_aging_days"].mean().rename(columns={"progress_student": "stage", "stage_aging_days": "average_days"}).sort_values("average_days")

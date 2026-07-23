@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 
 from components.charts import render_bar, render_horizontal_bar
-from components.states import render_provisional_note
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_days, render_kpis, render_section
 from app_pages.common import start_page
@@ -14,6 +13,10 @@ def main() -> None:
         "02 / Operational queue",
         "Talent Request Management",
         "Which talent requests require action, and why?",
+        provisional_note=(
+            "Request Aging uses dataset as-of date {as_of_date}; "
+            "action labels are deterministic and not weighted scores."
+        ),
     )
     requests = request_table(data, filters)
     kpis = canonical_kpis(data, filters)
@@ -36,7 +39,6 @@ def main() -> None:
         {"label": "Overdue request count", "value": format_count(overdue)},
         {"label": "Unsent request count", "value": format_count(unsent)},
     ])
-    render_provisional_note(f"Request Aging uses dataset as-of date {kpis['as_of_date']}; action labels are deterministic and not weighted scores.")
 
     aging = filtered.assign(
         aging_band=pd.cut(

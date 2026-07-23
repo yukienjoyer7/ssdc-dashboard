@@ -8,6 +8,7 @@ import "@carbon/web-components/es/components/date-picker/index.js";
 import "@carbon/web-components/es/components/notification/index.js";
 import "@carbon/web-components/es/components/pagination/index.js";
 import "@carbon/web-components/es/components/select/index.js";
+import "@carbon/web-components/es/components/tag/index.js";
 import "@carbon/web-components/es/components/tile/index.js";
 import "@carbon/web-components/es/components/ui-shell/index.js";
 import "./styles.css";
@@ -24,8 +25,9 @@ type FilterValues = {
 };
 type TableColumn = { key: string; label: string };
 type TableRow = Record<string, string | number | boolean | null>;
+type DetailItem = { label: string; value: string };
 type ComponentData = {
-  view: "shell" | "filters" | "kpis" | "feedback" | "table";
+  view: "shell" | "filters" | "kpis" | "feedback" | "data_status" | "table";
   pages?: Page[];
   active_page?: string;
   options?: Record<string, Option[]>;
@@ -34,6 +36,12 @@ type ComponentData = {
   kind?: "info" | "warning" | "error" | "success";
   title?: string;
   subtitle?: string;
+  mode?: "local" | "prototype";
+  record_count?: number;
+  as_of_date?: string;
+  kpi_status?: "provisional" | "validated";
+  detail_items?: DetailItem[];
+  warnings?: string[];
   rows?: TableRow[];
   columns?: TableColumn[];
   page?: number;
@@ -290,6 +298,129 @@ const renderKpis = (root: HTMLElement, data: ComponentData) => {
   root.appendChild(grid);
 };
 
+const formatStatusDate = (value?: string) => {
+  const parts = (value ?? "").split("-").map(Number);
+  if (
+    parts.length !== 3 ||
+    parts.some((part) => !Number.isInteger(part))
+  ) {
+    return "Unavailable";
+  }
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(parts[0], parts[1] - 1, parts[2])));
+};
+
+const renderDataStatus = (
+  root: HTMLElement,
+  data: ComponentData,
+  args: FrontendRendererArgs,
+) => {
+  const container = document.createElement("section");
+  container.className = "cds-data-status";
+  container.setAttribute("aria-label", "Data status");
+
+  const summary = document.createElement("div");
+  summary.className = "cds-data-status__summary";
+  const meta = document.createElement("span");
+  meta.className = "cds-data-status__meta";
+  meta.textContent = `Updated ${formatStatusDate(data.as_of_date)} · ${(
+    data.record_count ?? 0
+  ).toLocaleString("en-US")} records`;
+
+  const tags = document.createElement("div");
+  tags.className = "cds-data-status__tags";
+  const modeTag = carbon(
+    "cds-tag",
+    data.mode === "prototype" ? "Prototype data" : "Local data",
+  ) as HTMLElement;
+  modeTag.className = "cds-data-status__tag";
+  modeTag.setAttribute("type", data.mode === "prototype" ? "cool-gray" : "blue");
+  modeTag.setAttribute("size", "sm");
+  tags.appendChild(modeTag);
+
+  const kpiTag = carbon(
+    "cds-tag",
+    data.kpi_status === "validated"
+      ? "Validated KPI logic"
+      : "Provisional KPI logic",
+  ) as HTMLElement;
+  kpiTag.className = "cds-data-status__tag";
+  kpiTag.setAttribute(
+    "type",
+    data.kpi_status === "validated" ? "green" : "yellow",
+  );
+  kpiTag.setAttribute("size", "sm");
+  tags.appendChild(kpiTag);
+
+  if ((data.warnings?.length ?? 0) > 0 && data.mode !== "prototype") {
+    const warningTag = carbon("cds-tag", "Data warning") as HTMLElement;
+    warningTag.className = "cds-data-status__tag";
+    warningTag.setAttribute("type", "yellow");
+    warningTag.setAttribute("size", "sm");
+    tags.appendChild(warningTag);
+  }
+
+  const detailsId = `data-details-${args.key.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const detailsToggle = carbon("cds-button", "Data details") as HTMLElement;
+  detailsToggle.className = "cds-data-status__toggle";
+  detailsToggle.setAttribute("kind", "ghost");
+  detailsToggle.setAttribute("size", "sm");
+  detailsToggle.setAttribute("aria-expanded", "false");
+  detailsToggle.setAttribute("aria-controls", detailsId);
+  summary.append(meta, tags, detailsToggle);
+
+  const detailsPanel = document.createElement("div");
+  detailsPanel.id = detailsId;
+  detailsPanel.className = "cds-data-status__details";
+  detailsPanel.hidden = true;
+  const detailsList = document.createElement("dl");
+  detailsList.className = "cds-data-status__detail-list";
+  (data.detail_items ?? []).forEach((item) => {
+    const detail = document.createElement("div");
+    detail.className = "cds-data-status__detail";
+    const label = document.createElement("dt");
+    label.textContent = item.label;
+    const value = document.createElement("dd");
+    value.textContent = item.value;
+    detail.append(label, value);
+    detailsList.appendChild(detail);
+  });
+
+  const warningSection = document.createElement("div");
+  warningSection.className = "cds-data-status__warnings";
+  const warningTitle = document.createElement("strong");
+  warningTitle.textContent = "Data contract warnings";
+  warningSection.appendChild(warningTitle);
+  if ((data.warnings ?? []).length) {
+    const warningList = document.createElement("ul");
+    (data.warnings ?? []).forEach((warning) => {
+      const item = document.createElement("li");
+      item.textContent = warning;
+      warningList.appendChild(item);
+    });
+    warningSection.appendChild(warningList);
+  } else {
+    const noWarnings = document.createElement("p");
+    noWarnings.textContent = "No data-contract warnings.";
+    warningSection.appendChild(noWarnings);
+  }
+  detailsPanel.append(detailsList, warningSection);
+  container.append(summary, detailsPanel);
+  root.appendChild(container);
+
+  const onToggle = () => {
+    const expanded = detailsToggle.getAttribute("aria-expanded") === "true";
+    detailsToggle.setAttribute("aria-expanded", String(!expanded));
+    detailsPanel.hidden = expanded;
+  };
+  detailsToggle.addEventListener("click", onToggle);
+  return () => detailsToggle.removeEventListener("click", onToggle);
+};
+
 const renderFeedback = (root: HTMLElement, data: ComponentData) => {
   const notification = carbon("cds-inline-notification") as HTMLElement;
   notification.setAttribute("kind", data.kind ?? "info");
@@ -390,6 +521,8 @@ const CarbonComponent: FrontendRenderer<Record<string, unknown>, ComponentData> 
     case "feedback":
       renderFeedback(root, args.data);
       return;
+    case "data_status":
+      return renderDataStatus(root, args.data, args);
     case "table":
       return renderTable(root, args.data, args);
   }

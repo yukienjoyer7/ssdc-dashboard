@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 
 from components.charts import render_bar, render_horizontal_bar, render_line
-from components.states import render_provisional_note
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
@@ -14,6 +13,7 @@ def main() -> None:
         "01 / Command view",
         "Executive Overview",
         "What is the current overall condition of talent demand, fulfilment, selection activity, and placement outcomes?",
+        provisional_note="Canonical KPI preview; dataset as-of date: {as_of_date}.",
     )
     requests = request_table(data, filters)
     selection = selection_table(data, filters)
@@ -31,7 +31,6 @@ def main() -> None:
         {"label": "Placement rate", "value": format_percent(kpis["KPI-07"])},
         {"label": "Ghosting rate", "value": format_percent(kpis["KPI-08"])},
     ], columns_per_row=4)
-    render_provisional_note(f"Canonical KPI preview; dataset as-of date: {kpis['as_of_date']}.")
 
     trend_requests = requests.assign(month=pd.to_datetime(requests["request_date"]).dt.to_period("M").astype(str)).groupby("month", as_index=False).size().rename(columns={"size": "count"})
     trend_placements = placements.assign(month=pd.to_datetime(placements["placement_date"]).dt.to_period("M").astype(str)).groupby("month", as_index=False).size().rename(columns={"size": "count"})

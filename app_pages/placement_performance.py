@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from components.charts import render_bar, render_histogram, render_horizontal_bar, render_line
-from components.states import render_empty, render_provisional_note
+from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
@@ -14,6 +14,7 @@ def main() -> None:
         "05 / Outcome review",
         "Placement Performance",
         "How effective is the placement process, and where do outcomes differ by company, study program, and placement type?",
+        provisional_note="Canonical rate denominators are applied; dataset as-of date: {as_of_date}.",
     )
     placements = placement_table(data, filters)
     kpis = canonical_kpis(data, filters)
@@ -22,7 +23,6 @@ def main() -> None:
         {"label": "Placement rate", "value": format_percent(kpis["KPI-07"]), "help": "Placements / Candidate Applications"},
         {"label": "Fulfillment rate", "value": format_percent(kpis["KPI-09"]), "help": "Placements / Requested Headcount"},
     ])
-    render_provisional_note(f"Canonical rate denominators are applied; dataset as-of date: {kpis['as_of_date']}.")
     if placements.empty:
         render_empty("No placements in view", "Adjust the global filters or confirm that placement records are available.")
         return
