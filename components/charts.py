@@ -12,13 +12,19 @@ from config.theme import (
     FONT_FAMILY,
     PLOTLY_FONT_SIZES,
     TEXT_COLORS,
+    spacing_px,
 )
 
 
 def _base_layout(figure, height: int = 330):
     figure.update_layout(
         height=height,
-        margin={"l": 10, "r": 10, "t": 58, "b": 10},
+        margin={
+            "l": spacing_px("03"),
+            "r": spacing_px("03"),
+            "t": spacing_px("09"),
+            "b": spacing_px("03"),
+        },
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={

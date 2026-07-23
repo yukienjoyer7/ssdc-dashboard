@@ -36,6 +36,18 @@ TEXT_COLORS = {
     "helper": "#6f6f6f",
 }
 
+SPACING = {
+    "01": "0.125rem",
+    "02": "0.25rem",
+    "03": "0.5rem",
+    "04": "0.75rem",
+    "05": "1rem",
+    "06": "1.5rem",
+    "07": "2rem",
+    "08": "2.5rem",
+    "09": "3rem",
+}
+
 CHART_CATEGORICAL = [
     "#4589ff",
     "#009d9a",
@@ -82,7 +94,16 @@ def _typography_css_tokens() -> str:
         **{f"weight-{name}": value for name, value in TYPE_WEIGHTS.items()},
         **{f"text-{name}": value for name, value in TEXT_COLORS.items()},
     }
-    return "\n".join(f"            --app-{name}: {value};" for name, value in tokens.items())
+    app_tokens = [f"            --app-{name}: {value};" for name, value in tokens.items()]
+    spacing_tokens = [
+        f"            --cds-spacing-{name}: {value};"
+        for name, value in SPACING.items()
+    ]
+    return "\n".join([*app_tokens, *spacing_tokens])
+
+
+def spacing_px(token: str) -> int:
+    return round(float(SPACING[token].removesuffix("rem")) * 16)
 
 
 def inject_theme() -> None:
@@ -99,17 +120,17 @@ def inject_theme() -> None:
         [data-testid="stAppViewContainer"] { background: #f4f4f4; }
         .block-container {
             max-width: none;
-            padding: 5.5rem 2rem 3rem 18rem;
+            padding: calc(3rem + var(--cds-spacing-06)) 2rem var(--cds-spacing-09) 18rem;
         }
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
             font-family: var(--app-font-family);
         }
         .cds-page-header {
             max-width: 52rem;
-            margin: 1rem 0 1.5rem;
+            margin: 0;
         }
         .cds-kicker {
-            margin: 0 0 0.25rem;
+            margin: 0 0 var(--cds-spacing-02);
             color: var(--app-text-secondary);
             font-size: var(--app-type-helper);
             font-weight: var(--app-weight-semibold);
@@ -127,7 +148,7 @@ def inject_theme() -> None:
         }
         .cds-page-description {
             max-width: 52rem;
-            margin: 0.5rem 0 0;
+            margin: var(--cds-spacing-03) 0 0;
             color: var(--app-text-secondary);
             font-size: var(--app-type-page-description);
             font-weight: var(--app-weight-regular);
@@ -143,7 +164,7 @@ def inject_theme() -> None:
         .carbon-source-warning { border-left-color: #f1c21b; }
         .cds-section-header {
             max-width: 56rem;
-            margin: 2rem 0 0.75rem;
+            margin: 0;
         }
         .cds-section-heading {
             margin: 0;
@@ -153,7 +174,7 @@ def inject_theme() -> None:
             line-height: 1.35;
         }
         .cds-section-note {
-            margin: 0.25rem 0 0;
+            margin: var(--cds-spacing-02) 0 0;
             color: var(--app-text-secondary);
             font-size: var(--app-type-label);
             font-weight: var(--app-weight-regular);
@@ -164,22 +185,23 @@ def inject_theme() -> None:
             font-size: var(--app-type-chart-title);
             font-weight: var(--app-weight-medium);
             line-height: 1.375rem;
-            margin: 0.75rem 0 0.25rem;
+            margin: 0;
         }
         [class*="st-key-cds-chart-surface-"] {
             min-height: 24rem;
+            margin-block-end: var(--cds-spacing-03);
             background: #ffffff;
             border-color: #e0e0e0 !important;
             border-radius: 0 !important;
             box-shadow: none !important;
-            padding: 1rem;
+            padding: var(--cds-spacing-05);
             transition: border-color 110ms ease-out;
         }
         [class*="st-key-cds-chart-surface-"]:hover {
             border-color: #8d8d8d !important;
         }
         .cds-chart-surface__header {
-            margin: 0 0 0.75rem;
+            margin: 0 0 var(--cds-spacing-04);
         }
         .cds-chart-surface__title {
             color: var(--app-text-primary);
@@ -193,10 +215,12 @@ def inject_theme() -> None:
             font-size: var(--app-type-label);
             font-weight: var(--app-weight-regular);
             line-height: 1.125rem;
-            margin: 0.25rem 0 0;
+            margin: var(--cds-spacing-02) 0 0;
         }
         @media (max-width: 48rem) {
-            .block-container { padding: 4.5rem 1rem 2rem; }
+            .block-container {
+                padding: calc(3rem + var(--cds-spacing-06)) var(--cds-spacing-05) var(--cds-spacing-09);
+            }
         }
         </style>
         """,

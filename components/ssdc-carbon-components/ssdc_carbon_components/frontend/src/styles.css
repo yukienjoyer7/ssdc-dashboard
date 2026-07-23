@@ -17,6 +17,15 @@
   --app-weight-regular: 400;
   --app-weight-medium: 500;
   --app-weight-semibold: 600;
+  --app-spacing-01: var(--cds-spacing-01, 0.125rem);
+  --app-spacing-02: var(--cds-spacing-02, 0.25rem);
+  --app-spacing-03: var(--cds-spacing-03, 0.5rem);
+  --app-spacing-04: var(--cds-spacing-04, 0.75rem);
+  --app-spacing-05: var(--cds-spacing-05, 1rem);
+  --app-spacing-06: var(--cds-spacing-06, 1.5rem);
+  --app-spacing-07: var(--cds-spacing-07, 2rem);
+  --app-spacing-08: var(--cds-spacing-08, 2.5rem);
+  --app-spacing-09: var(--cds-spacing-09, 3rem);
   --cds-background: var(--st-background-color, #f4f4f4);
   --cds-background-hover: #e8e8e8;
   --cds-field-01: var(--st-background-color, #f4f4f4);
@@ -90,18 +99,18 @@ cds-header-name {
 
 .cds-filter-container {
   min-width: 0;
-  margin-block-end: 1rem;
+  margin-block-end: 0;
 }
 
 .cds-filter-toolbar {
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--app-spacing-05);
   min-block-size: 4rem;
   min-inline-size: 0;
   inline-size: 100%;
-  padding: 0.625rem 1rem;
+  padding: var(--app-spacing-04) var(--app-spacing-05);
   background: var(--cds-layer);
   border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
 }
@@ -109,7 +118,7 @@ cds-header-name {
 .cds-filter-toolbar__content {
   display: grid;
   flex: 1 1 auto;
-  gap: 0.125rem;
+  gap: var(--app-spacing-01);
   min-width: 0;
 }
 
@@ -145,11 +154,11 @@ cds-header-name {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--app-spacing-03);
 }
 
 .filter-panel {
-  padding: 1rem;
+  padding: var(--app-spacing-05);
   background: var(--cds-layer);
   border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
   border-block-start: 0;
@@ -158,7 +167,7 @@ cds-header-name {
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: 1rem;
+  gap: var(--app-spacing-05);
   align-items: end;
 }
 
@@ -169,7 +178,7 @@ cds-header-name {
 .cds-data-status {
   box-sizing: border-box;
   min-width: 0;
-  margin-block-end: 1rem;
+  margin-block-end: var(--app-spacing-03);
   background: var(--cds-layer);
   border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
 }
@@ -178,10 +187,10 @@ cds-header-name {
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--app-spacing-04);
   min-block-size: 3.5rem;
   min-width: 0;
-  padding: 0.5rem 0.75rem;
+  padding: var(--app-spacing-03) var(--app-spacing-04);
 }
 
 .cds-data-status__meta {
@@ -199,7 +208,7 @@ cds-header-name {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--app-spacing-03);
 }
 
 .cds-data-status__tag,
@@ -209,7 +218,8 @@ cds-header-name {
 }
 
 .cds-data-status__details {
-  padding: 0.75rem 1rem 1rem;
+  padding: var(--app-spacing-04) var(--app-spacing-05)
+    var(--app-spacing-05);
   background: var(--cds-layer-01);
   border-block-start: 1px solid var(--cds-border-subtle-00, #e0e0e0);
 }
@@ -221,7 +231,7 @@ cds-header-name {
 .cds-data-status__detail-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem 1rem;
+  gap: var(--app-spacing-04) var(--app-spacing-05);
   margin: 0;
 }
 
@@ -230,7 +240,7 @@ cds-header-name {
 }
 
 .cds-data-status__detail dt {
-  margin-block-end: 0.125rem;
+  margin-block-end: var(--app-spacing-01);
   color: var(--cds-text-helper);
   font-size: var(--app-type-helper);
   line-height: 1rem;
@@ -245,8 +255,8 @@ cds-header-name {
 }
 
 .cds-data-status__warnings {
-  margin-block-start: 1rem;
-  padding-block-start: 0.75rem;
+  margin-block-start: var(--app-spacing-05);
+  padding-block-start: var(--app-spacing-04);
   border-block-start: 1px solid var(--cds-border-subtle-00, #e0e0e0);
   font-size: var(--app-type-body-compact);
   line-height: 1.25rem;
@@ -259,20 +269,24 @@ cds-header-name {
 
 .cds-data-status__warnings p,
 .cds-data-status__warnings ul {
-  margin: 0.25rem 0 0;
+  margin: var(--app-spacing-02) 0 0;
 }
 
 .cds-data-status__warnings ul {
   padding-inline-start: 1.25rem;
 }
 
-.cds-kpi-section--primary,
+.cds-kpi-section--default,
 .cds-kpi-section--compact {
-  margin-block-end: 1.5rem;
+  margin-block-end: var(--app-spacing-05);
+}
+
+.cds-kpi-section--primary {
+  margin-block-end: var(--app-spacing-03);
 }
 
 .cds-kpi-section__title {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--app-spacing-03);
   color: var(--cds-text-primary);
   font-size: var(--app-type-section-title);
   font-weight: var(--app-weight-semibold);
@@ -286,7 +300,7 @@ cds-header-name {
 
 .cds-kpi-grid--default {
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 1rem;
+  gap: var(--app-spacing-05);
 }
 
 .cds-kpi-grid--primary,
@@ -295,11 +309,11 @@ cds-header-name {
 }
 
 .cds-kpi-grid--primary {
-  gap: 1rem;
+  gap: var(--app-spacing-05);
 }
 
 .cds-kpi-grid--compact {
-  gap: 0.75rem;
+  gap: var(--app-spacing-04);
 }
 
 .cds-kpi-card {
@@ -349,7 +363,7 @@ cds-header-name {
 }
 
 .cds-kpi-card__value {
-  margin-top: 0.5rem;
+  margin-top: var(--app-spacing-03);
   font-size: 1.75rem;
   font-weight: var(--app-weight-semibold);
   line-height: 1.1;
@@ -358,20 +372,20 @@ cds-header-name {
 }
 
 .cds-kpi-card--primary .cds-kpi-card__value {
-  margin-top: 0.75rem;
+  margin-top: var(--app-spacing-04);
   font-size: clamp(1.75rem, 2vw, var(--app-type-kpi-primary));
   line-height: 1.15;
 }
 
 .cds-kpi-card--compact .cds-kpi-card__value {
-  margin-top: 0.25rem;
+  margin-top: var(--app-spacing-02);
   font-size: var(--app-type-kpi-compact);
   line-height: 1.15;
 }
 
 .cds-kpi-card__delta,
 .cds-kpi-card__help {
-  margin-block-start: 0.375rem;
+  margin-block-start: var(--app-spacing-02);
 }
 
 .cds-kpi-card__delta {
@@ -459,12 +473,12 @@ cds-pagination {
     flex-direction: column;
     align-items: stretch;
     min-block-size: auto;
-    padding: 0.75rem;
+    padding: var(--app-spacing-04);
   }
 
   .cds-filter-toolbar__summary {
     flex-wrap: wrap;
-    row-gap: 0.125rem;
+    row-gap: var(--app-spacing-01);
   }
 
   .cds-filter-toolbar__summary-values {
@@ -478,7 +492,7 @@ cds-pagination {
 
   .cds-data-status__summary {
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--app-spacing-03);
   }
 
   .cds-data-status__meta {
