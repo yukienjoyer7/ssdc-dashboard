@@ -19,17 +19,17 @@ chartCategoricalColors = ["#4589ff", "#009d9a", "#a56eff", "#1192e8", "#24a148",
 chartSequentialColors = ["#edf5ff", "#d0e2ff", "#a6c8ff", "#78a9ff", "#4589ff", "#0f62fe", "#0043ce", "#002d9c", "#001d6c", "#001141"]
 dataframeBorderColor = "#c6c6c6"
 dataframeHeaderBackgroundColor = "#e0e0e0"
-font = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-headingFont = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+font = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+headingFont = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"
 codeFont = "'IBM Plex Mono':https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
-baseFontSize = 14
+baseFontSize = 16
 baseFontWeight = 400
 baseRadius = "none"
 buttonRadius = "none"
 showWidgetBorder = true
 showSidebarBorder = false
 linkUnderline = false
-headingFontSizes = ["2rem", "1.5rem", "1.25rem", "1rem", "0.875rem", "0.75rem"]
+headingFontSizes = ["2rem", "1.25rem", "1.125rem", "1rem", "0.875rem", "0.75rem"]
 headingFontWeights = [600, 600, 600, 500, 500, 500]
 
 [theme.sidebar]

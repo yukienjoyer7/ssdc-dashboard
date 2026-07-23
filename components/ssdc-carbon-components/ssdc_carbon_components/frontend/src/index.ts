@@ -124,10 +124,12 @@ const renderShell = (
   const items = carbon("cds-side-nav-items");
   (data.pages ?? []).forEach((page) => {
     const link = carbon("cds-side-nav-link", page.title) as HTMLElement;
+    const isActive = page.slug === data.active_page;
+    link.className = `cds-nav-item${isActive ? " cds-nav-item--active" : ""}`;
     link.setAttribute("href", `#${page.slug}`);
     link.dataset.page = page.slug;
     link.setAttribute("title", page.title);
-    if (page.slug === data.active_page) link.setAttribute("active", "");
+    if (isActive) link.setAttribute("active", "");
     items.appendChild(link);
   });
   sideNav.appendChild(items);
@@ -298,7 +300,7 @@ const renderKpis = (
   );
   section.className = `cds-kpi-section cds-kpi-section--${variant}`;
   if (data.section_label) {
-    const heading = document.createElement("h3");
+    const heading = document.createElement("h2");
     heading.className = "cds-kpi-section__title";
     heading.id = `kpi-title-${args.key.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
     heading.textContent = data.section_label;

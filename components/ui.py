@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from html import escape
 
 import pandas as pd
 import streamlit as st
@@ -9,9 +10,14 @@ from services.analytics import dataset_as_of_date
 
 
 def render_page_header(kicker: str, title: str, question: str) -> None:
-    st.markdown(f'<div class="carbon-page-header"><span>{kicker}</span></div>', unsafe_allow_html=True)
-    st.header(title)
-    st.caption(question)
+    st.markdown(
+        '<header class="cds-page-header">'
+        f'<p class="cds-kicker">{escape(kicker)}</p>'
+        f'<h1 class="cds-page-title">{escape(title)}</h1>'
+        f'<p class="cds-page-description">{escape(question)}</p>'
+        "</header>",
+        unsafe_allow_html=True,
+    )
 
 
 def render_data_status(
@@ -67,9 +73,14 @@ def render_kpis(
 
 
 def render_section(title: str, note: str | None = None) -> None:
-    st.markdown(f'<div class="carbon-section"><h3>{title}</h3></div>', unsafe_allow_html=True)
-    if note:
-        st.caption(note)
+    note_html = f'<p class="cds-section-note">{escape(note)}</p>' if note else ""
+    st.markdown(
+        '<header class="cds-section-header">'
+        f'<h2 class="cds-section-heading">{escape(title)}</h2>'
+        f"{note_html}"
+        "</header>",
+        unsafe_allow_html=True,
+    )
 
 
 def format_count(value: float | int) -> str:

@@ -7,7 +7,12 @@ import plotly.express as px
 import streamlit as st
 
 from components.carbon_ui import render_feedback
-from config.theme import CHART_CATEGORICAL
+from config.theme import (
+    CHART_CATEGORICAL,
+    FONT_FAMILY,
+    PLOTLY_FONT_SIZES,
+    TEXT_COLORS,
+)
 
 
 def _base_layout(figure, height: int = 330):
@@ -16,11 +21,50 @@ def _base_layout(figure, height: int = 330):
         margin={"l": 10, "r": 10, "t": 58, "b": 10},
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font={"family": "'IBM Plex Sans', sans-serif", "color": "#161616"},
+        font={
+            "family": FONT_FAMILY,
+            "size": PLOTLY_FONT_SIZES["body"],
+            "color": TEXT_COLORS["primary"],
+        },
         colorway=CHART_CATEGORICAL,
-        xaxis={"gridcolor": "#e0e0e0", "linecolor": "#8d8d8d", "zerolinecolor": "#8d8d8d"},
-        yaxis={"gridcolor": "#e0e0e0", "linecolor": "#8d8d8d", "zerolinecolor": "#8d8d8d"},
-        legend={"orientation": "h", "y": 1.08, "yanchor": "bottom", "x": 0, "xanchor": "left"},
+        xaxis={
+            "gridcolor": "#e0e0e0",
+            "linecolor": "#8d8d8d",
+            "zerolinecolor": "#8d8d8d",
+            "tickfont": {
+                "family": FONT_FAMILY,
+                "size": PLOTLY_FONT_SIZES["axis"],
+                "color": TEXT_COLORS["secondary"],
+            },
+        },
+        yaxis={
+            "gridcolor": "#e0e0e0",
+            "linecolor": "#8d8d8d",
+            "zerolinecolor": "#8d8d8d",
+            "tickfont": {
+                "family": FONT_FAMILY,
+                "size": PLOTLY_FONT_SIZES["axis"],
+                "color": TEXT_COLORS["secondary"],
+            },
+        },
+        legend={
+            "orientation": "h",
+            "y": 1.08,
+            "yanchor": "bottom",
+            "x": 0,
+            "xanchor": "left",
+            "font": {
+                "family": FONT_FAMILY,
+                "size": PLOTLY_FONT_SIZES["legend"],
+                "color": TEXT_COLORS["secondary"],
+            },
+        },
+        hoverlabel={
+            "font": {
+                "family": FONT_FAMILY,
+                "size": PLOTLY_FONT_SIZES["tooltip"],
+            },
+        },
     )
     return figure
 

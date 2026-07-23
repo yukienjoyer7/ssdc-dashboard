@@ -1,6 +1,41 @@
 import streamlit as st
 
 
+FONT_FAMILY = "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif"
+
+TYPE_SCALE = {
+    "page_title": "2rem",
+    "section_title": "1.125rem",
+    "subsection_title": "1rem",
+    "body": "1rem",
+    "page_description": "0.9375rem",
+    "body_compact": "0.875rem",
+    "label": "0.8125rem",
+    "helper": "0.75rem",
+    "kpi_primary": "2rem",
+    "kpi_compact": "1.5rem",
+    "chart_title": "1rem",
+}
+
+TYPE_WEIGHTS = {
+    "regular": 400,
+    "medium": 500,
+    "semibold": 600,
+}
+
+PLOTLY_FONT_SIZES = {
+    "body": 13,
+    "axis": 12,
+    "legend": 12,
+    "tooltip": 13,
+}
+
+TEXT_COLORS = {
+    "primary": "#161616",
+    "secondary": "#525252",
+    "helper": "#6f6f6f",
+}
+
 CHART_CATEGORICAL = [
     "#4589ff",
     "#009d9a",
@@ -40,11 +75,25 @@ CARBON_STATUS_COLORS = {
 }
 
 
+def _typography_css_tokens() -> str:
+    tokens = {
+        "font-family": FONT_FAMILY,
+        **{f"type-{name.replace('_', '-')}": value for name, value in TYPE_SCALE.items()},
+        **{f"weight-{name}": value for name, value in TYPE_WEIGHTS.items()},
+        **{f"text-{name}": value for name, value in TEXT_COLORS.items()},
+    }
+    return "\n".join(f"            --app-{name}: {value};" for name, value in tokens.items())
+
+
 def inject_theme() -> None:
+    typography_tokens = _typography_css_tokens()
     st.markdown(
+        "<style>\n"
+        "        :root {\n"
+        "            color-scheme: light;\n"
+        f"{typography_tokens}\n"
+        "        }\n"
         """
-        <style>
-        :root { color-scheme: light; }
         [data-testid="stHeader"], [data-testid="stDecoration"],
         [data-testid="stSidebar"] { display: none; }
         [data-testid="stAppViewContainer"] { background: #f4f4f4; }
@@ -53,15 +102,36 @@ def inject_theme() -> None:
             padding: 5.5rem 2rem 3rem 18rem;
         }
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
-            font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+            font-family: var(--app-font-family);
         }
-        .carbon-page-header { margin: 1rem 0 1.5rem; }
-        .carbon-page-header > span {
-            color: #525252;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            margin-bottom: 0.25rem;
+        .cds-page-header {
+            max-width: 52rem;
+            margin: 1rem 0 1.5rem;
+        }
+        .cds-kicker {
+            margin: 0 0 0.25rem;
+            color: var(--app-text-secondary);
+            font-size: var(--app-type-helper);
+            font-weight: var(--app-weight-semibold);
+            letter-spacing: 0.06em;
+            line-height: 1rem;
+            text-transform: uppercase;
+        }
+        .cds-page-title {
+            margin: 0;
+            color: var(--app-text-primary);
+            font-size: clamp(1.75rem, 2vw, var(--app-type-page-title));
+            font-weight: var(--app-weight-semibold);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .cds-page-description {
+            max-width: 52rem;
+            margin: 0.5rem 0 0;
+            color: var(--app-text-secondary);
+            font-size: var(--app-type-page-description);
+            font-weight: var(--app-weight-regular);
+            line-height: 1.5;
         }
         .carbon-source {
             border-left: 3px solid #0f62fe;
@@ -71,12 +141,29 @@ def inject_theme() -> None:
             margin: 0.5rem 0 1.5rem;
         }
         .carbon-source-warning { border-left-color: #f1c21b; }
-        .carbon-section { margin: 2rem 0 0.75rem; }
+        .cds-section-header {
+            max-width: 56rem;
+            margin: 2rem 0 0.75rem;
+        }
+        .cds-section-heading {
+            margin: 0;
+            color: var(--app-text-primary);
+            font-size: var(--app-type-section-title);
+            font-weight: var(--app-weight-semibold);
+            line-height: 1.35;
+        }
+        .cds-section-note {
+            margin: 0.25rem 0 0;
+            color: var(--app-text-secondary);
+            font-size: var(--app-type-label);
+            font-weight: var(--app-weight-regular);
+            line-height: 1.45;
+        }
         .carbon-chart-title {
-            color: #161616;
-            font-size: 0.875rem;
-            font-weight: 600;
-            line-height: 1.25;
+            color: var(--app-text-primary);
+            font-size: var(--app-type-chart-title);
+            font-weight: var(--app-weight-medium);
+            line-height: 1.375rem;
             margin: 0.75rem 0 0.25rem;
         }
         [class*="st-key-cds-chart-surface-"] {
@@ -95,15 +182,16 @@ def inject_theme() -> None:
             margin: 0 0 0.75rem;
         }
         .cds-chart-surface__title {
-            color: #161616;
-            font-size: 1rem;
-            font-weight: 500;
+            color: var(--app-text-primary);
+            font-size: var(--app-type-chart-title);
+            font-weight: var(--app-weight-medium);
             line-height: 1.375rem;
             margin: 0;
         }
         .cds-chart-surface__description {
-            color: #525252;
-            font-size: 0.8125rem;
+            color: var(--app-text-secondary);
+            font-size: var(--app-type-label);
+            font-weight: var(--app-weight-regular);
             line-height: 1.125rem;
             margin: 0.25rem 0 0;
         }
