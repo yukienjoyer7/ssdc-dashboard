@@ -114,14 +114,33 @@ const renderShell = (
   const menu = carbon("cds-header-menu-button") as HTMLElement;
   menu.setAttribute("button-label-inactive", "Open navigation menu");
   menu.setAttribute("button-label-active", "Close navigation menu");
-  const name = carbon("cds-header-name", "SSDC 2026") as HTMLElement;
+  const name = carbon("cds-header-name", "SSDC") as HTMLElement;
+  name.className = "cds-header-product";
   name.setAttribute("href", "#main-content");
   header.append(menu, name);
 
   const sideNav = carbon("cds-side-nav") as HTMLElement;
   sideNav.setAttribute("aria-label", "Dashboard navigation");
   sideNav.setAttribute("expanded", "");
+
+  const brand = document.createElement("div");
+  brand.className = "cds-sidebar__brand";
+
+  const productName = document.createElement("strong");
+  productName.className = "cds-sidebar__product-name";
+  productName.textContent = "SSDC";
+
+  const productDescription = document.createElement("span");
+  productDescription.className = "cds-sidebar__product-description";
+  productDescription.textContent = "Talent Intelligence Dashboard";
+  brand.append(productName, productDescription);
+
+  const divider = document.createElement("div");
+  divider.className = "cds-sidebar__divider";
+  divider.setAttribute("aria-hidden", "true");
+
   const items = carbon("cds-side-nav-items");
+  items.className = "cds-nav";
   (data.pages ?? []).forEach((page) => {
     const link = carbon("cds-side-nav-link", page.title) as HTMLElement;
     const isActive = page.slug === data.active_page;
@@ -129,16 +148,20 @@ const renderShell = (
     link.setAttribute("href", `#${page.slug}`);
     link.dataset.page = page.slug;
     link.setAttribute("title", page.title);
-    if (isActive) link.setAttribute("active", "");
+    if (isActive) {
+      link.setAttribute("active", "");
+      link.setAttribute("aria-current", "page");
+    }
     items.appendChild(link);
   });
-  sideNav.appendChild(items);
+  sideNav.append(brand, divider, items);
   root.append(header, sideNav);
 
   const onMenu = () => {
     const open = sideNav.hasAttribute("expanded");
     sideNav.toggleAttribute("expanded", !open);
     menu.toggleAttribute("active", !open);
+    name.classList.toggle("cds-header-product--visible", open);
   };
   menu.addEventListener("cds-header-menu-button-toggled", onMenu);
 

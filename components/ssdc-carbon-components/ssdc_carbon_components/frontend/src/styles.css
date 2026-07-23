@@ -17,6 +17,7 @@
   --app-weight-regular: 400;
   --app-weight-medium: 500;
   --app-weight-semibold: 600;
+  --app-focus-color: var(--st-primary-color, #0f62fe);
   --app-spacing-01: var(--cds-spacing-01, 0.125rem);
   --app-spacing-02: var(--cds-spacing-02, 0.25rem);
   --app-spacing-03: var(--cds-spacing-03, 0.5rem);
@@ -31,12 +32,14 @@
   --cds-field-01: var(--st-background-color, #f4f4f4);
   --cds-interactive-01: var(--st-primary-color, #0f62fe);
   --cds-interactive-02: #393939;
+  --cds-highlight: var(--st-blue-background-color, #edf5ff);
   --cds-layer: var(--st-secondary-background-color, #ffffff);
   --cds-layer-01: var(--st-secondary-background-color, #ffffff);
   --cds-layer-hover-01: #e8e8e8;
   --cds-border-subtle-00: var(--st-border-color, #e0e0e0);
   --cds-border-subtle-01: var(--st-border-color, #e0e0e0);
   --cds-border-strong-01: #8d8d8d;
+  --cds-sidebar-border: var(--st-border-color-light, #e0e0e0);
   --cds-text-primary: var(--st-text-color, #161616);
   --cds-text-secondary: #525252;
   --cds-text-helper: #6f6f6f;
@@ -70,8 +73,13 @@ cds-header {
 }
 
 cds-side-nav {
-  position: fixed;
+  background: var(--cds-background);
+  border-inline-end: 1px solid var(--cds-sidebar-border);
+  box-shadow: none;
+  box-sizing: border-box;
   inset: 3rem auto 0 0;
+  overflow-x: hidden;
+  position: fixed;
   z-index: 999;
 }
 
@@ -82,19 +90,105 @@ cds-header-name {
   font-weight: var(--app-weight-semibold);
 }
 
+.cds-header-product {
+  visibility: hidden;
+}
+
+.cds-header-product--visible {
+  visibility: visible;
+}
+
+.cds-sidebar__brand {
+  display: grid;
+  flex: none;
+  gap: var(--app-spacing-01);
+  padding: var(--app-spacing-05);
+}
+
+.cds-sidebar__product-name {
+  color: var(--cds-text-primary);
+  font-family: var(--app-font-family);
+  font-size: var(--app-type-section-title);
+  font-weight: var(--app-weight-semibold);
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.cds-sidebar__product-description {
+  color: var(--cds-text-secondary);
+  font-family: var(--app-font-family);
+  font-size: var(--app-type-label);
+  font-weight: var(--app-weight-regular);
+  line-height: 1.125rem;
+  overflow-wrap: anywhere;
+}
+
+.cds-sidebar__divider {
+  background: var(--cds-sidebar-border);
+  block-size: 1px;
+  flex: none;
+  margin: 0 var(--app-spacing-05) var(--app-spacing-03);
+}
+
+.cds-nav {
+  padding-block-start: var(--app-spacing-03);
+}
+
 .cds-nav-item {
+  --cds-background-hover: var(--cds-layer-hover-01);
+  --cds-background-selected: var(--cds-highlight);
+  --cds-border-interactive: var(--cds-interactive-01);
   --cds-heading-compact-01-font-size: var(--app-type-body-compact);
   --cds-heading-compact-01-font-weight: var(--app-weight-regular);
   color: var(--cds-text-primary);
+  display: block;
   font-family: var(--app-font-family);
   font-size: var(--app-type-body-compact);
   font-weight: var(--app-weight-regular);
+  inline-size: 100%;
   line-height: 1.25rem;
+  min-inline-size: 0;
+}
+
+.cds-nav-item::part(link) {
+  background: transparent;
+  box-sizing: border-box;
+  color: var(--cds-text-primary);
+  min-block-size: 2.75rem;
+  padding: var(--app-spacing-04) var(--app-spacing-05);
+}
+
+.cds-nav-item::part(title) {
+  color: var(--cds-text-primary);
+  font-weight: var(--app-weight-regular);
+  line-height: 1.25rem;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.cds-nav-item:not(.cds-nav-item--active)::part(link):hover {
+  background: var(--cds-layer-hover-01);
 }
 
 .cds-nav-item--active {
   --cds-heading-compact-01-font-weight: var(--app-weight-medium);
   font-weight: var(--app-weight-medium);
+}
+
+.cds-nav-item--active::part(link),
+.cds-nav-item--active::part(link):hover {
+  background: var(--cds-highlight);
+}
+
+.cds-nav-item--active::part(title) {
+  color: var(--cds-text-primary);
+  font-weight: var(--app-weight-medium);
+}
+
+.cds-nav-item::part(link):focus-visible {
+  outline: 2px solid var(--app-focus-color);
+  outline-offset: -2px;
 }
 
 .cds-filter-container {
@@ -461,6 +555,15 @@ cds-pagination {
 }
 
 @media (max-width: 48rem) {
+  .cds-header-product {
+    visibility: visible;
+  }
+
+  .cds-sidebar__brand,
+  .cds-sidebar__divider {
+    display: none;
+  }
+
   cds-side-nav {
     transform: translateX(-100%);
   }

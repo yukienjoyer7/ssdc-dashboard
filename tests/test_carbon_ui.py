@@ -13,6 +13,7 @@ from components.carbon_ui import (
     page_spec_for_slug,
     page_spec_for_title,
     render_feedback,
+    render_shell,
 )
 from components.ui import render_data_status, render_kpis
 from data.contracts import FilterState
@@ -26,9 +27,34 @@ def _mock_dashboard() -> DashboardData:
 
 def test_carbon_page_registry_is_complete_and_resolves_navigation_targets() -> None:
     assert len(PAGE_SPECS) == 5
+    assert [page.title for page in PAGE_SPECS] == [
+        "Executive overview",
+        "Talent request management",
+        "Talent matching",
+        "Selection monitoring",
+        "Placement performance",
+    ]
     assert page_spec_for_slug("talent-matching").title == "Talent matching"
     assert page_spec_for_title("Placement performance").slug == "placement-performance"
     assert page_spec_for_slug("missing") is None
+
+
+def test_shell_preserves_page_registry_and_active_route(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def capture(view, data, *, key):
+        captured.update({"view": view, "data": data, "key": key})
+        return None
+
+    monkeypatch.setattr("components.carbon_ui._render_surface", capture)
+    render_shell("talent-matching", key="test-shell")
+
+    assert captured["view"] == "shell"
+    assert captured["key"] == "test-shell"
+    assert captured["data"]["active_page"] == "talent-matching"
+    assert [page["slug"] for page in captured["data"]["pages"]] == [
+        page.slug for page in PAGE_SPECS
+    ]
 
 
 def test_default_filters_use_the_available_dataset_bounds() -> None:
@@ -226,10 +252,16 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     build = frontend / "build"
     source = (frontend / "src/index.ts").read_text()
     styles = (frontend / "src/styles.css").read_text()
-    assert list(build.glob("index-*.js"))
-    assert list(build.glob("index-*.css"))
+    compiled_js = "\n".join(path.read_text() for path in build.glob("index-*.js"))
+    compiled_css = "\n".join(path.read_text() for path in build.glob("index-*.css"))
+    assert compiled_js
+    assert compiled_css
     assert 'setAttribute("aria-label", "Dashboard navigation")' in source
     assert 'button-label-inactive' in source
+    assert 'className = "cds-sidebar__brand"' in source
+    assert 'productDescription.textContent = "Talent Intelligence Dashboard"' in source
+    assert 'link.setAttribute("aria-current", "page")' in source
+    assert 'name.classList.toggle("cds-header-product--visible", open)' in source
     assert 'className = "cds-filter-toolbar"' in source
     assert 'className = "cds-filter-toolbar__summary"' in source
     assert 'toggle.setAttribute("kind", "primary")' in source
@@ -252,6 +284,18 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert ".cds-kpi-grid--compact" in styles
     assert ".cds-kpi-grid--default" in styles
     assert "repeat(var(--cds-kpi-columns, 4), minmax(0, 1fr))" in styles
+    assert "--cds-background-selected: var(--cds-highlight)" in styles
+    assert "--cds-border-interactive: var(--cds-interactive-01)" in styles
+    assert ".cds-nav-item:not(.cds-nav-item--active)::part(link):hover" in styles
+    assert ".cds-nav-item--active::part(link)" in styles
+    assert ".cds-nav-item::part(link):focus-visible" in styles
+    assert "outline: 2px solid var(--app-focus-color)" in styles
+    assert "border-inline-end: 1px solid var(--cds-sidebar-border)" in styles
+    assert "min-block-size: 2.75rem" in styles
+    assert "Talent Intelligence Dashboard" in compiled_js
+    assert ".cds-sidebar__brand" in compiled_css
     assert "@media (max-width: 64rem)" in styles
     assert "@media (max-width: 40rem)" in styles
+    assert "nth-child" not in styles
+    assert "!important" not in styles
     assert "cds-inline-notification {\n  display: block;\n}" not in styles
