@@ -76,6 +76,7 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     frontend = Path("components/ssdc-carbon-components/ssdc_carbon_components/frontend")
     build = frontend / "build"
     source = (frontend / "src/index.ts").read_text()
+    styles = (frontend / "src/styles.css").read_text()
     assert list(build.glob("index-*.js"))
     assert list(build.glob("index-*.css"))
     assert 'setAttribute("aria-label", "Dashboard navigation")' in source
@@ -83,3 +84,4 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'type: "apply_filters"' in source
     assert 'cds-pagination-changed-current' in source
     assert 'type: "table_page"' in source
+    assert "cds-inline-notification {\n  display: block;\n}" not in styles

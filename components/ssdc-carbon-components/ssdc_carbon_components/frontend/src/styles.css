@@ -129,10 +129,6 @@ cds-pagination {
   margin-block-start: 1px;
 }
 
-cds-inline-notification {
-  display: block;
-}
-
 @media (max-width: 48rem) {
   cds-side-nav {
     transform: translateX(-100%);
