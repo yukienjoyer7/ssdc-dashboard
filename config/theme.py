@@ -1,21 +1,36 @@
 import streamlit as st
 
 
-CARBON_CHART_COLORS = [
-    "#6929c4",
-    "#1192e8",
-    "#005d5d",
-    "#9f1853",
-    "#fa4d56",
-    "#198038",
-    "#002d9c",
-    "#ee538b",
-    "#b28600",
+CHART_CATEGORICAL = [
+    "#4589ff",
     "#009d9a",
-    "#012749",
-    "#8a3800",
     "#a56eff",
+    "#1192e8",
+    "#24a148",
+    "#ee5396",
+    "#ff832b",
+    "#8d8d8d",
 ]
+
+CHART_SEQUENTIAL_BLUE = [
+    "#edf5ff",
+    "#d0e2ff",
+    "#a6c8ff",
+    "#78a9ff",
+    "#4589ff",
+    "#0f62fe",
+    "#0043ce",
+    "#002d9c",
+    "#001d6c",
+    "#001141",
+]
+
+CHART_PRIMARY = CHART_CATEGORICAL[0]
+
+EXECUTIVE_OVERVIEW_SERIES_COLORS = {
+    "Talent requests": CHART_CATEGORICAL[0],
+    "Placements": CHART_CATEGORICAL[1],
+}
 
 CARBON_STATUS_COLORS = {
     "info": "#0f62fe",

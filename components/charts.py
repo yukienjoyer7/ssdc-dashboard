@@ -1,6 +1,5 @@
 from contextlib import contextmanager
-from collections.abc import Iterable
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from html import escape
 
 import pandas as pd
@@ -8,9 +7,7 @@ import plotly.express as px
 import streamlit as st
 
 from components.carbon_ui import render_feedback
-from config.theme import CARBON_CHART_COLORS
-
-COLORS = CARBON_CHART_COLORS
+from config.theme import CHART_CATEGORICAL
 
 
 def _base_layout(figure, height: int = 330):
@@ -20,7 +17,7 @@ def _base_layout(figure, height: int = 330):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={"family": "'IBM Plex Sans', sans-serif", "color": "#161616"},
-        colorway=COLORS,
+        colorway=CHART_CATEGORICAL,
         xaxis={"gridcolor": "#e0e0e0", "linecolor": "#8d8d8d", "zerolinecolor": "#8d8d8d"},
         yaxis={"gridcolor": "#e0e0e0", "linecolor": "#8d8d8d", "zerolinecolor": "#8d8d8d"},
         legend={"orientation": "h", "y": 1.08, "yanchor": "bottom", "x": 0, "xanchor": "left"},
@@ -77,13 +74,25 @@ def render_bar(
     height: int = 330,
     *,
     show_title: bool = True,
+    color_map: Mapping[str, str] | None = None,
+    series_color: str | None = None,
 ) -> None:
     if frame.empty:
         _chart_empty(title)
         return
     if show_title:
         _chart_title(title)
-    figure = px.bar(frame, x=x, y=y, color=color, color_discrete_sequence=COLORS, text_auto=True)
+    figure = px.bar(
+        frame,
+        x=x,
+        y=y,
+        color=color,
+        color_discrete_sequence=CHART_CATEGORICAL,
+        color_discrete_map=dict(color_map or {}),
+        text_auto=True,
+    )
+    if series_color:
+        figure.update_traces(marker_color=series_color)
     figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
@@ -97,13 +106,26 @@ def render_horizontal_bar(
     height: int = 360,
     *,
     show_title: bool = True,
+    color_map: Mapping[str, str] | None = None,
+    series_color: str | None = None,
 ) -> None:
     if frame.empty:
         _chart_empty(title)
         return
     if show_title:
         _chart_title(title)
-    figure = px.bar(frame, x=x, y=y, color=color, color_discrete_sequence=COLORS, orientation="h", text_auto=True)
+    figure = px.bar(
+        frame,
+        x=x,
+        y=y,
+        color=color,
+        color_discrete_sequence=CHART_CATEGORICAL,
+        color_discrete_map=dict(color_map or {}),
+        orientation="h",
+        text_auto=True,
+    )
+    if series_color:
+        figure.update_traces(marker_color=series_color)
     figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
@@ -117,13 +139,25 @@ def render_line(
     height: int = 330,
     *,
     show_title: bool = True,
+    color_map: Mapping[str, str] | None = None,
+    series_color: str | None = None,
 ) -> None:
     if frame.empty:
         _chart_empty(title)
         return
     if show_title:
         _chart_title(title)
-    figure = px.line(frame, x=x, y=y, color=color, markers=True, color_discrete_sequence=COLORS)
+    figure = px.line(
+        frame,
+        x=x,
+        y=y,
+        color=color,
+        markers=True,
+        color_discrete_sequence=CHART_CATEGORICAL,
+        color_discrete_map=dict(color_map or {}),
+    )
+    if series_color:
+        figure.update_traces(line_color=series_color, marker_color=series_color)
     figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
@@ -136,12 +170,23 @@ def render_histogram(
     height: int = 330,
     *,
     show_title: bool = True,
+    color_map: Mapping[str, str] | None = None,
+    series_color: str | None = None,
 ) -> None:
     if frame.empty:
         _chart_empty(title)
         return
     if show_title:
         _chart_title(title)
-    figure = px.histogram(frame, x=x, color=color, nbins=12, color_discrete_sequence=COLORS)
+    figure = px.histogram(
+        frame,
+        x=x,
+        color=color,
+        nbins=12,
+        color_discrete_sequence=CHART_CATEGORICAL,
+        color_discrete_map=dict(color_map or {}),
+    )
+    if series_color:
+        figure.update_traces(marker_color=series_color)
     figure.update_layout(xaxis_title="", yaxis_title="Records")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})

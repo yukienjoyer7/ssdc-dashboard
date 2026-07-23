@@ -5,6 +5,7 @@ from components.charts import chart_surface, render_bar, render_horizontal_bar, 
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
+from config.theme import CHART_PRIMARY, EXECUTIVE_OVERVIEW_SERIES_COLORS
 from services.analytics import canonical_kpis, request_table, selection_table, placement_table
 
 
@@ -71,6 +72,7 @@ def main() -> None:
                 "Talent requests and placements",
                 color="metric",
                 show_title=False,
+                color_map=EXECUTIVE_OVERVIEW_SERIES_COLORS,
             )
     with right:
         with chart_surface(
@@ -84,6 +86,7 @@ def main() -> None:
                 "stage",
                 "Current selection-stage distribution",
                 show_title=False,
+                series_color=CHART_PRIMARY,
             )
 
     left, right = st.columns(2, gap="medium")
