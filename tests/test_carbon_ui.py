@@ -1,3 +1,4 @@
+import ast
 from datetime import date
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from components.carbon_ui import (
     page_spec_for_title,
     render_feedback,
 )
-from components.ui import render_data_status
+from components.ui import render_data_status, render_kpis
 from data.contracts import FilterState
 from data.loaders import DashboardData
 from data.mock_data import build_mock_tables
@@ -145,6 +146,81 @@ def test_error_feedback_remains_a_prominent_notification(monkeypatch) -> None:
     assert captured["data"]["kind"] == "error"
 
 
+def test_kpi_variants_are_forwarded_through_the_shared_renderer(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    items = [{"label": "Placements", "value": "7,534"}]
+    monkeypatch.setattr(
+        "components.ui.render_kpi_row",
+        lambda forwarded, **options: captured.update(
+            {"items": forwarded, **options},
+        ),
+    )
+
+    render_kpis(
+        items,
+        columns_per_row=4,
+        variant="primary",
+        section_label="Primary outcomes",
+        key="primary-outcomes",
+    )
+
+    assert captured["items"] == items
+    assert captured["columns_per_row"] == 4
+    assert captured["variant"] == "primary"
+    assert captured["section_label"] == "Primary outcomes"
+
+
+def test_executive_overview_uses_the_required_kpi_groups() -> None:
+    tree = ast.parse(Path("app_pages/executive_overview.py").read_text())
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "render_kpis"
+    ]
+
+    groups = [
+        [item.values[0].value for item in call.args[0].elts]
+        for call in calls
+    ]
+    options = [
+        {
+            keyword.arg: keyword.value.value
+            for keyword in call.keywords
+            if isinstance(keyword.value, ast.Constant)
+        }
+        for call in calls
+    ]
+
+    assert groups == [
+        ["Requested headcount", "Placements", "Placement rate", "Ghosting rate"],
+        ["Total companies", "Total talent requests", "Candidate applications", "Unique candidates"],
+    ]
+    assert options[0]["variant"] == "primary"
+    assert options[0]["section_label"] == "Primary outcomes"
+    assert options[1]["variant"] == "compact"
+    assert options[1]["section_label"] == "Pipeline volume"
+
+
+def test_other_pages_keep_the_default_kpi_variant() -> None:
+    for page in Path("app_pages").glob("*.py"):
+        if page.name == "executive_overview.py":
+            continue
+        tree = ast.parse(page.read_text())
+        calls = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "render_kpis"
+        ]
+        assert all(
+            not any(keyword.arg == "variant" for keyword in call.keywords)
+            for call in calls
+        )
+
+
 def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     frontend = Path("components/ssdc-carbon-components/ssdc_carbon_components/frontend")
     build = frontend / "build"
@@ -162,6 +238,9 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'detailsToggle.setAttribute("aria-expanded", "false")' in source
     assert "detailsPanel.hidden = true" in source
     assert 'notification.setAttribute("kind", data.kind ?? "info")' in source
+    assert 'className = "cds-kpi-section__title"' in source
+    assert "cds-kpi-grid--${variant}" in source
+    assert "cds-kpi-card--${variant}" in source
     assert 'type: "apply_filters"' in source
     assert 'cds-pagination-changed-current' in source
     assert 'type: "table_page"' in source
@@ -169,4 +248,10 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert ".cds-filter-toolbar__actions" in styles
     assert "min-block-size: 3.5rem" in styles
     assert ".cds-data-status__details[hidden]" in styles
+    assert ".cds-kpi-grid--primary" in styles
+    assert ".cds-kpi-grid--compact" in styles
+    assert ".cds-kpi-grid--default" in styles
+    assert "repeat(var(--cds-kpi-columns, 4), minmax(0, 1fr))" in styles
+    assert "@media (max-width: 64rem)" in styles
+    assert "@media (max-width: 40rem)" in styles
     assert "cds-inline-notification {\n  display: block;\n}" not in styles

@@ -137,8 +137,24 @@ def render_filter_toolbar(
     return current
 
 
-def render_kpi_row(items: list[dict[str, str]], *, key: str) -> None:
-    _render_surface("kpis", {"items": items}, key=key)
+def render_kpi_row(
+    items: list[dict[str, str]],
+    *,
+    key: str,
+    variant: str = "default",
+    section_label: str | None = None,
+    columns_per_row: int | None = None,
+) -> None:
+    _render_surface(
+        "kpis",
+        {
+            "items": items,
+            "variant": variant,
+            "section_label": section_label,
+            "columns_per_row": columns_per_row,
+        },
+        key=key,
+    )
 
 
 def render_feedback(

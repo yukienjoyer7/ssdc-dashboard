@@ -44,13 +44,25 @@ def render_data_status(
     )
 
 
-def render_kpis(items: Iterable[dict[str, str]], columns_per_row: int | None = None, key: str | None = None) -> None:
+def render_kpis(
+    items: Iterable[dict[str, str]],
+    columns_per_row: int | None = None,
+    key: str | None = None,
+    *,
+    variant: str = "default",
+    section_label: str | None = None,
+) -> None:
     items = list(items)
     if not items:
         return
+    if variant not in {"default", "primary", "compact"}:
+        raise ValueError(f"Unsupported KPI variant: {variant}")
     render_kpi_row(
         items,
         key=key or "carbon-kpis-" + "-".join(item["label"].lower().replace(" ", "-") for item in items),
+        variant=variant,
+        section_label=section_label,
+        columns_per_row=max(1, int(columns_per_row)) if columns_per_row is not None else None,
     )
 
 

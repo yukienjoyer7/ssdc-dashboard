@@ -26,13 +26,24 @@ type FilterValues = {
 type TableColumn = { key: string; label: string };
 type TableRow = Record<string, string | number | boolean | null>;
 type DetailItem = { label: string; value: string };
+type KpiVariant = "default" | "primary" | "compact";
+type KpiItem = {
+  label: string;
+  value: string;
+  help?: string;
+  delta?: string;
+  delta_kind?: "neutral" | "positive" | "negative";
+};
 type ComponentData = {
   view: "shell" | "filters" | "kpis" | "feedback" | "data_status" | "table";
   pages?: Page[];
   active_page?: string;
   options?: Record<string, Option[]>;
   filters?: FilterValues;
-  items?: Array<{ label: string; value: string; help?: string }>;
+  items?: KpiItem[];
+  variant?: KpiVariant;
+  section_label?: string;
+  columns_per_row?: number;
   kind?: "info" | "warning" | "error" | "success";
   title?: string;
   subtitle?: string;
@@ -276,26 +287,61 @@ const renderFilters = (
   };
 };
 
-const renderKpis = (root: HTMLElement, data: ComponentData) => {
+const renderKpis = (
+  root: HTMLElement,
+  data: ComponentData,
+  args: FrontendRendererArgs,
+) => {
+  const variant = data.variant ?? "default";
+  const section = document.createElement(
+    data.section_label ? "section" : "div",
+  );
+  section.className = `cds-kpi-section cds-kpi-section--${variant}`;
+  if (data.section_label) {
+    const heading = document.createElement("h3");
+    heading.className = "cds-kpi-section__title";
+    heading.id = `kpi-title-${args.key.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+    heading.textContent = data.section_label;
+    section.setAttribute("aria-labelledby", heading.id);
+    section.appendChild(heading);
+  }
+
   const grid = document.createElement("div");
-  grid.className = "kpi-grid";
+  grid.className = `cds-kpi-grid cds-kpi-grid--${variant}`;
+  if (data.columns_per_row) {
+    grid.style.setProperty(
+      "--cds-kpi-columns",
+      String(data.columns_per_row),
+    );
+  }
   (data.items ?? []).forEach((item) => {
     const tile = carbon("cds-tile") as HTMLElement;
+    tile.className = `cds-kpi-card cds-kpi-card--${variant}`;
     const label = document.createElement("span");
-    label.className = "kpi-label";
+    label.className = "cds-kpi-card__label";
     label.textContent = item.label;
     const value = document.createElement("strong");
-    value.className = "kpi-value";
+    value.className = "cds-kpi-card__value";
     value.textContent = item.value;
     tile.append(label, value);
+    if (item.delta) {
+      const delta = document.createElement("span");
+      delta.className = `cds-kpi-card__delta cds-kpi-card__delta--${
+        item.delta_kind ?? "neutral"
+      }`;
+      delta.textContent = item.delta;
+      tile.appendChild(delta);
+    }
     if (item.help) {
       const help = document.createElement("small");
+      help.className = "cds-kpi-card__help";
       help.textContent = item.help;
       tile.appendChild(help);
     }
     grid.appendChild(tile);
   });
-  root.appendChild(grid);
+  section.appendChild(grid);
+  root.appendChild(section);
 };
 
 const formatStatusDate = (value?: string) => {
@@ -516,7 +562,7 @@ const CarbonComponent: FrontendRenderer<Record<string, unknown>, ComponentData> 
     case "filters":
       return renderFilters(root, args.data, args);
     case "kpis":
-      renderKpis(root, args.data);
+      renderKpis(root, args.data, args);
       return;
     case "feedback":
       renderFeedback(root, args.data);

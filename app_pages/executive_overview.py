@@ -21,16 +21,30 @@ def main() -> None:
     kpis = canonical_kpis(data, filters)
     actions = requests.loc[requests["action_label"].isin(["Belum Dikirim", "Kurang Kandidat", "Belum Terpenuhi"])].copy()
 
-    render_kpis([
-        {"label": "Total companies", "value": format_count(kpis["KPI-01"])},
-        {"label": "Total talent requests", "value": format_count(kpis["KPI-02"])},
-        {"label": "Requested headcount", "value": format_count(kpis["KPI-03"])},
-        {"label": "Candidate applications", "value": format_count(kpis["KPI-04"])},
-        {"label": "Unique candidates", "value": format_count(kpis["KPI-05"])},
-        {"label": "Placements", "value": format_count(kpis["KPI-06"])},
-        {"label": "Placement rate", "value": format_percent(kpis["KPI-07"])},
-        {"label": "Ghosting rate", "value": format_percent(kpis["KPI-08"])},
-    ], columns_per_row=4)
+    render_kpis(
+        [
+            {"label": "Requested headcount", "value": format_count(kpis["KPI-03"])},
+            {"label": "Placements", "value": format_count(kpis["KPI-06"])},
+            {"label": "Placement rate", "value": format_percent(kpis["KPI-07"])},
+            {"label": "Ghosting rate", "value": format_percent(kpis["KPI-08"])},
+        ],
+        columns_per_row=4,
+        variant="primary",
+        section_label="Primary outcomes",
+        key="executive-primary-outcomes",
+    )
+    render_kpis(
+        [
+            {"label": "Total companies", "value": format_count(kpis["KPI-01"])},
+            {"label": "Total talent requests", "value": format_count(kpis["KPI-02"])},
+            {"label": "Candidate applications", "value": format_count(kpis["KPI-04"])},
+            {"label": "Unique candidates", "value": format_count(kpis["KPI-05"])},
+        ],
+        columns_per_row=4,
+        variant="compact",
+        section_label="Pipeline volume",
+        key="executive-pipeline-volume",
+    )
 
     trend_requests = requests.assign(month=pd.to_datetime(requests["request_date"]).dt.to_period("M").astype(str)).groupby("month", as_index=False).size().rename(columns={"size": "count"})
     trend_placements = placements.assign(month=pd.to_datetime(placements["placement_date"]).dt.to_period("M").astype(str)).groupby("month", as_index=False).size().rename(columns={"size": "count"})
