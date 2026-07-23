@@ -39,41 +39,77 @@ cds-side-nav {
   z-index: 999;
 }
 
-.filter-toolbar {
+.cds-filter-container {
+  min-width: 0;
+  margin-block-end: 1rem;
+}
+
+.cds-filter-toolbar {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
-  padding: 1rem;
+  min-block-size: 4rem;
+  min-inline-size: 0;
+  inline-size: 100%;
+  padding: 0.625rem 1rem;
   background: var(--cds-layer);
-  border-bottom: 1px solid var(--cds-border-subtle);
+  border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
 }
 
-.toolbar-heading {
+.cds-filter-toolbar__content {
   display: grid;
+  flex: 1 1 auto;
   gap: 0.125rem;
-  margin-right: auto;
+  min-width: 0;
 }
 
-.toolbar-heading span,
+.cds-filter-toolbar__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.125rem;
+}
+
+.cds-filter-toolbar__summary {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  color: var(--cds-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.cds-filter-toolbar__summary-values {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cds-filter-toolbar__summary-separator,
+.cds-filter-toolbar__summary-date {
+  flex: none;
+  white-space: nowrap;
+}
+
 .kpi-label,
 .kpi-grid small {
   color: var(--st-gray-text-color, #525252);
   font-size: 0.75rem;
 }
 
-.toolbar-actions,
-.active-filters {
+.cds-filter-toolbar__actions {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
 }
 
 .filter-panel {
   padding: 1rem;
   background: var(--cds-layer);
-  border-bottom: 1px solid var(--cds-border-subtle);
+  border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
+  border-block-start: 0;
 }
 
 .filter-grid {
@@ -138,7 +174,24 @@ cds-pagination {
     transform: translateX(0);
   }
 
-  .filter-toolbar {
-    align-items: flex-start;
+  .cds-filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    min-block-size: auto;
+    padding: 0.75rem;
+  }
+
+  .cds-filter-toolbar__summary {
+    flex-wrap: wrap;
+    row-gap: 0.125rem;
+  }
+
+  .cds-filter-toolbar__summary-values {
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .cds-filter-toolbar__actions {
+    align-self: flex-start;
   }
 }

@@ -8,7 +8,6 @@ import "@carbon/web-components/es/components/date-picker/index.js";
 import "@carbon/web-components/es/components/notification/index.js";
 import "@carbon/web-components/es/components/pagination/index.js";
 import "@carbon/web-components/es/components/select/index.js";
-import "@carbon/web-components/es/components/tag/index.js";
 import "@carbon/web-components/es/components/tile/index.js";
 import "@carbon/web-components/es/components/ui-shell/index.js";
 import "./styles.css";
@@ -143,51 +142,46 @@ const renderFilters = (
   args: FrontendRendererArgs,
 ) => {
   const filters = data.filters as FilterValues;
+  const container = document.createElement("div");
+  container.className = "cds-filter-container";
   const toolbar = document.createElement("div");
-  toolbar.className = "filter-toolbar";
-  const heading = document.createElement("div");
-  heading.className = "toolbar-heading";
+  toolbar.className = "cds-filter-toolbar";
+  const content = document.createElement("div");
+  content.className = "cds-filter-toolbar__content";
   const title = document.createElement("strong");
+  title.className = "cds-filter-toolbar__title";
   title.textContent = "Global filters";
-  const description = document.createElement("span");
-  description.textContent = "Applied to every dashboard view";
-  heading.append(title, description);
+  const summary = document.createElement("div");
+  summary.className = "cds-filter-toolbar__summary";
+  const summaryValues = document.createElement("span");
+  summaryValues.className = "cds-filter-toolbar__summary-values";
+  const activeValues = [filters.company, filters.study_program];
+  [filters.request_status, filters.placement_type].forEach((value) => {
+    if (value && !value.startsWith("All ")) activeValues.push(value);
+  });
+  summaryValues.textContent = activeValues.join(" · ");
+  const summarySeparator = document.createElement("span");
+  summarySeparator.className = "cds-filter-toolbar__summary-separator";
+  summarySeparator.setAttribute("aria-hidden", "true");
+  summarySeparator.textContent = " · ";
+  const summaryDate = document.createElement("span");
+  summaryDate.className = "cds-filter-toolbar__summary-date";
+  summaryDate.textContent =
+    [filters.date_start, filters.date_end].filter(Boolean).join(" to ") ||
+    "All dates";
+  summary.append(summaryValues, summarySeparator, summaryDate);
+  content.append(title, summary);
 
   const actions = document.createElement("div");
-  actions.className = "toolbar-actions";
+  actions.className = "cds-filter-toolbar__actions";
   const toggle = carbon("cds-button", "Filters") as HTMLElement;
-  toggle.setAttribute("kind", "secondary");
+  toggle.setAttribute("kind", "primary");
   toggle.setAttribute("size", "sm");
   const reset = carbon("cds-button", "Reset") as HTMLElement;
   reset.setAttribute("kind", "ghost");
   reset.setAttribute("size", "sm");
   actions.append(toggle, reset);
-  toolbar.append(heading, actions);
-
-  const tags = document.createElement("div");
-  tags.className = "active-filters";
-  const values = [
-    filters.company,
-    filters.study_program,
-    filters.request_status,
-    filters.placement_type,
-  ];
-  values.filter((value) => !value.startsWith("All ")).forEach((value) => {
-    const tag = carbon("cds-tag", value) as HTMLElement;
-    tag.setAttribute("type", "blue");
-    tag.setAttribute("size", "sm");
-    tags.appendChild(tag);
-  });
-  if (filters.date_start || filters.date_end) {
-    const tag = carbon(
-      "cds-tag",
-      `${filters.date_start} – ${filters.date_end}`,
-    ) as HTMLElement;
-    tag.setAttribute("type", "gray");
-    tag.setAttribute("size", "sm");
-    tags.appendChild(tag);
-  }
-  toolbar.appendChild(tags);
+  toolbar.append(content, actions);
 
   const panel = document.createElement("div");
   panel.className = "filter-panel";
@@ -235,7 +229,8 @@ const renderFilters = (
   apply.setAttribute("kind", "primary");
   apply.setAttribute("size", "sm");
   panel.append(controls, apply);
-  root.append(toolbar, panel);
+  container.append(toolbar, panel);
+  root.appendChild(container);
 
   const onToggle = () => {
     panel.hidden = !panel.hidden;

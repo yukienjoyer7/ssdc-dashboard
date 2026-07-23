@@ -81,7 +81,13 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert list(build.glob("index-*.css"))
     assert 'setAttribute("aria-label", "Dashboard navigation")' in source
     assert 'button-label-inactive' in source
+    assert 'className = "cds-filter-toolbar"' in source
+    assert 'className = "cds-filter-toolbar__summary"' in source
+    assert 'toggle.setAttribute("kind", "primary")' in source
+    assert "cds-tag" not in source
     assert 'type: "apply_filters"' in source
     assert 'cds-pagination-changed-current' in source
     assert 'type: "table_page"' in source
+    assert "min-block-size: 4rem" in styles
+    assert ".cds-filter-toolbar__actions" in styles
     assert "cds-inline-notification {\n  display: block;\n}" not in styles
