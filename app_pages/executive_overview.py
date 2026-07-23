@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from components.charts import render_bar, render_horizontal_bar, render_line
+from components.charts import chart_surface, render_bar, render_horizontal_bar, render_line
 from components.tables import render_downloadable_table
 from components.ui import format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
@@ -57,17 +57,63 @@ def main() -> None:
     action_labels = requests["action_label"].value_counts().rename_axis("action_label").reset_index(name="count")
 
     render_section("Pipeline movement", "Request and placement events by month.")
-    left, right = st.columns(2)
+    left, right = st.columns([3, 2], gap="medium")
     with left:
-        render_line(trend, "month", "count", "Talent requests and placements", color="metric")
+        with chart_surface(
+            "Talent requests and placements",
+            "Monthly movement of talent requests and completed placements.",
+            key="overview-request-placement-trend",
+        ):
+            render_line(
+                trend,
+                "month",
+                "count",
+                "Talent requests and placements",
+                color="metric",
+                show_title=False,
+            )
     with right:
-        render_horizontal_bar(stage_counts, "count", "stage", "Current selection-stage distribution")
+        with chart_surface(
+            "Current selection-stage distribution",
+            "Candidate records grouped by their current selection stage.",
+            key="overview-selection-stage",
+        ):
+            render_horizontal_bar(
+                stage_counts,
+                "count",
+                "stage",
+                "Current selection-stage distribution",
+                show_title=False,
+            )
 
-    left, right = st.columns(2)
+    left, right = st.columns(2, gap="medium")
     with left:
-        render_horizontal_bar(gap, "headcount_gap", "label", "Largest fulfilment gaps")
+        with chart_surface(
+            "Largest fulfilment gaps",
+            "Requests with the largest remaining headcount shortfall.",
+            key="overview-fulfilment-gaps",
+        ):
+            render_horizontal_bar(
+                gap,
+                "headcount_gap",
+                "label",
+                "Largest fulfilment gaps",
+                show_title=False,
+            )
     with right:
-        render_bar(action_labels, "action_label", "count", "Requests by action label", color="action_label")
+        with chart_surface(
+            "Requests by action label",
+            "Request volume grouped by its current action label.",
+            key="overview-action-labels",
+        ):
+            render_bar(
+                action_labels,
+                "action_label",
+                "count",
+                "Requests by action label",
+                color="action_label",
+                show_title=False,
+            )
 
     render_section("Requests requiring action", "Use the request-management page to inspect the reason and next operational step.")
     action_columns = [

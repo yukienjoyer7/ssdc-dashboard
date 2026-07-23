@@ -1,4 +1,7 @@
+from contextlib import contextmanager
 from collections.abc import Iterable
+from collections.abc import Iterator
+from html import escape
 
 import pandas as pd
 import plotly.express as px
@@ -37,41 +40,108 @@ def _chart_empty(title: str) -> None:
     )
 
 
-def render_bar(frame: pd.DataFrame, x: str, y: str, title: str, color: str | None = None, height: int = 330) -> None:
+@contextmanager
+def chart_surface(
+    title: str,
+    description: str | None = None,
+    *,
+    key: str,
+) -> Iterator[None]:
+    with st.container(
+        border=True,
+        key=f"cds-chart-surface-{key}",
+        height="stretch",
+        gap=None,
+    ):
+        description_html = (
+            f'<p class="cds-chart-surface__description">{escape(description)}</p>'
+            if description
+            else ""
+        )
+        st.markdown(
+            '<div class="cds-chart-surface__header">'
+            f'<h4 class="cds-chart-surface__title">{escape(title)}</h4>'
+            f"{description_html}"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        yield
+
+
+def render_bar(
+    frame: pd.DataFrame,
+    x: str,
+    y: str,
+    title: str,
+    color: str | None = None,
+    height: int = 330,
+    *,
+    show_title: bool = True,
+) -> None:
     if frame.empty:
         _chart_empty(title)
         return
-    _chart_title(title)
+    if show_title:
+        _chart_title(title)
     figure = px.bar(frame, x=x, y=y, color=color, color_discrete_sequence=COLORS, text_auto=True)
     figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
 
-def render_horizontal_bar(frame: pd.DataFrame, x: str, y: str, title: str, color: str | None = None, height: int = 360) -> None:
+def render_horizontal_bar(
+    frame: pd.DataFrame,
+    x: str,
+    y: str,
+    title: str,
+    color: str | None = None,
+    height: int = 360,
+    *,
+    show_title: bool = True,
+) -> None:
     if frame.empty:
         _chart_empty(title)
         return
-    _chart_title(title)
+    if show_title:
+        _chart_title(title)
     figure = px.bar(frame, x=x, y=y, color=color, color_discrete_sequence=COLORS, orientation="h", text_auto=True)
     figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
 
-def render_line(frame: pd.DataFrame, x: str, y: str, title: str, color: str | None = None, height: int = 330) -> None:
+def render_line(
+    frame: pd.DataFrame,
+    x: str,
+    y: str,
+    title: str,
+    color: str | None = None,
+    height: int = 330,
+    *,
+    show_title: bool = True,
+) -> None:
     if frame.empty:
         _chart_empty(title)
         return
-    _chart_title(title)
+    if show_title:
+        _chart_title(title)
     figure = px.line(frame, x=x, y=y, color=color, markers=True, color_discrete_sequence=COLORS)
     figure.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
 
 
-def render_histogram(frame: pd.DataFrame, x: str, title: str, color: str | None = None, height: int = 330) -> None:
+def render_histogram(
+    frame: pd.DataFrame,
+    x: str,
+    title: str,
+    color: str | None = None,
+    height: int = 330,
+    *,
+    show_title: bool = True,
+) -> None:
     if frame.empty:
         _chart_empty(title)
         return
-    _chart_title(title)
+    if show_title:
+        _chart_title(title)
     figure = px.histogram(frame, x=x, color=color, nbins=12, color_discrete_sequence=COLORS)
     figure.update_layout(xaxis_title="", yaxis_title="Records")
     st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})

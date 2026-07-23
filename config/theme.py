@@ -64,6 +64,34 @@ def inject_theme() -> None:
             line-height: 1.25;
             margin: 0.75rem 0 0.25rem;
         }
+        [class*="st-key-cds-chart-surface-"] {
+            min-height: 24rem;
+            background: #ffffff;
+            border-color: #e0e0e0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 1rem;
+            transition: border-color 110ms ease-out;
+        }
+        [class*="st-key-cds-chart-surface-"]:hover {
+            border-color: #8d8d8d !important;
+        }
+        .cds-chart-surface__header {
+            margin: 0 0 0.75rem;
+        }
+        .cds-chart-surface__title {
+            color: #161616;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.375rem;
+            margin: 0;
+        }
+        .cds-chart-surface__description {
+            color: #525252;
+            font-size: 0.8125rem;
+            line-height: 1.125rem;
+            margin: 0.25rem 0 0;
+        }
         @media (max-width: 48rem) {
             .block-container { padding: 4.5rem 1rem 2rem; }
         }
