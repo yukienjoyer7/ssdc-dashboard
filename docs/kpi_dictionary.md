@@ -14,9 +14,9 @@ current system date.
 | KPI-06 | Placements | Count of selection rows with canonical outcome `Placement` |
 | KPI-07 | Placement Rate | `Placements / Candidate Applications` |
 | KPI-08 | Ghosting Rate | `Ghosting / Candidate Applications` |
-| KPI-09 | Fulfillment Rate | `Placements / Requested Headcount` |
-| KPI-10 | Headcount Gap | `max(requested_headcount - placements, 0)` |
-| KPI-11 | Request Aging | `as_of_date - request_date` |
+| KPI-09 | Fulfillment Rate | `Placements / Requested Headcount` via `compute_fulfillment_rate()` |
+| KPI-10 | Headcount Gap | `max(requested_headcount - placements, 0)` via `compute_headcount_gap()` |
+| KPI-11 | Request Aging | `as_of_date - request_date` via `compute_request_aging()` |
 | KPI-12 | Selection Aging | `as_of_date - last_update` |
 | KPI-13 | Sync Freshness | `as_of_date - sync_date` |
 

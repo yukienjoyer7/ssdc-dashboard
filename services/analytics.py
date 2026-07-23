@@ -40,8 +40,63 @@ def dataset_as_of_date(data: DashboardData) -> pd.Timestamp:
     return max(values) if values else pd.NaT
 
 
-def _canonical_outcome(series: pd.Series) -> pd.Series:
-    return series.map(CANONICAL_OUTCOME_MAP).fillna("On Progress")
+def resolve_outcome(progress_student: pd.Series, rejection: pd.Series) -> pd.Series:
+    """Resolve canonical outcome using rejection as source of truth, fallback to progress_student."""
+    result = progress_student.map(CANONICAL_OUTCOME_MAP).fillna("On Progress")
+    mask = rejection.notna() & (rejection.astype(str).str.strip() != "")
+    if not mask.any():
+        return result
+    rejection_values = rejection.loc[mask].astype(str).str.strip()
+    result.loc[mask & rejection_values.eq("Placement")] = "Placement"
+    result.loc[mask & rejection_values.eq("Ghosting")] = "Ghosting"
+    result.loc[mask & rejection_values.str.startswith("Rejection")] = "Rejected"
+    return result
+
+
+def classify_ghosting(canonical_outcome: pd.Series) -> pd.Series:
+    return canonical_outcome.eq("Ghosting")
+
+
+_FU_STAGES = {"FU 1", "FU 2", "FU 3"}
+
+
+def classify_follow_up(
+    canonical_outcome: pd.Series,
+    stale_flag: pd.Series,
+    progress_student: pd.Series,
+) -> pd.Series:
+    result = pd.Series("Monitor", index=canonical_outcome.index, dtype=str)
+    mask_on_progress = canonical_outcome.eq("On Progress") & stale_flag
+    mask_fu = progress_student.isin(_FU_STAGES) & stale_flag
+    mask_ghosting = canonical_outcome.eq("Ghosting")
+    result.loc[mask_on_progress] = "Follow up with company"
+    result.loc[mask_fu] = "Escalate"
+    result.loc[mask_ghosting] = "Contact student"
+    return result
+
+
+def compute_request_aging(request_date: pd.Series, as_of: pd.Timestamp) -> pd.Series:
+    dates = _dates(request_date)
+    if pd.isna(as_of):
+        return pd.Series(0, index=dates.index)
+    return (as_of - dates).dt.days.clip(lower=0).fillna(0).astype(int)
+
+
+def compute_selection_aging(last_update: pd.Series, as_of: pd.Timestamp) -> pd.Series:
+    dates = _dates(last_update)
+    if pd.isna(as_of):
+        return pd.Series(0, index=dates.index)
+    return (as_of - dates).dt.days.clip(lower=0).fillna(0).astype(int)
+
+
+def compute_headcount_gap(requested_headcount: pd.Series, placements: pd.Series) -> pd.Series:
+    return (_numeric(requested_headcount) - _numeric(placements)).clip(lower=0).astype(int)
+
+
+def compute_fulfillment_rate(placements: pd.Series, requested_headcount: pd.Series) -> pd.Series:
+    pl = _numeric(placements)
+    hc = _numeric(requested_headcount)
+    return (pl / hc.replace(0, pd.NA) * 100).fillna(0)
 
 
 def _apply_date_filter(frame: pd.DataFrame, column: str, filters: FilterState) -> pd.DataFrame:
@@ -61,6 +116,16 @@ def _apply_company(frame: pd.DataFrame, filters: FilterState) -> pd.DataFrame:
 
 
 def request_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
+    frame = data.analytic("df_request")
+    if frame is not None:
+        frame["request_date"] = _dates(frame["request_date"])
+        frame["aging_days"] = frame["request_aging_days"]
+        frame = _apply_date_filter(frame, "request_date", filters)
+        frame = _apply_company(frame, filters)
+        if filters.request_status != "All request statuses":
+            frame = frame.loc[frame["request_status"] == filters.request_status].copy()
+        return frame.sort_values(["headcount_gap", "request_aging_days"], ascending=False).reset_index(drop=True)
+
     requests = data.table("talent_request.csv")
     tracking = data.table("tracking_company.csv")
     selection = data.table("tracking_student.csv")
@@ -90,12 +155,15 @@ def request_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     frame["candidates_sent"] = _numeric(frame["jumlah_dikirimkan"])
     frame["candidate_applications"] = _numeric(frame["candidate_applications"])
     frame["placements"] = _numeric(frame["placements"])
-    frame["headcount_gap"] = (frame["requested_headcount"] - frame["placements"]).clip(lower=0)
+    frame["headcount_gap"] = compute_headcount_gap(
+        frame["requested_headcount"],
+        frame.groupby("id_talent_req")["placements"].transform("sum"),
+    )
     frame["candidate_supply_ratio"] = (
         frame["candidate_applications"].div(frame["requested_headcount"].replace(0, pd.NA)).fillna(0)
     )
     reference = dataset_as_of_date(data)
-    frame["request_aging_days"] = (_dates(frame["request_date"]).rsub(reference).dt.days).clip(lower=0)
+    frame["request_aging_days"] = compute_request_aging(frame["request_date"], reference)
     frame["aging_days"] = frame["request_aging_days"]
     frame["overdue"] = frame["request_aging_days"] > PROTOTYPE_OVERDUE_DAYS
     frame["action_label"] = "Terpenuhi"
@@ -124,6 +192,24 @@ def request_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
 
 
 def selection_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
+    frame = data.analytic("df_selection")
+    if frame is not None:
+        frame["stage_aging_days"] = frame["selection_aging_days"]
+        frame["last_update"] = _dates(frame["last_update"])
+        if "follow_up_action" not in frame.columns:
+            frame["follow_up_action"] = classify_follow_up(
+                frame["canonical_outcome"], frame["stale_flag"], frame["progress_student"],
+            )
+        frame = _apply_date_filter(frame, "last_update", filters)
+        frame = _apply_company(frame, filters)
+        if filters.study_program != "All study programs":
+            frame = frame.loc[frame["study_program"] == filters.study_program].copy()
+        if filters.placement_type != "All placement types":
+            frame = frame.loc[frame["placement_type"] == filters.placement_type].copy()
+        if filters.request_status != "All request statuses":
+            frame = frame.loc[frame["request_status"] == filters.request_status].copy()
+        return frame.sort_values(["ghosting_warning", "stale_flag", "selection_aging_days"], ascending=False).reset_index(drop=True)
+
     selection = data.table("tracking_student.csv")
     tracking = data.table("tracking_company.csv")
     status = data.table("status_student.csv")
@@ -136,15 +222,18 @@ def selection_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     frame["study_program"] = frame["program_studi"].fillna("Unknown")
     frame["placement_type"] = frame["jenis_penempatan"].fillna(frame["jenis_penempatan_request"])
     frame["last_update"] = _dates(frame["last_update"])
-    frame["canonical_outcome"] = _canonical_outcome(frame["progress_student"])
+    frame["canonical_outcome"] = resolve_outcome(frame["progress_student"], frame["rejection"])
     reference = dataset_as_of_date(data)
-    frame["selection_aging_days"] = (reference - frame["last_update"]).dt.days.clip(lower=0)
+    frame["selection_aging_days"] = compute_selection_aging(frame["last_update"], reference)
     frame["stage_aging_days"] = frame["selection_aging_days"]
     frame["stale_flag"] = frame["selection_aging_days"].gt(PROTOTYPE_OVERDUE_DAYS)
+    frame["ghosting_warning"] = classify_ghosting(frame["canonical_outcome"])
     frame["follow_up_overdue"] = (
         frame["stale_flag"] & frame["canonical_outcome"].eq("On Progress")
     )
-    frame["ghosting_warning"] = frame["canonical_outcome"].eq("Ghosting")
+    frame["follow_up_action"] = classify_follow_up(
+        frame["canonical_outcome"], frame["stale_flag"], frame["progress_student"],
+    )
     frame = _apply_date_filter(frame, "last_update", filters)
     frame = _apply_company(frame, filters)
     if filters.study_program != "All study programs":
@@ -175,7 +264,10 @@ def canonical_kpis(data: DashboardData, filters: FilterState) -> dict[str, float
     applications = len(selection)
     placements = int(selection["canonical_outcome"].eq("Placement").sum())
     ghosting = int(selection["canonical_outcome"].eq("Ghosting").sum())
-    requested_headcount = requests["requested_headcount"].sum()
+    request_ids_in_scope = selection["id_talent_req"].unique()
+    scoped_headcount = requests.loc[
+        requests["id_talent_req"].isin(request_ids_in_scope), "requested_headcount"
+    ].sum()
     as_of = dataset_as_of_date(data)
     sync_dates = _dates(data.table("status_student.csv")["sync_date"])
     sync_freshness = (as_of - sync_dates).dt.days.max() if not pd.isna(as_of) else 0
@@ -183,13 +275,13 @@ def canonical_kpis(data: DashboardData, filters: FilterState) -> dict[str, float
     return {
         "KPI-01": int(companies["id_company"].nunique()),
         "KPI-02": int(requests["id_talent_req"].nunique()),
-        "KPI-03": int(requested_headcount),
+        "KPI-03": int(requests["requested_headcount"].sum()),
         "KPI-04": int(applications),
         "KPI-05": int(selection["NIM"].nunique()),
         "KPI-06": placements,
         "KPI-07": placements / applications * 100 if applications else 0,
         "KPI-08": ghosting / applications * 100 if applications else 0,
-        "KPI-09": placements / requested_headcount * 100 if requested_headcount else 0,
+        "KPI-09": float(compute_fulfillment_rate(pd.Series(placements), pd.Series(scoped_headcount)).iloc[0]),
         "KPI-10": int(requests["headcount_gap"].sum()),
         "KPI-11": float(requests["request_aging_days"].mean()) if not requests.empty else 0,
         "KPI-12": float(selection["selection_aging_days"].mean()) if not selection.empty else 0,
@@ -204,6 +296,30 @@ def matching_table(data: DashboardData, request_id: str, filters: FilterState) -
     if selected.empty:
         return pd.DataFrame(), None
     request = selected.iloc[0]
+    students = data.analytic("df_student_profile")
+    if students is not None:
+        frame = students.copy()
+        if filters.study_program != "All study programs":
+            frame = frame.loc[frame["program_studi"] == filters.study_program].copy()
+        frame["semester_num"] = _numeric(frame["semester"])
+        minimum_semester = float(pd.to_numeric(request["minimum_semester"], errors="coerce") or 0)
+        required_terms = [term.strip().lower() for term in str(request["bidang_studi_dibutuhkan"]).split(",") if term.strip()]
+        searchable = (frame["program_studi"].fillna("") + " " + frame["bidang_minat"].fillna("")).str.lower()
+        frame["study_match"] = searchable.apply(lambda value: any(term in value for term in required_terms))
+        frame["semester_match"] = frame["semester_num"] >= minimum_semester
+        frame["available_match"] = frame["ketersediaan"].eq("Available")
+        frame["eligible"] = frame["study_match"] & frame["semester_match"] & frame["available_match"]
+        frame["match_score"] = (
+            frame["study_match"].astype(int) * 40
+            + frame["semester_match"].astype(int) * 35
+            + frame["available_match"].astype(int) * 25
+        )
+        frame["recommendation"] = "Review"
+        frame.loc[frame["eligible"], "recommendation"] = "Strong match"
+        frame.loc[(~frame["eligible"]) & (frame["match_score"] >= 40), "recommendation"] = "Potential match"
+        frame["explanation"] = frame.apply(_matching_explanation, axis=1)
+        return frame.sort_values(["eligible", "match_score", "IPK"], ascending=False).reset_index(drop=True), request
+
     students = data.table("student_all.csv")
     status = data.table("status_student.csv")[["NIM", "ketersediaan", "status", "IPK"]].drop_duplicates("NIM")
     frame = students.merge(status, on="NIM", how="left")
