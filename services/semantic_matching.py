@@ -81,6 +81,7 @@ def _filter_eligible_students(df_student: pd.DataFrame) -> pd.DataFrame:
     return df_student.loc[
         df_student["status"].eq("Active")
         & df_student["ketersediaan"].eq("Available")
+        & df_student["CV"].eq("Ada")
         & df_student["eligible"].eq("Ya")
     ].copy()
 
@@ -131,6 +132,9 @@ def build_all(data_dir: str | Path | None = None, top_k: int = TOP_K) -> dict[st
     student_vecs = _encode_texts(student_texts, model)
     rows: list[dict[str, Any]] = []
     request_ids = df_request["id_talent_req"].tolist()
+    min_semester_map: dict[str, int] = {}
+    if "minimum_semester" in df_request.columns:
+        min_semester_map = df_request.set_index("id_talent_req")["minimum_semester"].to_dict()
     n_requests = len(request_vecs)
     n_students = len(student_vecs)
     print(f"Computing similarity for {n_requests} requests x {n_students} students ...")
@@ -141,13 +145,15 @@ def build_all(data_dir: str | Path | None = None, top_k: int = TOP_K) -> dict[st
         top_indices = np.argsort(-similarities, axis=1)[:, :top_k]
         for batch_idx in range(len(batch_vecs)):
             req_idx = batch_start + batch_idx
+            req_id = request_ids[req_idx]
             for rank, stud_idx in enumerate(top_indices[batch_idx]):
                 rows.append(
                     {
-                        "id_talent_req": request_ids[req_idx],
+                        "id_talent_req": req_id,
                         "NIM": student_nims[stud_idx],
                         "semantic_score": round(float(similarities[batch_idx, stud_idx]), 6),
                         "semantic_rank": int(rank) + 1,
+                        "minimum_semester": int(min_semester_map.get(req_id, 0)),
                     }
                 )
         if (batch_start // BATCH_SIZE) % 10 == 0:
