@@ -217,7 +217,7 @@ const renderShell = (
   const sideNav = carbon("cds-side-nav") as HTMLElement;
   sideNav.dataset.testid = "sidebar-nav";
   sideNav.setAttribute("aria-label", "Dashboard navigation");
-  sideNav.setAttribute("collapse-mode", "rail");
+  sideNav.setAttribute("collapse-mode", "fixed");
   sideNav.setAttribute("expanded", "");
 
   const brand = document.createElement("div");
@@ -262,6 +262,20 @@ const renderShell = (
   });
   sideNav.append(brand, divider, items);
   root.append(header, sideNav);
+  const manualRailStyle = document.createElement("style");
+  manualRailStyle.textContent = `
+    .cds--side-nav--collapsed {
+      inline-size: 3rem !important;
+      transform: none !important;
+    }
+    @media (max-width: 48rem) {
+      .cds--side-nav--collapsed {
+        inline-size: 16rem !important;
+        transform: translateX(-16rem) !important;
+      }
+    }
+  `;
+  sideNav.shadowRoot?.appendChild(manualRailStyle);
 
   const mobileQuery = window.matchMedia("(max-width: 48rem)");
   let wasMobile = mobileQuery.matches;
@@ -336,6 +350,7 @@ const renderShell = (
     menu.removeEventListener("cds-header-menu-button-toggled", onMenu);
     mobileQuery.removeEventListener("change", syncResponsiveShell);
     sideNav.removeEventListener("click", onNavigate);
+    manualRailStyle.remove();
     window.clearTimeout(initialShellTimer);
     navObserver.disconnect();
     layoutTarget.removeAttribute("data-ssdc-sidebar-collapsed");

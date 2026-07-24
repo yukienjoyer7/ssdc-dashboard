@@ -286,7 +286,7 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'className = "cds-header__global"' in source
     assert 'help.dataset.testid = "help-placeholder"' in source
     assert 'Help coming soon' in source
-    assert 'sideNav.setAttribute("collapse-mode", "rail")' in source
+    assert 'sideNav.setAttribute("collapse-mode", "fixed")' in source
     assert 'data-ssdc-sidebar-collapsed' in source
     assert 'className = "cds-sidebar__brand"' in source
     assert 'import GlobalAnalytics from "@carbon/pictograms/svg/global--analytics.svg?raw"' in source
@@ -299,6 +299,8 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'header.append(menu, global)' in source
     assert 'link.setAttribute("aria-label", page.title)' in source
     assert 'new MutationObserver(syncGlobalLayout)' in source
+    assert 'manualRailStyle.textContent' in source
+    assert 'inline-size: 3rem' in source
     assert 'headerBrand.textContent = "SSDC"' not in source
     assert 'product.textContent = "Talent Intelligence"' not in source
     assert 'className = "cds-filter-toolbar"' in source

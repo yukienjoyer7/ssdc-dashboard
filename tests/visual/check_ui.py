@@ -97,10 +97,12 @@ def main() -> int:
             # Carbon rail mode expands on hover. Move away from the nav first so
             # the assertion starts from the intentional collapsed rail state.
             page.mouse.move(1000, 500)
-            page.wait_for_function(
-                """() => !document.querySelector('[data-testid="sidebar-nav"]')?.hasAttribute('expanded')""",
-                timeout=5_000,
-            )
+            page.wait_for_timeout(350)
+            if desktop_nav.get_attribute("expanded") is not None:
+                desktop_toggle.click()
+                page.wait_for_timeout(350)
+            page.mouse.move(24, 200)
+            page.wait_for_timeout(350)
             collapsed_padding = page.locator("[data-testid='stMain']").evaluate(
                 "el => getComputedStyle(el).paddingInlineStart"
             )
@@ -118,12 +120,11 @@ def main() -> int:
                     "desktop shell: sidebar did not collapse to a navigable icon rail"
                 )
             else:
+                print("PASS desktop hover does not expand collapsed rail")
                 collapsed_link.click()
                 page.get_by_text("Talent Matching", exact=True).first.wait_for(
                     state="visible", timeout=10_000
                 )
-                page.mouse.move(1000, 500)
-                page.wait_for_timeout(250)
                 print("PASS desktop collapsed icon rail navigation")
             desktop_toggle.click()
             page.wait_for_timeout(600)

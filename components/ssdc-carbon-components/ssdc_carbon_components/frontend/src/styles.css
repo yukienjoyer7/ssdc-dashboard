@@ -155,6 +155,11 @@ cds-side-nav:not([expanded]) .cds-sidebar__divider {
   display: none;
 }
 
+cds-side-nav:not([expanded]) .cds-nav,
+cds-side-nav:not([expanded]) .cds-nav-item {
+  inline-size: 3rem;
+}
+
 cds-side-nav:not([expanded]) .cds-nav-item::part(link) {
   justify-content: center;
   padding-inline: 0;
