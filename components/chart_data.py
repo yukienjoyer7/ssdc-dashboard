@@ -68,7 +68,7 @@ def monthly_counts(
         complete.append(
             pd.DataFrame(
                 {
-                    "month": domain.astype(str),
+                    "month": domain.strftime("%b %Y"),
                     value_name: current.astype(int).to_numpy(),
                     "metric": metric,
                 }

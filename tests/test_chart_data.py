@@ -45,10 +45,10 @@ def test_monthly_counts_zero_fills_a_shared_chronological_domain() -> None:
     )
 
     assert result.to_dict("records") == [
-        {"month": "2026-01", "count": 1, "metric": "Talent requests"},
-        {"month": "2026-02", "count": 0, "metric": "Talent requests"},
-        {"month": "2026-03", "count": 1, "metric": "Talent requests"},
-        {"month": "2026-01", "count": 0, "metric": "Placements"},
-        {"month": "2026-02", "count": 1, "metric": "Placements"},
-        {"month": "2026-03", "count": 0, "metric": "Placements"},
+        {"month": "Jan 2026", "count": 1, "metric": "Talent requests"},
+        {"month": "Feb 2026", "count": 0, "metric": "Talent requests"},
+        {"month": "Mar 2026", "count": 1, "metric": "Talent requests"},
+        {"month": "Jan 2026", "count": 0, "metric": "Placements"},
+        {"month": "Feb 2026", "count": 1, "metric": "Placements"},
+        {"month": "Mar 2026", "count": 0, "metric": "Placements"},
     ]

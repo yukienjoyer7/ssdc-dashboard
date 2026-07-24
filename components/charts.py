@@ -269,11 +269,12 @@ def render_line(
         y_title=y_title,
         category_order=category_order,
     )
-    if x_type:
-        figure.update_xaxes(type=x_type)
     if show_legend is not None:
         figure.update_layout(showlegend=show_legend)
-    st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
+    figure = _base_layout(figure, height)
+    if x_type:
+        figure.update_xaxes(type=x_type)
+    st.plotly_chart(figure, width="stretch", config={"displayModeBar": False})
 
 
 def render_histogram(

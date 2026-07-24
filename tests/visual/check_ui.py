@@ -24,6 +24,7 @@ def wait_for_render(page: Page) -> None:
     page.locator("[data-testid='stAppViewContainer']").wait_for(state="visible", timeout=30_000)
     page.wait_for_timeout(1_500)
     page.locator(".cds-kpi-card").first.wait_for(state="visible", timeout=30_000)
+    page.locator(".js-plotly-plot").first.wait_for(state="visible", timeout=30_000)
     page.wait_for_timeout(500)
 
 
