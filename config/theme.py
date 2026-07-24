@@ -36,6 +36,18 @@ TEXT_COLORS = {
     "helper": "#6f6f6f",
 }
 
+SURFACE_COLORS = {
+    "background": "#ffffff",
+    "layer_01": "#f4f4f4",
+    "layer_02": "#ffffff",
+    "layer_hover": "#e8e8e8",
+    "layer_selected": "#e0e0e0",
+    "highlight": "#d0e2ff",
+    "border_subtle": "#e0e0e0",
+    "border_strong": "#c6c6c6",
+    "interactive": "#0f62fe",
+}
+
 SPACING = {
     "01": "0.125rem",
     "02": "0.25rem",
@@ -88,11 +100,26 @@ CARBON_STATUS_COLORS = {
 
 
 def _typography_css_tokens() -> str:
+    surface_token_names = {
+        "background": "surface-background",
+        "layer_01": "surface-layer-01",
+        "layer_02": "surface-layer-02",
+        "layer_hover": "surface-layer-hover",
+        "layer_selected": "surface-layer-selected",
+        "highlight": "surface-highlight",
+        "border_subtle": "border-subtle",
+        "border_strong": "border-strong",
+        "interactive": "interactive",
+    }
     tokens = {
         "font-family": FONT_FAMILY,
         **{f"type-{name.replace('_', '-')}": value for name, value in TYPE_SCALE.items()},
         **{f"weight-{name}": value for name, value in TYPE_WEIGHTS.items()},
         **{f"text-{name}": value for name, value in TEXT_COLORS.items()},
+        **{
+            token_name: SURFACE_COLORS[color_name]
+            for color_name, token_name in surface_token_names.items()
+        },
     }
     app_tokens = [f"            --app-{name}: {value};" for name, value in tokens.items()]
     spacing_tokens = [
@@ -117,7 +144,9 @@ def inject_theme() -> None:
         """
         [data-testid="stHeader"], [data-testid="stDecoration"],
         [data-testid="stSidebar"] { display: none; }
-        [data-testid="stAppViewContainer"] { background: #f4f4f4; }
+        [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+            background: var(--app-surface-layer-01);
+        }
         .block-container {
             max-width: none;
             padding: calc(3rem + var(--cds-spacing-06)) 2rem var(--cds-spacing-09) 18rem;
@@ -155,9 +184,9 @@ def inject_theme() -> None:
             line-height: 1.5;
         }
         .carbon-source {
-            border-left: 3px solid #0f62fe;
-            background: #ffffff;
-            color: #161616;
+            border-left: 3px solid var(--app-interactive);
+            background: var(--app-surface-background);
+            color: var(--app-text-primary);
             padding: 0.75rem 1rem;
             margin: 0.5rem 0 1.5rem;
         }
@@ -190,15 +219,15 @@ def inject_theme() -> None:
         [class*="st-key-cds-chart-surface-"] {
             min-height: 24rem;
             margin-block-end: var(--cds-spacing-03);
-            background: #ffffff;
-            border-color: #e0e0e0 !important;
+            background: var(--app-surface-background);
+            border: 1px solid var(--app-border-subtle) !important;
             border-radius: 0 !important;
             box-shadow: none !important;
             padding: var(--cds-spacing-05);
             transition: border-color 110ms ease-out;
         }
         [class*="st-key-cds-chart-surface-"]:hover {
-            border-color: #8d8d8d !important;
+            border-color: var(--app-border-strong) !important;
         }
         .cds-chart-surface__header {
             margin: 0 0 var(--cds-spacing-04);

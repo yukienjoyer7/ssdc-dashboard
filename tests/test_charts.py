@@ -215,8 +215,9 @@ def test_chart_surface_styles_are_scoped_and_neutral() -> None:
     theme = Path("config/theme.py").read_text()
 
     assert '[class*="st-key-cds-chart-surface-"]' in theme
-    assert "background: #ffffff;" in theme
-    assert "border-color: #e0e0e0 !important;" in theme
+    assert "background: var(--app-surface-background);" in theme
+    assert "border: 1px solid var(--app-border-subtle) !important;" in theme
+    assert "border-color: var(--app-border-strong) !important;" in theme
     assert "border-radius: 0 !important;" in theme
     assert "box-shadow: none !important;" in theme
     assert ".cds-chart-surface__title" in theme

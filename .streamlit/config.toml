@@ -17,8 +17,8 @@ violetColor = "#8a3ffc"
 grayColor = "#6f6f6f"
 chartCategoricalColors = ["#4589ff", "#009d9a", "#a56eff", "#1192e8", "#24a148", "#ee5396", "#ff832b", "#8d8d8d"]
 chartSequentialColors = ["#edf5ff", "#d0e2ff", "#a6c8ff", "#78a9ff", "#4589ff", "#0f62fe", "#0043ce", "#002d9c", "#001d6c", "#001141"]
-dataframeBorderColor = "#c6c6c6"
-dataframeHeaderBackgroundColor = "#e0e0e0"
+dataframeBorderColor = "#e0e0e0"
+dataframeHeaderBackgroundColor = "#f4f4f4"
 font = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"
 headingFont = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"
 codeFont = "'IBM Plex Mono':https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"

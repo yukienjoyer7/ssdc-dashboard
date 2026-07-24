@@ -18,6 +18,13 @@
   --app-weight-medium: 500;
   --app-weight-semibold: 600;
   --app-focus-color: var(--st-primary-color, #0f62fe);
+  --app-surface-background: var(--st-secondary-background-color, #ffffff);
+  --app-surface-layer-01: var(--st-background-color, #f4f4f4);
+  --app-surface-layer-02: var(--st-secondary-background-color, #ffffff);
+  --app-surface-layer-hover: #e8e8e8;
+  --app-surface-layer-selected: #e0e0e0;
+  --app-border-subtle: var(--st-border-color-light, #e0e0e0);
+  --app-border-strong: var(--st-border-color, #c6c6c6);
   --app-spacing-01: var(--cds-spacing-01, 0.125rem);
   --app-spacing-02: var(--cds-spacing-02, 0.25rem);
   --app-spacing-03: var(--cds-spacing-03, 0.5rem);
@@ -28,18 +35,18 @@
   --app-spacing-08: var(--cds-spacing-08, 2.5rem);
   --app-spacing-09: var(--cds-spacing-09, 3rem);
   --cds-background: var(--st-background-color, #f4f4f4);
-  --cds-background-hover: #e8e8e8;
+  --cds-background-hover: var(--app-surface-layer-hover);
   --cds-field-01: var(--st-background-color, #f4f4f4);
   --cds-interactive-01: var(--st-primary-color, #0f62fe);
   --cds-interactive-02: #393939;
   --cds-highlight: var(--st-blue-background-color, #edf5ff);
-  --cds-layer: var(--st-secondary-background-color, #ffffff);
-  --cds-layer-01: var(--st-secondary-background-color, #ffffff);
-  --cds-layer-hover-01: #e8e8e8;
-  --cds-border-subtle-00: var(--st-border-color, #e0e0e0);
-  --cds-border-subtle-01: var(--st-border-color, #e0e0e0);
-  --cds-border-strong-01: #8d8d8d;
-  --cds-sidebar-border: var(--st-border-color-light, #e0e0e0);
+  --cds-layer: var(--app-surface-background);
+  --cds-layer-01: var(--app-surface-background);
+  --cds-layer-hover-01: var(--app-surface-layer-hover);
+  --cds-border-subtle-00: var(--app-border-subtle);
+  --cds-border-subtle-01: var(--app-border-subtle);
+  --cds-border-strong-01: var(--app-border-strong);
+  --cds-sidebar-border: var(--app-border-subtle);
   --cds-text-primary: var(--st-text-color, #161616);
   --cds-text-secondary: #525252;
   --cds-text-helper: #6f6f6f;
@@ -205,8 +212,10 @@ cds-header-name {
   min-inline-size: 0;
   inline-size: 100%;
   padding: var(--app-spacing-04) var(--app-spacing-05);
-  background: var(--cds-layer);
-  border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
+  background: var(--app-surface-background);
+  border: 1px solid var(--app-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .cds-filter-toolbar__content {
@@ -253,9 +262,11 @@ cds-header-name {
 
 .filter-panel {
   padding: var(--app-spacing-05);
-  background: var(--cds-layer);
-  border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
+  background: var(--app-surface-background);
+  border: 1px solid var(--app-border-subtle);
   border-block-start: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .filter-grid {
@@ -273,8 +284,11 @@ cds-header-name {
   box-sizing: border-box;
   min-width: 0;
   margin-block-end: var(--app-spacing-03);
-  background: var(--cds-layer);
-  border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
+  background: transparent;
+  border-block: 1px solid var(--app-border-subtle);
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .cds-data-status__summary {
@@ -314,8 +328,8 @@ cds-header-name {
 .cds-data-status__details {
   padding: var(--app-spacing-04) var(--app-spacing-05)
     var(--app-spacing-05);
-  background: var(--cds-layer-01);
-  border-block-start: 1px solid var(--cds-border-subtle-00, #e0e0e0);
+  background: var(--app-surface-background);
+  border-block-start: 1px solid var(--app-border-subtle);
 }
 
 .cds-data-status__details[hidden] {
@@ -351,7 +365,7 @@ cds-header-name {
 .cds-data-status__warnings {
   margin-block-start: var(--app-spacing-05);
   padding-block-start: var(--app-spacing-04);
-  border-block-start: 1px solid var(--cds-border-subtle-00, #e0e0e0);
+  border-block-start: 1px solid var(--app-border-subtle);
   font-size: var(--app-type-body-compact);
   line-height: 1.25rem;
 }
@@ -414,7 +428,10 @@ cds-header-name {
   box-sizing: border-box;
   display: block;
   min-width: 0;
-  background: var(--cds-layer);
+  background: var(--app-surface-background);
+  border: 1px solid var(--app-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .cds-kpi-card--default {
@@ -423,13 +440,11 @@ cds-header-name {
 
 .cds-kpi-card--primary {
   min-height: 7rem;
-  border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
   transition: border-color 110ms ease-out;
 }
 
 .cds-kpi-card--compact {
   min-height: 5rem;
-  border: 1px solid var(--cds-border-subtle-00, #e0e0e0);
 }
 
 .cds-kpi-card__label,
@@ -498,15 +513,33 @@ cds-header-name {
 
 @media (hover: hover) {
   .cds-kpi-card--primary:hover {
-    border-color: var(--cds-border-strong-01, #8d8d8d);
+    border-color: var(--app-border-strong);
   }
+}
+
+.cds-table-surface {
+  box-sizing: border-box;
+  min-width: 0;
+  background: var(--app-surface-background);
+  border: 1px solid var(--app-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.cds-table-empty {
+  display: block;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 cds-table {
   --cds-body-compact-01-font-size: var(--app-type-body-compact);
+  --cds-layer-accent: var(--app-surface-layer-01);
+  --cds-border-subtle: var(--app-border-subtle);
   display: block;
   overflow-x: auto;
-  background: var(--cds-layer);
+  background: var(--app-surface-background);
   color: var(--cds-text-primary);
   font-family: var(--app-font-family);
   font-size: var(--app-type-body-compact);
@@ -541,8 +574,10 @@ cds-table-row:hover {
 
 cds-pagination {
   --cds-body-compact-01-font-size: var(--app-type-body-compact);
+  --cds-border-subtle: var(--app-border-subtle);
+  --cds-layer: var(--app-surface-background);
   display: block;
-  margin-block-start: 1px;
+  margin-block-start: 0;
   font-family: var(--app-font-family);
   font-size: var(--app-type-body-compact);
 }

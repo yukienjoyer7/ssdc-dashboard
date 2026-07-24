@@ -507,15 +507,20 @@ const renderTable = (
   data: ComponentData,
   args: FrontendRendererArgs,
 ) => {
+  const surface = document.createElement("div");
+  surface.className = "cds-table-surface";
+
   if (!(data.rows ?? []).length) {
     const empty = carbon("cds-tile");
+    empty.className = "cds-table-empty";
     const emptyTitle = document.createElement("strong");
     emptyTitle.textContent = data.empty_title ?? "No records match";
     const emptyDetail = document.createElement("p");
     emptyDetail.textContent =
       data.empty_detail ?? "Adjust the active filters and try again.";
     empty.append(emptyTitle, emptyDetail);
-    root.appendChild(empty);
+    surface.appendChild(empty);
+    root.appendChild(surface);
     return;
   }
 
@@ -541,7 +546,6 @@ const renderTable = (
     body.appendChild(tableRow);
   });
   table.append(head, body);
-  root.appendChild(table);
 
   const pagination = carbon("cds-pagination") as HTMLElement;
   pagination.setAttribute("aria-label", "Table pagination");
@@ -555,7 +559,8 @@ const renderTable = (
   pagination.setAttribute("forward-text", "Next page");
   pagination.setAttribute("backward-text", "Previous page");
   pagination.className = "table-pagination";
-  root.appendChild(pagination);
+  surface.append(table, pagination);
+  root.appendChild(surface);
 
   const onRow = (event: Event) => {
     const row = (event.target as HTMLElement).closest<HTMLElement>("[data-row]")
