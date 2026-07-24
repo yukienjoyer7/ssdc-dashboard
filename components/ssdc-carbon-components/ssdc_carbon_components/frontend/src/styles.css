@@ -611,7 +611,8 @@ cds-pagination {
     flex-direction: column;
     align-items: stretch;
     min-block-size: auto;
-    padding: var(--app-spacing-04);
+    gap: var(--app-spacing-03);
+    padding: var(--app-spacing-03) var(--app-spacing-04);
   }
 
   .cds-filter-toolbar__summary {
@@ -630,7 +631,9 @@ cds-pagination {
 
   .cds-data-status__summary {
     flex-wrap: wrap;
-    gap: var(--app-spacing-03);
+    gap: var(--app-spacing-02);
+    min-block-size: 2.75rem;
+    padding-block: var(--app-spacing-01);
   }
 
   .cds-data-status__meta {
