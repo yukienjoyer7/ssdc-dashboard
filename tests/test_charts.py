@@ -195,20 +195,28 @@ def test_single_series_color_and_layout_colorway_are_explicit(monkeypatch) -> No
     assert list(figure.layout.colorway) == CHART_CATEGORICAL
 
 
-def test_executive_charts_use_surfaces_without_affecting_other_pages() -> None:
+def test_all_analytical_pages_use_shared_chart_surfaces() -> None:
+    expected_surface_counts = {
+        "executive_overview.py": 4,
+        "talent_request_management.py": 4,
+        "talent_matching.py": 1,
+        "selection_monitoring.py": 3,
+        "placement_performance.py": 5,
+    }
     overview = Path("app_pages/executive_overview.py").read_text()
 
     assert '"main_supporting",' in overview
-    assert overview.count("with chart_surface(") == 4
-    assert overview.count("show_title=False") == 4
     assert "color_map=EXECUTIVE_OVERVIEW_SERIES_COLORS" in overview
     assert "series_color=CHART_PRIMARY" in overview
     assert "#4589ff" not in overview
     assert "#009d9a" not in overview
 
-    for page in Path("app_pages").glob("*.py"):
-        if page.name != "executive_overview.py":
-            assert "chart_surface" not in page.read_text()
+    for page_name, expected_count in expected_surface_counts.items():
+        page = Path("app_pages") / page_name
+        source = page.read_text()
+        assert "chart_surface" in source
+        assert source.count("with chart_surface(") == expected_count
+        assert source.count("show_title=False") >= expected_count
 
 
 def test_chart_surface_styles_are_scoped_and_neutral() -> None:

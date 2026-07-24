@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from components.charts import render_bar, render_histogram, render_horizontal_bar, render_line
+from components.charts import chart_surface, render_bar, render_histogram, render_horizontal_bar, render_line
 from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
@@ -37,18 +37,67 @@ def main() -> None:
         key="placement-outcomes-primary",
     )
     with left:
-        render_line(trend, "month", "placements", "Placement trend")
+        with chart_surface(
+            "Placement trend",
+            "Completed placements grouped by month.",
+            key="placement-trend",
+        ):
+            render_line(trend, "month", "placements", "Placement trend", show_title=False)
     with right:
-        render_horizontal_bar(by_company, "placements", "company_name", "Placements by company")
+        with chart_surface(
+            "Placements by company",
+            "Completed placements grouped by company.",
+            key="placement-company",
+        ):
+            render_horizontal_bar(
+                by_company,
+                "placements",
+                "company_name",
+                "Placements by company",
+                show_title=False,
+            )
     left, right = analytical_columns(
         "equal",
         key="placement-outcomes-secondary",
     )
     with left:
-        render_horizontal_bar(by_program, "placements", "study_program", "Placements by study program")
+        with chart_surface(
+            "Placements by study program",
+            "Completed placements grouped by study program.",
+            key="placement-program",
+        ):
+            render_horizontal_bar(
+                by_program,
+                "placements",
+                "study_program",
+                "Placements by study program",
+                show_title=False,
+            )
     with right:
-        render_bar(by_type, "placement_type", "placements", "Placements by type", color="placement_type")
-    render_histogram(placements, "time_to_placement_days", "Time-to-placement distribution")
+        with chart_surface(
+            "Placements by type",
+            "Completed placements grouped by placement type.",
+            key="placement-type",
+        ):
+            render_bar(
+                by_type,
+                "placement_type",
+                "placements",
+                "Placements by type",
+                color="placement_type",
+                show_title=False,
+            )
+    with chart_surface(
+        "Time-to-placement distribution",
+        "Elapsed days from request to completed placement.",
+        key="placement-time-to-placement",
+    ):
+        render_histogram(
+            placements,
+            "time_to_placement_days",
+            "Time-to-placement distribution",
+            show_title=False,
+        )
 
     render_section("Placement detail", "Download the filtered placement records for review.")
     columns = [

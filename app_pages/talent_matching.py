@@ -1,6 +1,6 @@
 import streamlit as st
 
-from components.charts import render_histogram
+from components.charts import chart_surface, render_histogram
 from components.carbon_ui import render_feedback
 from components.states import render_empty
 from components.tables import render_downloadable_table
@@ -77,7 +77,18 @@ def main() -> None:
             key="matching-candidate-detail",
         )
         with left:
-            render_histogram(ranked, "match_score", "Match-score distribution", color="recommendation")
+            with chart_surface(
+                "Match-score distribution",
+                "Candidate scores grouped by recommendation outcome.",
+                key="matching-score-distribution",
+            ):
+                render_histogram(
+                    ranked,
+                    "match_score",
+                    "Match-score distribution",
+                    color="recommendation",
+                    show_title=False,
+                )
         with right:
             candidate_ids = displayed["NIM"].tolist()
             chosen = st.selectbox("Candidate detail", candidate_ids, key="matching_candidate_detail")

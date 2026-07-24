@@ -1,6 +1,6 @@
 import streamlit as st
 
-from components.charts import render_bar, render_horizontal_bar
+from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, format_count, render_kpis, render_section
@@ -58,10 +58,45 @@ def main() -> None:
         key="selection-risk",
     )
     with left:
-        render_bar(stages, "stage", "count", "Selection-stage distribution", color="stage")
+        with chart_surface(
+            "Selection-stage distribution",
+            "Current candidate records grouped by selection stage.",
+            key="selection-stage-distribution",
+        ):
+            render_bar(
+                stages,
+                "stage",
+                "count",
+                "Selection-stage distribution",
+                color="stage",
+                show_title=False,
+            )
     with right:
-        render_horizontal_bar(aging, "average_days", "stage", "Average aging by stage")
-    render_bar(risks, "company_name", "ghosting_warning", "Ghosting warnings by company", color="company_name")
+        with chart_surface(
+            "Average aging by stage",
+            "Mean age of records within each current stage.",
+            key="selection-average-aging",
+        ):
+            render_horizontal_bar(
+                aging,
+                "average_days",
+                "stage",
+                "Average aging by stage",
+                show_title=False,
+            )
+    with chart_surface(
+        "Ghosting warnings by company",
+        "Companies grouped by active ghosting-warning records.",
+        key="selection-ghosting-warnings",
+    ):
+        render_bar(
+            risks,
+            "company_name",
+            "ghosting_warning",
+            "Ghosting warnings by company",
+            color="company_name",
+            show_title=False,
+        )
 
     render_section("Follow-up action table", "Current-stage records are shown with the source status and prototype warning flags.")
     if filtered.empty:

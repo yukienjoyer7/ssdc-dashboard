@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from components.charts import render_bar, render_horizontal_bar
+from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, format_count, format_days, render_kpis, render_section
 from app_pages.common import start_page
@@ -56,17 +56,64 @@ def main() -> None:
         key="request-workload-primary",
     )
     with left:
-        render_bar(aging, "aging_band", "count", "Request aging distribution", color="aging_band")
+        with chart_surface(
+            "Request aging distribution",
+            "Requests grouped by current aging band.",
+            key="request-aging-distribution",
+        ):
+            render_bar(
+                aging,
+                "aging_band",
+                "count",
+                "Request aging distribution",
+                color="aging_band",
+                show_title=False,
+            )
     with right:
-        render_horizontal_bar(gaps, "headcount_gap", "label", "Largest headcount gaps")
+        with chart_surface(
+            "Largest headcount gaps",
+            "Requests with the greatest remaining staffing shortfall.",
+            key="request-headcount-gaps",
+        ):
+            render_horizontal_bar(
+                gaps,
+                "headcount_gap",
+                "label",
+                "Largest headcount gaps",
+                show_title=False,
+            )
     left, right = analytical_columns(
         "equal",
         key="request-workload-secondary",
     )
     with left:
-        render_horizontal_bar(supply, "candidate_applications", "label", "Candidate applications", color="action_label")
+        with chart_surface(
+            "Candidate applications",
+            "Requests ranked by candidate applications and action label.",
+            key="request-candidate-supply",
+        ):
+            render_horizontal_bar(
+                supply,
+                "candidate_applications",
+                "label",
+                "Candidate applications",
+                color="action_label",
+                show_title=False,
+            )
     with right:
-        render_bar(action_labels, "action_label", "count", "Requests by action label", color="action_label")
+        with chart_surface(
+            "Requests by action label",
+            "Request volume grouped by the current operational label.",
+            key="request-action-labels",
+        ):
+            render_bar(
+                action_labels,
+                "action_label",
+                "count",
+                "Requests by action label",
+                color="action_label",
+                show_title=False,
+            )
 
     render_section("Action table", "Select a request ID to preserve it for the matching page.")
     request_ids = ["Select a request", *filtered["id_talent_req"].tolist()]
