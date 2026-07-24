@@ -54,18 +54,18 @@ def render_page_header(
     if pictogram:
         from components.carbon_ui import render_pictogram
 
-        pictogram_column, header_column = st.columns(
-            [1, 12],
-            gap="small",
+        identity_key = f"cds-page-identity-{title.lower().replace(' ', '-')}"
+        with st.container(
+            key=identity_key,
+            horizontal=True,
             vertical_alignment="top",
-        )
-        with pictogram_column:
+            gap="small",
+        ):
             render_pictogram(
                 pictogram,
                 label=f"{title} pictogram",
                 key=f"page-pictogram-{title.lower().replace(' ', '-')}",
-        )
-        with header_column:
+            )
             st.markdown(header, unsafe_allow_html=True)
         return
     st.markdown(header, unsafe_allow_html=True)

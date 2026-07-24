@@ -233,6 +233,7 @@ def inject_theme() -> None:
         .cds-page-header {
             max-width: 52rem;
             margin: 0;
+            min-width: 0;
         }
         .cds-kicker {
             margin: 0 0 var(--cds-spacing-02);
@@ -286,13 +287,14 @@ def inject_theme() -> None:
             line-height: 1.45;
         }
         [class*="st-key-cds-control-group-"] {
-            gap: var(--cds-spacing-01);
+            gap: var(--cds-spacing-04);
             margin-block-end: var(--cds-spacing-03);
-            padding-block: var(--cds-spacing-01);
+            padding-block: var(--cds-spacing-03);
             border-block: 1px solid var(--app-border-subtle);
         }
         .cds-control-group__label {
-            margin: 0 0 var(--cds-spacing-01);
+            display: block;
+            margin: 0;
             color: var(--app-text-secondary);
             font-size: var(--app-type-label);
             font-weight: var(--app-weight-semibold);
@@ -324,13 +326,19 @@ def inject_theme() -> None:
         }
         .cds-chart-surface__header {
             margin: 0 0 var(--cds-spacing-04);
+            padding: 0;
+        }
+        [class*="st-key-cds-chart-surface-"]
+        > [data-testid="stElementContainer"]:has(.cds-chart-surface__header--described) {
+            min-height: 3.0625rem !important;
         }
         .cds-chart-surface__title {
             color: var(--app-text-primary);
             font-size: var(--app-type-chart-title);
             font-weight: var(--app-weight-medium);
             line-height: 1.375rem;
-            margin: 0;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         .cds-chart-surface__description {
             color: var(--app-text-secondary);

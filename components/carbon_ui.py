@@ -103,8 +103,8 @@ def render_pictogram(
         "pictogram",
         {"name": name, "label": label},
         key=key,
-        width=72,
-        height=72,
+        width=56,
+        height=56,
     )
 
 

@@ -65,11 +65,12 @@ def test_shared_theme_uses_spacing_tokens_without_stacked_header_margins(
     assert "margin: 0 0 var(--cds-spacing-04);" in css
     assert (
         '[class*="st-key-cds-control-group-"] {\n'
-        "            gap: var(--cds-spacing-01);\n"
+        "            gap: var(--cds-spacing-04);\n"
         "            margin-block-end: var(--cds-spacing-03);\n"
-        "            padding-block: var(--cds-spacing-01);"
+        "            padding-block: var(--cds-spacing-03);"
     ) in css
-    assert "margin: 0 0 var(--cds-spacing-01);" in css
+    assert "display: block;" in css
+    assert "margin: 0;" in css
     assert "padding: 5.5rem" not in css
     assert "margin: 2rem 0 0.75rem" not in css
 

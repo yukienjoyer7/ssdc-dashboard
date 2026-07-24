@@ -125,18 +125,25 @@ def chart_surface(
         height="stretch",
         gap=None,
     ):
+        header_class = "cds-chart-surface__header"
+        if description:
+            header_class += " cds-chart-surface__header--described"
         description_html = (
             f'<p class="cds-chart-surface__description">{escape(description)}</p>'
             if description
             else ""
         )
         st.markdown(
-            '<div class="cds-chart-surface__header">'
+            f'<div class="{header_class}">'
             f'<h4 class="cds-chart-surface__title">{escape(title)}</h4>'
             f"{description_html}"
             "</div>",
             unsafe_allow_html=True,
         )
+        # Keep the header and the analytical body in separate Streamlit
+        # elements. CSS margins on HTML injected by st.markdown do not always
+        # contribute to the parent block's flow height.
+        st.space("small")
         yield
 
 

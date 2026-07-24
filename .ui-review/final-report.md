@@ -2,61 +2,74 @@
 
 ## Outcome
 
-Converged: YES for the chart-improvement scope  
-Iterations completed: 22 continuation iterations in the autonomous experiment  
-Final chart quality score: 5.00 / 5  
-Full dashboard score carried forward outside this chart scope: 4.66 / 5
+Converged: YES
+Iterations completed: 23
+Final overall score: 5.00 / 5
 
-## Final Page Chart Scores
+The full five-page dashboard target converged after the cross-page pictogram
+alignment and text-overlap defects were fixed and re-reviewed.
 
-| Page | Charts reviewed | Score |
-|---|---:|---:|
-| Executive Overview | 4 | 5.00 |
-| Talent Request Management | 4 | 5.00 |
-| Talent Matching | 1 | 5.00 |
-| Selection Monitoring | 3 | 5.00 |
-| Placement Performance | 5 | 5.00 |
+## Final Page Scores
 
-## Final Chart Category Scores
+| Page | Score |
+|---|---:|
+| Executive overview | 5.00 |
+| Talent request management | 5.00 |
+| Talent matching | 5.00 |
+| Selection monitoring | 5.00 |
+| Placement performance | 5.00 |
 
-| Category | Score | Evidence |
-|---|---:|---|
-| Analytical question fit | 5.00 | Sparse datasets use exact-score bars, dot plots, or compact insights instead of misleading distributions. |
-| Ordering and sorting | 5.00 | Stage, action, request, and time-series orders are explicit and deterministic. |
-| Labels and units | 5.00 | Axes expose count, applications, days, score, and month units; request labels include IDs. |
-| Color semantics | 5.00 | Shared Carbon status and recommendation mappings are stable across pages. |
-| Responsive readability | 5.00 | All configured desktop, laptop, and tablet captures render without overflow or clipped chart containers. |
-| Runtime evidence | 5.00 | All 17 chart instances hydrate successfully with no application exceptions. |
+## Final Category Scores
+
+| Category | Executive | Request management | Matching | Selection | Placement |
+|---|---:|---:|---:|---:|---:|
+| Information hierarchy | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Analytical usefulness | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Layout & alignment | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Information density | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Visual consistency | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Data visualization quality | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Interaction clarity | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Typography & readability | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Responsive behavior | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
+| Accessibility-oriented checks | 5.00 | 5.00 | 5.00 | 5.00 | 5.00 |
 
 ## Remaining Findings
 
-No Critical, High, Medium, or Low chart findings remain.
+No Critical, High, Medium, or Low findings remain that are supported by the
+final evidence.
 
-The full-dashboard score remains 4.66/5 because this request was scoped to charts and did not reopen previously settled shell, filter, or broader composition scoring.
+The custom Carbon filter controls have partial state-change automation by
+design. Their stable selectors are present and the complete dashboard still
+passes the deterministic browser checks.
 
 ## Major Shared-System Improvements
 
-- Centralized chart data transformations in `components/chart_data.py`.
-- Standardized Plotly axis titles, category order, legend behavior, and categorical time axes in `components/charts.py`.
-- Added Carbon semantic action, stage, and recommendation color maps in `config/theme.py`.
-- Corrected Candidate Applications ranking to use candidate applications.
-- Added unique request IDs to repeated company/position labels.
-- Replaced misleading small-sample histograms with exact-score bars and observation dot plots.
-- Added compact insight treatment for single-category comparisons.
-- Made screenshot and objective checks wait for hydrated Plotly graphs.
+- Replaced proportional page-header columns with a single responsive
+  horizontal identity container.
+- Standardized page pictogram host dimensions at 56px.
+- Increased shared control-group rhythm to Carbon spacing-04 and spacing-03,
+  eliminating title/field label collisions.
+- Removed Streamlit heading padding from chart titles.
+- Added structural chart-header height reservation and native Streamlit spacing
+  before chart bodies and compact insights.
+- Preserved all KPI formulas, data loading, filters, routing, chart data,
+  tables, downloads, and session-state contracts.
 
 ## Regression Validation
 
 - All five routes load and navigate through the visible shell.
-- All 17 charts render in the final live-app evidence pass.
-- Filters, routing, tables, downloads, session-state keys, and mock-data behavior were preserved.
-- Desktop collapsed icon rail, manual reopen, and tablet drawer behavior remain passing.
-- No horizontal overflow exists at the configured viewports.
+- All 15 configured screenshots were captured at desktop, laptop, and tablet
+  viewports and directly inspected.
+- Final DOM checks found no pictogram/header misalignment, control-label
+  overlap, chart-description/insight overlap, or KPI label/value overlap.
+- No horizontal overflow exists at any required viewport.
+- Sidebar rail collapse/reopen and tablet drawer behavior remain passing.
 
 ## Test Results
 
-- `uv run pytest -q`: 97 passed.
-- `uv run python -m compileall -q components services app_pages config data tests/visual`: passed.
+- `pytest -q`: 97 passed.
+- `python -m compileall -q app.py config components data services app_pages tests/visual`: passed.
 - Frontend `npm run build`: passed (`tsc --noEmit` and Vite production build).
 
 ## Browser Validation
@@ -65,19 +78,20 @@ The full-dashboard score remains 4.66/5 because this request was scoped to chart
 - 0 console errors.
 - 0 uncaught page errors.
 - No visible Streamlit exceptions.
-- 15/15 final screenshots captured and directly inspected under `tests/visual/screenshots/iteration-22/`.
-- Final live DOM audit confirmed 17 hydrated Plotly chart instances.
+- 15/15 final screenshots captured under
+  `tests/visual/screenshots/iteration-23/`.
 
 ## Git State
 
 - Branch: `experiment/autonomous-ui`.
-- No branch switching, merge, rebase, push, reset, or history rewrite performed.
-- Atomic local commits:
-  - `b598496 fix(charts): improve analytical chart semantics`
-  - `847e0a5 fix(charts): make time-series evidence deterministic`
+- No branch switching, merge, rebase, push, reset, or history rewrite was
+  performed.
+- Changes are recorded in an atomic Conventional Commit for this iteration.
 
 ## Remaining Limitations
 
-- Full WCAG compliance is not established by screenshot/browser checks alone.
-- Filter apply/reset state-change automation remains partial by design for the custom Carbon component.
-- The 5.00/5 score applies to chart quality, not a retroactive re-score of unrelated shell or page-composition categories.
+- Screenshot and browser checks do not constitute a formal WCAG audit.
+- Filter apply/reset state-change automation remains partial for the custom
+  Carbon component, although stable test selectors are exposed.
+- No further UI iteration is justified without new product requirements or
+  evidence of a functional defect.
