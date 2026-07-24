@@ -2,84 +2,82 @@
 
 ## Outcome
 
-Converged: YES  
-Iterations completed: 3  
-Final overall score: 4.07 / 5
+Converged: NO — requested 4.7/5 target not reached before the hard Iteration 8 limit  
+Iterations completed: 8  
+Final overall score: 4.58 / 5
 
-All prepared convergence criteria are satisfied before the hard limit of eight iterations: every page is at least 4.0, no category is below 3.5, no Critical or High findings remain, deterministic browser checks pass, project and frontend checks pass, no horizontal overflow is present, no application-caused browser console errors remain, and two consecutive review cycles produced no new High-severity issue.
+The prepared loop’s operational requirements passed: no Critical or High findings, deterministic browser checks pass, project tests pass, no horizontal overflow was found, and no application-caused browser console errors remain. The user-requested 4.7 target was not claimed because the final evidence supports 4.58.
 
 ## Final Page Scores
 
 | Page | Score |
 |---|---:|
-| Executive overview | 4.07 |
-| Talent request management | 4.03 |
-| Talent matching | 4.03 |
-| Selection monitoring | 4.08 |
-| Placement performance | 4.13 |
-
-Final evidence: 15 screenshots in `tests/visual/screenshots/final/`, with desktop 1440×1000, laptop 1280×900, and tablet 768×1024 coverage for every configured page.
+| Executive overview | 4.34 |
+| Talent request management | 4.63 |
+| Talent matching | 4.61 |
+| Selection monitoring | 4.68 |
+| Placement performance | 4.64 |
 
 ## Final Category Scores
 
-Scores are ordered by the prepared rubric: Information hierarchy, Analytical usefulness, Layout & alignment, Information density, Visual consistency, Data visualization quality, Interaction clarity, Typography & readability, Responsive behavior, Accessibility.
+Category order: Information hierarchy, Analytical usefulness, Layout & alignment, Information density, Visual consistency, Data visualization quality, Interaction clarity, Typography & readability, Responsive behavior, Accessibility.
 
 | Page | Category scores |
 |---|---|
-| Executive overview | 4.1, 4.1, 4.1, 4.1, 4.1, 4.0, 3.8, 4.2, 4.0, 4.0 |
-| Talent request management | 3.9, 4.0, 4.0, 3.9, 4.0, 3.9, 3.5, 4.0, 3.8, 4.0 |
-| Talent matching | 4.0, 4.0, 4.0, 4.0, 4.0, 3.8, 3.5, 4.0, 3.9, 4.0 |
-| Selection monitoring | 4.0, 4.1, 4.1, 4.1, 4.1, 3.9, 3.6, 4.1, 3.9, 4.0 |
-| Placement performance | 4.1, 4.2, 4.2, 4.1, 4.2, 4.1, 3.7, 4.2, 3.9, 4.1 |
+| Executive overview | 4.3, 4.2, 4.3, 4.3, 4.2, 4.1, 4.1, 4.3, 4.6, 4.1 |
+| Talent request management | 4.5, 4.3, 4.4, 4.5, 4.5, 4.2, 4.5, 4.2, 4.6, 4.2 |
+| Talent matching | 4.5, 4.2, 4.3, 4.4, 4.5, 4.2, 4.5, 4.2, 4.6, 4.2 |
+| Selection monitoring | 4.6, 4.3, 4.4, 4.5, 4.5, 4.2, 4.5, 4.3, 4.6, 4.2 |
+| Placement performance | 4.5, 4.4, 4.5, 4.5, 4.5, 4.3, 4.3, 4.3, 4.6, 4.3 |
 
 ## Remaining Findings
 
-- Medium: Secondary analytical detail remains below the tablet first viewport on some pages, including downstream charts or detail tables after the first analytical module. This is a bounded density tradeoff; no content was removed or replaced with decorative filler.
-- Filter Apply/Reset state-change automation remains partial because the custom Carbon component does not expose a stable state-observation contract. Stable selectors are present and the filter surface is validated visually.
-
-No Critical or High findings remain.
+- Medium: shared provenance/status summary remains a repeated vertical-rhythm cost. It is readable and intentional, but appears on every data-driven page.
+- No Critical findings remain.
+- No High findings remain.
+- Filter apply/reset state automation remains partial because the custom Carbon component does not expose a deterministic state-change harness; stable selectors are present and documented.
 
 ## Major Shared-System Improvements
 
-- Fixed the Carbon responsive shell so tablet navigation initializes collapsed, exposes a visible hamburger affordance, and synchronizes host width when opened or closed.
-- Added stable selectors for the sidebar and global filter controls, plus deterministic tablet shell collapse/reopen coverage.
-- Stabilized screenshot capture around Carbon KPI hydration so evidence is not taken from unhydrated fallback content.
-- Standardized compact KPI density and responsive breakpoints across Executive Overview, Request Management, Talent Matching, and Selection Monitoring while preserving formulas, values, filters, and layout semantics.
-- Preserved Carbon-neutral surfaces, zero-radius borders, IBM Plex typography, restrained blue interaction accents, and stable chart palettes.
+- Standardized analytical chart surfaces and titles across all analytical pages.
+- Reduced shared chart renderer heights while preserving chart data, labels, legends, and color semantics.
+- Tightened the Carbon data-status summary rhythm.
+- Added shared labelled control groups for request, matching, and selection filters.
+- Compacted responsive filter/status surfaces and kept tablet filter actions on one row, with narrow-phone stacking preserved.
+- Preserved data loading, KPI formulas, filtering semantics, routing, session state, tables, downloads, and chart data.
 
 ## Regression Validation
 
-- All five configured pages were rechecked at all three configured viewports in every completed review cycle.
-- Navigation, page load, charts, tables, KPI values, and responsive shell behavior remained functional.
-- No page-level horizontal overflow was detected at the required desktop viewport.
-- No unexpected browser console errors or uncaught page errors were detected.
-- No data-loading, filtering, session-state, routing, aggregation, download, or chart-data semantics were changed.
+- All five routes load and navigate through the visible shell.
+- All charts and tables render in final screenshots.
+- Filter controls retain their existing keys and behavior.
+- Tablet sidebar collapse/reopen passes.
+- Narrow-phone toolbar remains stacked, visible, and overflow-free at 390px.
 
 ## Test Results
 
-- Project suite: `91 passed`
-- Python compile check: PASS via `python -m compileall`
-- Frontend type check: PASS via `npm run typecheck`
-- Frontend production build: PASS during Iteration 02 validation
+- `uv run pytest -q`: 92 passed.
+- `uv run python -m compileall -q app.py config components data services app_pages tests/visual`: passed.
+- Frontend `npm run build`: TypeScript check and Vite production build passed.
 
 ## Browser Validation
 
-- Objective checks: PASS for all five pages
-- Tablet shell collapse/reopen: PASS
-- Console errors: 0
-- Uncaught page errors: 0
-- Horizontal overflow: PASS
-- Screenshot capture: 15/15 PASS in `tests/visual/screenshots/final/`
-- Filter automation: stable selector surface detected; state-change coverage intentionally remains partial
+- All deterministic checks pass for five pages.
+- 0 console errors.
+- 0 uncaught page errors.
+- No horizontal overflow at configured viewports.
+- 15 final screenshots captured in `tests/visual/screenshots/iteration-08-final/` and directly inspected.
+- Narrow-phone fallback check passed at 390×844.
 
 ## Git State
 
-- Branch: `experiment/autonomous-ui`
-- No branch switches, merges, rebases, pushes, resets, or history rewrites were performed.
-- Local atomic Conventional Commits were created throughout the loop, including separate implementation and evidence commits for Iterations 01–03.
-- Final report and final screenshot evidence are committed locally; the worktree is clean after the final evidence checkpoint.
+- Branch: `experiment/autonomous-ui`.
+- No branch switching, merge, rebase, push, reset, or history rewrite performed.
+- Iteration changes were committed atomically with Conventional Commits.
+- Final report and Iteration 8 evidence are pending the final local evidence commit at handoff.
 
 ## Remaining Limitations
 
-- Some secondary charts, tables, and detail modules naturally continue below the tablet first viewport. Further reduction would require a product decision about content prioritization rather than a safe cosmetic adjustment.
-- Filter Apply/Reset selectors are deterministic, but custom-component state-change automation is not claimed until a stable observable contract is available.
+- The requested 4.7/5 score was not reached before the hard Iteration 8 stop.
+- The repeated provenance summary is still slightly prominent by design and should be reconsidered only with a product decision about how often prototype/KPI provenance must be exposed.
+- Full WCAG auditing is outside screenshot/browser coverage; the implementation retains visible labels, focus rules, and color-independent status treatment, but a dedicated accessibility audit is recommended before production.
