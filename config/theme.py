@@ -63,6 +63,7 @@ SPACING = {
 DASHBOARD_LAYOUT = {
     "content_max_width": "1400px",
     "sidebar_width": "16rem",
+    "sidebar_collapsed_width": "3rem",
     "gutter_wide": "2rem",
     "gutter_medium": "1.5rem",
     "gutter_narrow": "1rem",
@@ -164,7 +165,12 @@ def inject_theme() -> None:
             padding-inline-start: var(--dashboard-sidebar-width);
         }
         body:has([data-ssdc-sidebar-collapsed]) [data-testid="stMain"] {
-            padding-inline-start: 0;
+            padding-inline-start: var(--dashboard-sidebar-collapsed-width);
+        }
+        @media (max-width: 48rem) {
+            body:has([data-ssdc-sidebar-collapsed]) [data-testid="stMain"] {
+                padding-inline-start: 0;
+            }
         }
         [data-testid="stMainBlockContainer"], .block-container {
             box-sizing: border-box;

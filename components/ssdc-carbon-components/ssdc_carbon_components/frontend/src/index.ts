@@ -217,7 +217,7 @@ const renderShell = (
   const sideNav = carbon("cds-side-nav") as HTMLElement;
   sideNav.dataset.testid = "sidebar-nav";
   sideNav.setAttribute("aria-label", "Dashboard navigation");
-  sideNav.setAttribute("collapse-mode", "fixed");
+  sideNav.setAttribute("collapse-mode", "rail");
   sideNav.setAttribute("expanded", "");
 
   const brand = document.createElement("div");
@@ -245,6 +245,7 @@ const renderShell = (
     link.setAttribute("href", `#${page.slug}`);
     link.dataset.page = page.slug;
     link.setAttribute("title", page.title);
+    link.setAttribute("aria-label", page.title);
     if (isActive) {
       link.setAttribute("active", "");
       link.setAttribute("aria-current", "page");
@@ -273,6 +274,8 @@ const renderShell = (
       !sideNav.hasAttribute("expanded"),
     );
   };
+  const navObserver = new MutationObserver(syncGlobalLayout);
+  navObserver.observe(sideNav, { attributes: true, attributeFilter: ["expanded"] });
   if (wasMobile) {
     sideNav.removeAttribute("expanded");
     menu.removeAttribute("active");
@@ -302,6 +305,13 @@ const renderShell = (
     wasMobile = isMobile;
   };
   syncResponsiveShell();
+  const initialShellTimer = window.setTimeout(() => {
+    if (!mobileQuery.matches) {
+      sideNav.setAttribute("expanded", "");
+      menu.setAttribute("active", "");
+      syncGlobalLayout();
+    }
+  }, 0);
 
   const onMenu = () => {
     queueMicrotask(() => {
@@ -326,6 +336,8 @@ const renderShell = (
     menu.removeEventListener("cds-header-menu-button-toggled", onMenu);
     mobileQuery.removeEventListener("change", syncResponsiveShell);
     sideNav.removeEventListener("click", onNavigate);
+    window.clearTimeout(initialShellTimer);
+    navObserver.disconnect();
     layoutTarget.removeAttribute("data-ssdc-sidebar-collapsed");
   };
 };

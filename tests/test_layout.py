@@ -30,6 +30,7 @@ def test_dashboard_layout_tokens_define_one_content_frame() -> None:
     assert theme.DASHBOARD_LAYOUT == {
         "content_max_width": "1400px",
         "sidebar_width": "16rem",
+        "sidebar_collapsed_width": "3rem",
         "gutter_wide": "2rem",
         "gutter_medium": "1.5rem",
         "gutter_narrow": "1rem",
@@ -52,6 +53,8 @@ def test_theme_constrains_the_main_region_responsively(monkeypatch) -> None:
         assert f"--dashboard-{css_name}: {value};" in css
     assert '[data-testid="stMain"] {' in css
     assert "padding-inline-start: var(--dashboard-sidebar-width);" in css
+    assert "padding-inline-start: var(--dashboard-sidebar-collapsed-width);" in css
+    assert "@media (max-width: 48rem)" in css
     assert '[data-testid="stMainBlockContainer"], .block-container {' in css
     assert "width: 100%;" in css
     assert "max-width: var(--dashboard-content-max-width);" in css

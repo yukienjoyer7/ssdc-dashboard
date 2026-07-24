@@ -286,7 +286,7 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'className = "cds-header__global"' in source
     assert 'help.dataset.testid = "help-placeholder"' in source
     assert 'Help coming soon' in source
-    assert 'sideNav.setAttribute("collapse-mode", "fixed")' in source
+    assert 'sideNav.setAttribute("collapse-mode", "rail")' in source
     assert 'data-ssdc-sidebar-collapsed' in source
     assert 'className = "cds-sidebar__brand"' in source
     assert 'import GlobalAnalytics from "@carbon/pictograms/svg/global--analytics.svg?raw"' in source
@@ -297,6 +297,8 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'link.setAttribute("aria-current", "page")' in source
     assert 'header.setAttribute("aria-label", "Dashboard header")' in source
     assert 'header.append(menu, global)' in source
+    assert 'link.setAttribute("aria-label", page.title)' in source
+    assert 'new MutationObserver(syncGlobalLayout)' in source
     assert 'headerBrand.textContent = "SSDC"' not in source
     assert 'product.textContent = "Talent Intelligence"' not in source
     assert 'className = "cds-filter-toolbar"' in source
@@ -340,6 +342,8 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert "background: var(--app-surface-background)" in styles
     assert "border-block-end: 1px solid var(--app-border-subtle)" in styles
     assert "cds-side-nav:not([expanded])" in styles
+    assert "justify-content: center" in styles
+    assert "display: none" in styles
     assert ".cds-page-pictogram" in styles
     assert "min-block-size: 2.75rem" in styles
     assert "Talent Intelligence Dashboard" in compiled_js

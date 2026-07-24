@@ -94,20 +94,46 @@ def main() -> int:
         if not desktop_toggle.is_visible():
             failures.append("desktop shell: top-bar sidebar toggle is not visible")
         else:
-            desktop_toggle.click()
-            page.wait_for_timeout(250)
+            # Carbon rail mode expands on hover. Move away from the nav first so
+            # the assertion starts from the intentional collapsed rail state.
+            page.mouse.move(1000, 500)
+            page.wait_for_function(
+                """() => !document.querySelector('[data-testid="sidebar-nav"]')?.hasAttribute('expanded')""",
+                timeout=5_000,
+            )
             collapsed_padding = page.locator("[data-testid='stMain']").evaluate(
                 "el => getComputedStyle(el).paddingInlineStart"
             )
+            collapsed_link = desktop_nav.locator("[data-page='talent-matching']")
+            collapsed_link_width = collapsed_link.evaluate(
+                "el => el.getBoundingClientRect().width"
+            )
             if (
                 desktop_nav.get_attribute("expanded") is not None
-                or collapsed_padding != "0px"
+                or collapsed_padding != "48px"
+                or collapsed_link_width != 48
+                or not collapsed_link.is_visible()
             ):
                 failures.append(
-                    "desktop shell: sidebar did not collapse with the main gutter"
+                    "desktop shell: sidebar did not collapse to a navigable icon rail"
                 )
+            else:
+                collapsed_link.click()
+                page.get_by_text("Talent Matching", exact=True).first.wait_for(
+                    state="visible", timeout=10_000
+                )
+                page.mouse.move(1000, 500)
+                page.wait_for_timeout(250)
+                print("PASS desktop collapsed icon rail navigation")
             desktop_toggle.click()
-            page.wait_for_timeout(250)
+            page.wait_for_timeout(600)
+            if desktop_nav.get_attribute("expanded") is None:
+                # A Streamlit rerun can replace the shell between the icon
+                # navigation event and the toggle click; retry the live locator
+                # once so the check remains deterministic without using a
+                # brittle DOM handle.
+                desktop_toggle.click()
+                page.wait_for_timeout(600)
             if desktop_nav.get_attribute("expanded") is None:
                 failures.append("desktop shell: sidebar did not reopen")
             else:
