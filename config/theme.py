@@ -231,13 +231,13 @@ def inject_theme() -> None:
             line-height: 1.45;
         }
         [class*="st-key-cds-control-group-"] {
-            gap: var(--cds-spacing-02);
-            margin-block-end: var(--cds-spacing-04);
-            padding-block: var(--cds-spacing-02);
+            gap: var(--cds-spacing-01);
+            margin-block-end: var(--cds-spacing-03);
+            padding-block: var(--cds-spacing-01);
             border-block: 1px solid var(--app-border-subtle);
         }
         .cds-control-group__label {
-            margin: 0 0 var(--cds-spacing-02);
+            margin: 0 0 var(--cds-spacing-01);
             color: var(--app-text-secondary);
             font-size: var(--app-type-label);
             font-weight: var(--app-weight-semibold);
