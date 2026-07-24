@@ -401,6 +401,8 @@ def semantic_matching_table(data: DashboardData, request_id: str, filters: Filte
         how="left",
     )
     ranked["semester_num"] = _numeric(ranked["semester"])
+    if "minimum_semester" not in ranked.columns:
+        ranked["minimum_semester"] = 0
     ranked["meets_semester"] = ranked["semester_num"] >= _numeric(ranked["minimum_semester"])
     ranked["eligible"] = ranked["meets_semester"] & ranked["status"].eq("Active") & ranked["ketersediaan"].eq("Available")
     ranked["recommendation"] = "Review"
