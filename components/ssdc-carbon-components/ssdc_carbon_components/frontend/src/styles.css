@@ -47,6 +47,7 @@
   --cds-border-subtle-01: var(--app-border-subtle);
   --cds-border-strong-01: var(--app-border-strong);
   --cds-sidebar-border: var(--app-border-subtle);
+  --cds-sidebar-background: var(--app-surface-background);
   --cds-text-primary: var(--st-text-color, #161616);
   --cds-text-secondary: #525252;
   --cds-text-helper: #6f6f6f;
@@ -80,7 +81,9 @@ cds-header {
 }
 
 cds-side-nav {
-  background: var(--cds-background);
+  --cds-background: var(--cds-sidebar-background);
+  --cds-layer: var(--cds-sidebar-background);
+  background: var(--cds-sidebar-background);
   border-inline-end: 1px solid var(--cds-sidebar-border);
   box-shadow: none;
   box-sizing: border-box;
@@ -165,6 +168,21 @@ cds-header-name {
   padding: var(--app-spacing-04) var(--app-spacing-05);
 }
 
+.cds-nav-item::part(title-icon-container) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-end: var(--app-spacing-03);
+  vertical-align: middle;
+}
+
+.cds-nav-item__icon {
+  display: block;
+  fill: currentColor;
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
 .cds-nav-item::part(title) {
   color: var(--cds-text-primary);
   font-weight: var(--app-weight-regular);
@@ -196,6 +214,24 @@ cds-header-name {
 .cds-nav-item::part(link):focus-visible {
   outline: 2px solid var(--app-focus-color);
   outline-offset: -2px;
+}
+
+.cds-page-pictogram {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  inline-size: 56px;
+  block-size: 56px;
+  background: var(--app-surface-background);
+  border: 1px solid var(--app-border-subtle);
+  color: var(--cds-interactive-01);
+}
+
+.cds-page-pictogram__svg {
+  display: block;
+  inline-size: 48px;
+  block-size: 48px;
+  fill: currentColor;
 }
 
 .cds-filter-container {

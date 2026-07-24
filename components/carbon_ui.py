@@ -16,11 +16,18 @@ from services.analytics import (
 )
 
 
-def _render_surface(view: str, data: dict[str, Any], *, key: str) -> dict[str, Any] | None:
+def _render_surface(
+    view: str,
+    data: dict[str, Any],
+    *,
+    key: str,
+    width: str | int = "stretch",
+    height: str | int = "content",
+) -> dict[str, Any] | None:
     """Render the packaged component lazily so pure helpers remain unit-testable."""
     from ssdc_carbon_components import render_surface
 
-    return render_surface(view, data, key=key)
+    return render_surface(view, data, key=key, width=width, height=height)
 
 
 @dataclass(frozen=True)
@@ -28,15 +35,17 @@ class PageSpec:
     slug: str
     title: str
     icon: str
+    carbon_icon: str
+    pictogram: str
     path: str
 
 
 PAGE_SPECS = (
-    PageSpec("executive-overview", "Executive overview", "monitoring", "app_pages/executive_overview.py"),
-    PageSpec("talent-request-management", "Talent request management", "task_alt", "app_pages/talent_request_management.py"),
-    PageSpec("talent-matching", "Talent matching", "person_search", "app_pages/talent_matching.py"),
-    PageSpec("selection-monitoring", "Selection monitoring", "notifications_active", "app_pages/selection_monitoring.py"),
-    PageSpec("placement-performance", "Placement performance", "insights", "app_pages/placement_performance.py"),
+    PageSpec("executive-overview", "Executive overview", "monitoring", "dashboard", "global--analytics", "app_pages/executive_overview.py"),
+    PageSpec("talent-request-management", "Talent request management", "task_alt", "task", "list--checkbox", "app_pages/talent_request_management.py"),
+    PageSpec("talent-matching", "Talent matching", "person_search", "search", "user--search", "app_pages/talent_matching.py"),
+    PageSpec("selection-monitoring", "Selection monitoring", "notifications_active", "warning--alt", "chart--stepper", "app_pages/selection_monitoring.py"),
+    PageSpec("placement-performance", "Placement performance", "insights", "chart--line", "user--analytics", "app_pages/placement_performance.py"),
 )
 
 
@@ -50,7 +59,8 @@ DEFAULT_TABLE_PAGE_SIZE = 50
 
 
 def page_spec_for_title(title: str) -> PageSpec:
-    return next((page for page in PAGE_SPECS if page.title == title), PAGE_SPECS[0])
+    normalized = title.casefold()
+    return next((page for page in PAGE_SPECS if page.title.casefold() == normalized), PAGE_SPECS[0])
 
 
 def page_spec_for_slug(slug: str) -> PageSpec | None:
@@ -62,12 +72,33 @@ def render_shell(active_page: str, *, key: str = "carbon-shell") -> dict[str, An
         "shell",
         {
             "pages": [
-                {"slug": page.slug, "title": page.title, "icon": page.icon}
+                {
+                    "slug": page.slug,
+                    "title": page.title,
+                    "icon": page.carbon_icon,
+                    "pictogram": page.pictogram,
+                }
                 for page in PAGE_SPECS
             ],
             "active_page": active_page,
         },
         key=key,
+    )
+
+
+def render_pictogram(
+    name: str,
+    *,
+    label: str,
+    key: str,
+) -> None:
+    """Render a Carbon pictogram as page identity, not as an interactive icon."""
+    _render_surface(
+        "pictogram",
+        {"name": name, "label": label},
+        key=key,
+        width=72,
+        height=72,
     )
 
 

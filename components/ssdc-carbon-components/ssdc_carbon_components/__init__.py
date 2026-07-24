@@ -21,11 +21,15 @@ def render_surface(
     data: Mapping[str, Any],
     *,
     key: str,
+    width: str | int = "stretch",
+    height: str | int = "content",
 ) -> dict[str, Any] | None:
     """Render a Carbon surface and return its transient user action."""
     result = _COMPONENT(
         key=key,
         data={"view": view, **dict(data)},
+        width=width,
+        height=height,
         on_action_change=_on_action_change,
     )
     action = getattr(result, "action", None)

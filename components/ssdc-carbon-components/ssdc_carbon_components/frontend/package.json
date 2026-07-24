@@ -19,6 +19,8 @@
   ],
   "prettier": {},
   "dependencies": {
+    "@carbon/icons": "^11.84.0",
+    "@carbon/pictograms": "^12.80.0",
     "@carbon/web-components": "^2.59.0",
     "@streamlit/component-v2-lib": "^0.2.0"
   },

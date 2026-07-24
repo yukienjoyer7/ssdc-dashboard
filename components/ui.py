@@ -37,15 +37,38 @@ def control_group(label: str, *, key: str) -> Iterator[None]:
         yield
 
 
-def render_page_header(kicker: str, title: str, question: str) -> None:
-    st.markdown(
+def render_page_header(
+    kicker: str,
+    title: str,
+    question: str,
+    *,
+    pictogram: str | None = None,
+) -> None:
+    header = (
         '<header class="cds-page-header">'
         f'<p class="cds-kicker">{escape(kicker)}</p>'
         f'<h1 class="cds-page-title">{escape(title)}</h1>'
         f'<p class="cds-page-description">{escape(question)}</p>'
-        "</header>",
-        unsafe_allow_html=True,
+        "</header>"
     )
+    if pictogram:
+        from components.carbon_ui import render_pictogram
+
+        pictogram_column, header_column = st.columns(
+            [1, 12],
+            gap="small",
+            vertical_alignment="top",
+        )
+        with pictogram_column:
+            render_pictogram(
+                pictogram,
+                label=f"{title} pictogram",
+                key=f"page-pictogram-{title.lower().replace(' ', '-')}",
+        )
+        with header_column:
+            st.markdown(header, unsafe_allow_html=True)
+        return
+    st.markdown(header, unsafe_allow_html=True)
 
 
 def render_data_status(

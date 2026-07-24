@@ -3,6 +3,7 @@ import streamlit as st
 from data.contracts import FilterState
 from data.loaders import DashboardData, load_dashboard_data
 from components.ui import render_data_status
+from components.carbon_ui import page_spec_for_title
 
 
 def get_context() -> tuple[DashboardData, FilterState]:
@@ -21,7 +22,12 @@ def start_page(
     data, filters = get_context()
     from components.ui import render_page_header
 
-    render_page_header(kicker, title, question)
+    render_page_header(
+        kicker,
+        title,
+        question,
+        pictogram=page_spec_for_title(title).pictogram,
+    )
     render_data_status(
         data,
         provisional_note,

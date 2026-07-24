@@ -39,6 +39,17 @@ def test_carbon_page_registry_is_complete_and_resolves_navigation_targets() -> N
     assert page_spec_for_slug("missing") is None
 
 
+def test_page_registry_uses_carbon_navigation_icons_and_pictograms() -> None:
+    assert [(page.carbon_icon, page.pictogram) for page in PAGE_SPECS] == [
+        ("dashboard", "global--analytics"),
+        ("task", "list--checkbox"),
+        ("search", "user--search"),
+        ("warning--alt", "chart--stepper"),
+        ("chart--line", "user--analytics"),
+    ]
+    assert page_spec_for_title("Executive Overview").pictogram == "global--analytics"
+
+
 def test_shell_preserves_page_registry_and_active_route(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
@@ -54,6 +65,9 @@ def test_shell_preserves_page_registry_and_active_route(monkeypatch) -> None:
     assert captured["data"]["active_page"] == "talent-matching"
     assert [page["slug"] for page in captured["data"]["pages"]] == [
         page.slug for page in PAGE_SPECS
+    ]
+    assert [page["pictogram"] for page in captured["data"]["pages"]] == [
+        page.pictogram for page in PAGE_SPECS
     ]
 
 
@@ -268,6 +282,10 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'setAttribute("aria-label", "Dashboard navigation")' in source
     assert 'button-label-inactive' in source
     assert 'className = "cds-sidebar__brand"' in source
+    assert 'import GlobalAnalytics from "@carbon/pictograms/svg/global--analytics.svg?raw"' in source
+    assert 'import Dashboard16 from "@carbon/icons/es/dashboard/16.js"' in source
+    assert 'iconNode.setAttribute("slot", "title-icon")' in source
+    assert 'case "pictogram"' in source
     assert 'productDescription.textContent = "Talent Intelligence Dashboard"' in source
     assert 'link.setAttribute("aria-current", "page")' in source
     assert 'name.classList.toggle("cds-header-product--visible", open)' in source
@@ -305,6 +323,9 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert ".cds-nav-item::part(link):focus-visible" in styles
     assert "outline: 2px solid var(--app-focus-color)" in styles
     assert "border-inline-end: 1px solid var(--cds-sidebar-border)" in styles
+    assert "--cds-background: var(--cds-sidebar-background)" in styles
+    assert "background: var(--cds-sidebar-background)" in styles
+    assert ".cds-page-pictogram" in styles
     assert "min-block-size: 2.75rem" in styles
     assert "Talent Intelligence Dashboard" in compiled_js
     assert ".cds-sidebar__brand" in compiled_css

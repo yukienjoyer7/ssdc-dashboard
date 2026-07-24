@@ -2,6 +2,16 @@ import {
   FrontendRenderer,
   FrontendRendererArgs,
 } from "@streamlit/component-v2-lib";
+import Dashboard16 from "@carbon/icons/es/dashboard/16.js";
+import Task16 from "@carbon/icons/es/task/16.js";
+import Search16 from "@carbon/icons/es/search/16.js";
+import WarningAlt16 from "@carbon/icons/es/warning--alt/16.js";
+import ChartLine16 from "@carbon/icons/es/chart--line/16.js";
+import GlobalAnalytics from "@carbon/pictograms/svg/global--analytics.svg?raw";
+import ListCheckbox from "@carbon/pictograms/svg/list--checkbox.svg?raw";
+import UserSearch from "@carbon/pictograms/svg/user--search.svg?raw";
+import ChartStepper from "@carbon/pictograms/svg/chart--stepper.svg?raw";
+import UserAnalytics from "@carbon/pictograms/svg/user--analytics.svg?raw";
 import "@carbon/web-components/es/components/button/index.js";
 import "@carbon/web-components/es/components/data-table/index.js";
 import "@carbon/web-components/es/components/date-picker/index.js";
@@ -14,7 +24,17 @@ import "@carbon/web-components/es/components/ui-shell/index.js";
 import "./styles.css";
 
 type Option = { value: string; label: string };
-type Page = { slug: string; title: string; icon: string };
+type Page = {
+  slug: string;
+  title: string;
+  icon: string;
+  pictogram: string;
+};
+type CarbonIconNode = {
+  elem: string;
+  attrs?: Record<string, string | number>;
+  content?: CarbonIconNode[];
+};
 type FilterValues = {
   date_start: string;
   date_end: string;
@@ -35,9 +55,18 @@ type KpiItem = {
   delta_kind?: "neutral" | "positive" | "negative";
 };
 type ComponentData = {
-  view: "shell" | "filters" | "kpis" | "feedback" | "data_status" | "table";
+  view:
+    | "shell"
+    | "pictogram"
+    | "filters"
+    | "kpis"
+    | "feedback"
+    | "data_status"
+    | "table";
   pages?: Page[];
   active_page?: string;
+  name?: string;
+  label?: string;
   options?: Record<string, Option[]>;
   filters?: FilterValues;
   items?: KpiItem[];
@@ -74,6 +103,54 @@ const carbon = (tag: string, text?: string) => {
   const node = document.createElement(tag);
   if (text) node.textContent = text;
   return node;
+};
+
+const navigationIcons: Record<string, CarbonIconNode> = {
+  dashboard: Dashboard16,
+  task: Task16,
+  search: Search16,
+  "warning--alt": WarningAlt16,
+  "chart--line": ChartLine16,
+};
+
+const pictograms: Record<string, string> = {
+  "global--analytics": GlobalAnalytics,
+  "list--checkbox": ListCheckbox,
+  "user--search": UserSearch,
+  "chart--stepper": ChartStepper,
+  "user--analytics": UserAnalytics,
+};
+
+const createCarbonIcon = (data: CarbonIconNode): SVGElement => {
+  const node = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    data.elem,
+  );
+  Object.entries(data.attrs ?? {}).forEach(([key, value]) => {
+    node.setAttribute(key, String(value));
+  });
+  (data.content ?? []).forEach((child) =>
+    node.appendChild(createCarbonIcon(child)),
+  );
+  return node;
+};
+
+const createPictogram = (name: string, label: string): HTMLElement => {
+  const wrapper = document.createElement("div");
+  wrapper.className = "cds-page-pictogram";
+  wrapper.setAttribute("role", "img");
+  wrapper.setAttribute("aria-label", label);
+  const markup = pictograms[name];
+  if (!markup) return wrapper;
+  wrapper.innerHTML = markup;
+  const svg = wrapper.querySelector("svg");
+  if (svg) {
+    svg.setAttribute("aria-hidden", "true");
+    svg.classList.add("cds-page-pictogram__svg");
+    svg.removeAttribute("width");
+    svg.removeAttribute("height");
+  }
+  return wrapper;
 };
 
 const emit = (args: FrontendRendererArgs, payload: Record<string, unknown>) => {
@@ -154,6 +231,14 @@ const renderShell = (
       link.setAttribute("active", "");
       link.setAttribute("aria-current", "page");
     }
+    const icon = navigationIcons[page.icon];
+    if (icon) {
+      const iconNode = createCarbonIcon(icon);
+      iconNode.setAttribute("slot", "title-icon");
+      iconNode.setAttribute("aria-hidden", "true");
+      iconNode.classList.add("cds-nav-item__icon");
+      link.appendChild(iconNode);
+    }
     items.appendChild(link);
   });
   sideNav.append(brand, divider, items);
@@ -217,6 +302,12 @@ const renderShell = (
   };
 };
 
+const renderPictogram = (root: HTMLElement, data: ComponentData) => {
+  root.appendChild(
+    createPictogram(data.name ?? "", data.label ?? "Page pictogram"),
+  );
+};
+
 const renderFilters = (
   root: HTMLElement,
   data: ComponentData,
@@ -272,7 +363,12 @@ const renderFilters = (
   const controls = document.createElement("div");
   controls.className = "filter-grid";
   const optionControls = [
-    optionSelect("company", "Company", data.options?.company ?? [], filters.company),
+    optionSelect(
+      "company",
+      "Company",
+      data.options?.company ?? [],
+      filters.company,
+    ),
     optionSelect(
       "study_program",
       "Study program",
@@ -374,10 +470,7 @@ const renderKpis = (
   const grid = document.createElement("div");
   grid.className = `cds-kpi-grid cds-kpi-grid--${variant}`;
   if (data.columns_per_row) {
-    grid.style.setProperty(
-      "--cds-kpi-columns",
-      String(data.columns_per_row),
-    );
+    grid.style.setProperty("--cds-kpi-columns", String(data.columns_per_row));
   }
   (data.items ?? []).forEach((item) => {
     const tile = carbon("cds-tile") as HTMLElement;
@@ -411,10 +504,7 @@ const renderKpis = (
 
 const formatStatusDate = (value?: string) => {
   const parts = (value ?? "").split("-").map(Number);
-  if (
-    parts.length !== 3 ||
-    parts.some((part) => !Number.isInteger(part))
-  ) {
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) {
     return "Unavailable";
   }
   return new Intl.DateTimeFormat("en-GB", {
@@ -449,7 +539,10 @@ const renderDataStatus = (
     data.mode === "prototype" ? "Prototype data" : "Local data",
   ) as HTMLElement;
   modeTag.className = "cds-data-status__tag";
-  modeTag.setAttribute("type", data.mode === "prototype" ? "cool-gray" : "blue");
+  modeTag.setAttribute(
+    "type",
+    data.mode === "prototype" ? "cool-gray" : "blue",
+  );
   modeTag.setAttribute("size", "sm");
   tags.appendChild(modeTag);
 
@@ -617,18 +710,25 @@ const renderTable = (
   pagination.addEventListener("cds-pagination-changed-current", onPageChange);
   return () => {
     body.removeEventListener("click", onRow);
-    pagination.removeEventListener("cds-pagination-changed-current", onPageChange);
+    pagination.removeEventListener(
+      "cds-pagination-changed-current",
+      onPageChange,
+    );
   };
 };
 
-const CarbonComponent: FrontendRenderer<Record<string, unknown>, ComponentData> = (
-  args,
-) => {
+const CarbonComponent: FrontendRenderer<
+  Record<string, unknown>,
+  ComponentData
+> = (args) => {
   const root = rootFor(args.parentElement);
   root.replaceChildren();
   switch (args.data.view) {
     case "shell":
       return renderShell(root, args.data, args);
+    case "pictogram":
+      renderPictogram(root, args.data);
+      return;
     case "filters":
       return renderFilters(root, args.data, args);
     case "kpis":
