@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 
@@ -353,6 +354,78 @@ def _matching_explanation(row: pd.Series) -> str:
     if not missing:
         return "Matches study program, minimum semester, and availability."
     return f"Matches {', '.join(matched) or 'none'}; review {', '.join(missing)}."
+
+
+_SEMANTIC_SCORES_PATH = Path(__file__).resolve().parents[1] / "data" / "processed" / "semantic_scores.parquet"
+_SEMANTIC_SCORES_CACHE: pd.DataFrame | None = None
+
+
+def _load_semantic_scores() -> pd.DataFrame | None:
+    global _SEMANTIC_SCORES_CACHE
+    if _SEMANTIC_SCORES_CACHE is not None:
+        return _SEMANTIC_SCORES_CACHE
+    if not _SEMANTIC_SCORES_PATH.exists():
+        return None
+    _SEMANTIC_SCORES_CACHE = pd.read_parquet(_SEMANTIC_SCORES_PATH)
+    return _SEMANTIC_SCORES_CACHE
+
+
+def semantic_matching_table(data: DashboardData, request_id: str, filters: FilterState) -> tuple[pd.DataFrame, pd.Series | None]:
+    requests = request_table(data, filters)
+    selected = requests.loc[requests["id_talent_req"] == request_id]
+    if selected.empty:
+        return pd.DataFrame(), None
+    request = selected.iloc[0]
+    scores = _load_semantic_scores()
+    if scores is None:
+        return pd.DataFrame(), request
+    req_scores = scores.loc[scores["id_talent_req"] == request_id]
+    if req_scores.empty:
+        return pd.DataFrame(), request
+    students = data.analytic("df_student_profile")
+    if students is None:
+        students = data.table("student_all.csv").merge(
+            data.table("status_student.csv")[
+                ["NIM", "program_studi", "semester", "status", "ketersediaan", "CV", "IPK",
+                 "tools_normalized", "bidang_minat", "jenis_penempatan_diminati", "domisili", "eligible"]
+            ].drop_duplicates("NIM"),
+            on="NIM",
+            how="left",
+        )
+    ranked = req_scores.merge(
+        students[["NIM", "nama", "program_studi", "semester", "status", "ketersediaan",
+                   "CV", "IPK", "tools_normalized", "bidang_minat",
+                   "jenis_penempatan_diminati", "domisili", "eligible"]],
+        on="NIM",
+        how="left",
+    )
+    ranked["semester_num"] = _numeric(ranked["semester"])
+    ranked["meets_semester"] = ranked["semester_num"] >= _numeric(ranked["minimum_semester"])
+    ranked["eligible"] = ranked["meets_semester"] & ranked["status"].eq("Active") & ranked["ketersediaan"].eq("Available")
+    ranked["recommendation"] = "Review"
+    ranked.loc[ranked["eligible"], "recommendation"] = "Eligible"
+    ranked["explanation"] = ranked.apply(_semantic_explanation, axis=1)
+    if filters.study_program != "All study programs":
+        ranked = ranked.loc[ranked["program_studi"] == filters.study_program].copy()
+    return ranked.sort_values("semantic_score", ascending=False).reset_index(drop=True), request
+
+
+def _semantic_explanation(row: pd.Series) -> str:
+    badges = []
+    if row.get("status") == "Active":
+        badges.append("Active")
+    if row.get("ketersediaan") == "Available":
+        badges.append("Available")
+    if row.get("CV") == "Ada":
+        badges.append("CV tersedia")
+    meets = row.get("meets_semester")
+    min_sem = int(row.get("minimum_semester", 0))
+    if meets:
+        badges.append(f"Semester {int(row.get('semester_num', 0))} >= {min_sem}")
+    else:
+        badges.append(f"Semester {int(row.get('semester_num', 0))} < {min_sem}")
+    score = float(row.get("semantic_score", 0))
+    return f"Eligibility: {'; '.join(badges)} | Relevance: {score:.3f}"
 
 
 def date_bounds(data: DashboardData) -> tuple[date, date]:

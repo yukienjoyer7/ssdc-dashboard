@@ -6,7 +6,7 @@ from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
-from services.analytics import matching_table, request_table
+from services.analytics import semantic_matching_table, request_table
 
 
 def main() -> None:
@@ -15,8 +15,8 @@ def main() -> None:
         "Talent Matching",
         "Which eligible students are the strongest matches for a selected talent request, and why?",
         provisional_note=(
-            "Eligibility requires a study-program/interest match, minimum semester, "
-            "and Available status."
+            "Semantic ranking via Qwen3-Embedding-0.6B. Eligibility gate: Active, Available, "
+            "CV, and minimum semester per request."
         ),
     )
     requests = request_table(data, filters)
@@ -28,7 +28,7 @@ def main() -> None:
     default_index = options.index(previous) if previous in options else 0
     request_id = st.selectbox("Select talent request", options, index=default_index, key="matching_request_id")
     st.session_state["selected_request_id"] = request_id
-    ranked, request = matching_table(data, request_id, filters)
+    ranked, request = semantic_matching_table(data, request_id, filters)
     if request is None:
         render_empty("Request not found", "Choose a request from the current filtered list.")
         return
@@ -49,9 +49,17 @@ def main() -> None:
         key="matching-request-requirements",
     )
 
+    if ranked.empty:
+        render_empty(
+            "Semantic scores unavailable",
+            "Precomputed semantic scores were not found. Run the semantic matching pipeline "
+            "(services/semantic_matching.py build_all()) to generate candidate rankings.",
+        )
+        return
+
     eligibility_only = st.checkbox("Show eligible candidates only", value=True, key="matching_eligible_only")
-    min_score = st.slider("Minimum match score", 0, 100, 0, key="matching_min_score")
-    displayed = ranked.loc[ranked["match_score"] >= min_score].copy()
+    min_score = st.slider("Minimum relevance score", 0.00, 1.00, 0.00, 0.05, key="matching_min_score")
+    displayed = ranked.loc[ranked["semantic_score"] >= min_score].copy()
     if eligibility_only:
         displayed = displayed.loc[displayed["eligible"]].copy()
     eligible_count = int(ranked["eligible"].sum())
@@ -60,16 +68,16 @@ def main() -> None:
         {"label": "Evaluated candidates", "value": format_count(len(ranked))},
         {"label": "Eligible candidates", "value": format_count(eligible_count)},
         {"label": "Eligibility rate", "value": format_percent(eligibility_rate)},
-        {"label": "Top-k candidates", "value": format_count(len(displayed))},
+        {"label": "Top-k displayed", "value": format_count(len(displayed))},
     ])
 
-    render_section("Ranked shortlist", "Every score includes criterion-level explanation for review.")
+    render_section("Ranked shortlist", "Semantic relevance score (not acceptance probability). Higher = more relevant.")
     if displayed.empty:
-        render_empty("No candidates match", "Lower the score threshold or include candidates who need review.")
+        render_empty("No candidates match", "Lower the relevance threshold or include candidates who need review.")
     else:
         columns = [
-            "NIM", "nama", "program_studi", "semester", "ketersediaan", "eligible", "match_score",
-            "recommendation", "explanation",
+            "NIM", "nama", "program_studi", "semester", "ketersediaan", "eligible",
+            "semantic_score", "semantic_rank", "recommendation", "explanation",
         ]
         render_downloadable_table(displayed[columns], "ssdc-ranked-shortlist.csv", "matching-table")
         left, right = analytical_columns(
@@ -77,7 +85,7 @@ def main() -> None:
             key="matching-candidate-detail",
         )
         with left:
-            render_histogram(ranked, "match_score", "Match-score distribution", color="recommendation")
+            render_histogram(ranked, "semantic_score", "Relevance score distribution", color="recommendation")
         with right:
             candidate_ids = displayed["NIM"].tolist()
             chosen = st.selectbox("Candidate detail", candidate_ids, key="matching_candidate_detail")
@@ -86,9 +94,13 @@ def main() -> None:
             st.write(detail["explanation"])
             st.write({
                 "Eligibility": "Eligible" if detail["eligible"] else "Review",
-                "Match score": int(detail["match_score"]),
-                "Semester": detail["semester"],
+                "Relevance score": f"{float(detail['semantic_score']):.3f}",
+                "Rank": int(detail["semantic_rank"]),
+                "Semester": str(detail["semester"]),
+                "IPK": str(detail.get("IPK", "")),
                 "Availability": detail["ketersediaan"],
+                "Domicile": detail.get("domisili", ""),
+                "Tools": detail.get("tools_normalized", ""),
             })
 
 
