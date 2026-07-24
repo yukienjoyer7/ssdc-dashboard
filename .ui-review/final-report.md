@@ -74,7 +74,7 @@ Category order: Information hierarchy, Analytical usefulness, Layout & alignment
 - Branch: `experiment/autonomous-ui`.
 - No branch switching, merge, rebase, push, reset, or history rewrite performed.
 - Iteration changes were committed atomically with Conventional Commits.
-- Final report and Iteration 8 evidence are pending the final local evidence commit at handoff.
+- Final report and Iteration 8 evidence are committed in the final local evidence commit; working tree is clean at handoff.
 
 ## Remaining Limitations
 
