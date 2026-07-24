@@ -23,6 +23,8 @@ def wait_for_render(page: Page) -> None:
     page.wait_for_load_state("domcontentloaded", timeout=30_000)
     page.locator("[data-testid='stAppViewContainer']").wait_for(state="visible", timeout=30_000)
     page.wait_for_timeout(1_500)
+    page.locator(".cds-kpi-card").first.wait_for(state="visible", timeout=30_000)
+    page.wait_for_timeout(500)
 
 
 def navigate(page: Page, base_url: str, path: str, title: str) -> None:
@@ -84,8 +86,32 @@ def main() -> int:
         # capability-based so a component markup change is documented, not made brittle.
         filter_controls = page.locator("[data-testid*='filter'], [class*='filter']").count()
         print(f"INFO filter automation surface detected: {filter_controls > 0}")
-        print("INFO apply/reset interaction: component-specific; no stable public selector is configured")
-        print("INFO sidebar collapse/reopen: custom shell; navigation reachability was verified")
+        print("INFO apply/reset interaction: stable selectors exposed; state-change automation remains partial")
+        print("INFO sidebar collapse/reopen: validating the responsive shell contract separately")
+
+        responsive_page = browser.new_page(viewport={"width": 768, "height": 1024})
+        try:
+            responsive_page.goto(base_url.rstrip("/") + "/", wait_until="domcontentloaded", timeout=30_000)
+            wait_for_render(responsive_page)
+            toggle = responsive_page.locator("[data-testid='sidebar-toggle'] button")
+            sidebar = responsive_page.locator("[data-testid='sidebar-nav']")
+            link = sidebar.locator("[data-page='talent-matching']")
+            if not toggle.is_visible():
+                failures.append("tablet shell: sidebar toggle is not visible")
+            toggle.click()
+            responsive_page.wait_for_timeout(250)
+            if not link.is_visible():
+                failures.append("tablet shell: navigation did not open visibly")
+            toggle.click()
+            responsive_page.wait_for_timeout(250)
+            if link.is_visible():
+                failures.append("tablet shell: navigation did not close")
+            if not failures:
+                print("PASS tablet shell collapse/reopen")
+        except Exception as exc:  # noqa: BLE001 - report responsive shell failures
+            failures.append(f"tablet shell collapse/reopen: {exc}")
+        finally:
+            responsive_page.close()
         browser.close()
 
     if console_errors:

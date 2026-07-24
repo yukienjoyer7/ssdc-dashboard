@@ -26,6 +26,10 @@ def wait_for_render(page: Page) -> None:
     page.locator("[data-testid='stAppViewContainer']").wait_for(state="visible", timeout=30_000)
     page.wait_for_timeout(2_000)
     page.locator("[data-testid='stStatusWidget']").wait_for(state="hidden", timeout=30_000)
+    # Carbon components hydrate independently of Streamlit's status widget.
+    # Wait for a rendered KPI tile so screenshots never capture plain fallback text.
+    page.locator(".cds-kpi-card").first.wait_for(state="visible", timeout=30_000)
+    page.wait_for_timeout(500)
 
 
 def navigate(page: Page, base_url: str, configured_path: str, title: str) -> None:
