@@ -195,8 +195,14 @@ def evaluate_top_k(
     )
     df_request, df_student = _load_source_tables(processed)
     eligible = _filter_eligible_students(df_student)
+    scores_path = processed / "semantic_scores.parquet"
+    if not scores_path.exists():
+        raise FileNotFoundError(
+            f"Semantic scores not found at {scores_path}. "
+            "Run build_all() first to precompute request–student similarity scores."
+        )
     sample = df_request.sample(n=min(num_requests, len(df_request)), random_state=42)
-    semantic_scores = pd.read_parquet(processed / "semantic_scores.parquet")
+    semantic_scores = pd.read_parquet(scores_path)
     rows = []
     for _, request in sample.iterrows():
         req_id = request["id_talent_req"]
