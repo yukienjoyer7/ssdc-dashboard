@@ -16,7 +16,7 @@ from config.theme import (
 )
 
 
-def _base_layout(figure, height: int = 330):
+def _base_layout(figure, height: int = 300):
     figure.update_layout(
         height=height,
         margin={
@@ -121,7 +121,7 @@ def render_bar(
     y: str,
     title: str,
     color: str | None = None,
-    height: int = 330,
+    height: int = 300,
     *,
     show_title: bool = True,
     color_map: Mapping[str, str] | None = None,
@@ -153,7 +153,7 @@ def render_horizontal_bar(
     y: str,
     title: str,
     color: str | None = None,
-    height: int = 360,
+    height: int = 320,
     *,
     show_title: bool = True,
     color_map: Mapping[str, str] | None = None,
@@ -186,7 +186,7 @@ def render_line(
     y: str,
     title: str,
     color: str | None = None,
-    height: int = 330,
+    height: int = 300,
     *,
     show_title: bool = True,
     color_map: Mapping[str, str] | None = None,
@@ -217,7 +217,7 @@ def render_histogram(
     x: str,
     title: str,
     color: str | None = None,
-    height: int = 330,
+    height: int = 300,
     *,
     show_title: bool = True,
     color_map: Mapping[str, str] | None = None,

@@ -287,7 +287,8 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'type: "table_page"' in source
     assert "min-block-size: 4rem" in styles
     assert ".cds-filter-toolbar__actions" in styles
-    assert "min-block-size: 3.5rem" in styles
+    assert "min-block-size: 3rem" in styles
+    assert "padding: var(--app-spacing-02) var(--app-spacing-04)" in styles
     assert ".cds-data-status__details[hidden]" in styles
     assert ".cds-kpi-grid--primary" in styles
     assert ".cds-kpi-grid--compact" in styles

@@ -296,9 +296,9 @@ cds-header-name {
   display: flex;
   align-items: center;
   gap: var(--app-spacing-04);
-  min-block-size: 3.5rem;
+  min-block-size: 3rem;
   min-width: 0;
-  padding: var(--app-spacing-03) var(--app-spacing-04);
+  padding: var(--app-spacing-02) var(--app-spacing-04);
 }
 
 .cds-data-status__meta {
