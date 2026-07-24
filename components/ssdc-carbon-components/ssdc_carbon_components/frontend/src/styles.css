@@ -608,8 +608,8 @@ cds-pagination {
   }
 
   .cds-filter-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
     min-block-size: auto;
     gap: var(--app-spacing-03);
     padding: var(--app-spacing-03) var(--app-spacing-04);
@@ -626,7 +626,7 @@ cds-pagination {
   }
 
   .cds-filter-toolbar__actions {
-    align-self: flex-start;
+    align-self: center;
   }
 
   .cds-data-status__summary {
@@ -649,6 +649,17 @@ cds-pagination {
 
   .cds-data-status__detail-list {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 40rem) {
+  .cds-filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cds-filter-toolbar__actions {
+    align-self: flex-start;
   }
 }
 
