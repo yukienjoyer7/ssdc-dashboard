@@ -61,7 +61,7 @@ def main() -> None:
         {"label": "Eligible candidates", "value": format_count(eligible_count)},
         {"label": "Eligibility rate", "value": format_percent(eligibility_rate)},
         {"label": "Top-k candidates", "value": format_count(len(displayed))},
-    ])
+    ], columns_per_row=4, variant="compact")
 
     render_section("Ranked shortlist", "Every score includes criterion-level explanation for review.")
     if displayed.empty:

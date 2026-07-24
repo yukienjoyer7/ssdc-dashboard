@@ -232,6 +232,7 @@ def test_executive_overview_uses_the_required_kpi_groups() -> None:
 def test_kpi_variants_match_page_hierarchy() -> None:
     expected_variants = {
         "talent_request_management.py": ["compact"],
+        "talent_matching.py": ["default", "compact"],
         "selection_monitoring.py": ["compact"],
     }
     for page in Path("app_pages").glob("*.py"):
