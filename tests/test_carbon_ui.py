@@ -63,6 +63,7 @@ def test_shell_preserves_page_registry_and_active_route(monkeypatch) -> None:
     assert captured["view"] == "shell"
     assert captured["key"] == "test-shell"
     assert captured["data"]["active_page"] == "talent-matching"
+    assert captured["data"]["context_label"] == "Prototype data"
     assert [page["slug"] for page in captured["data"]["pages"]] == [
         page.slug for page in PAGE_SPECS
     ]
@@ -281,6 +282,12 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert compiled_css
     assert 'setAttribute("aria-label", "Dashboard navigation")' in source
     assert 'button-label-inactive' in source
+    assert 'menu.setAttribute("collapse-mode", "rail")' in source
+    assert 'className = "cds-header__global"' in source
+    assert 'help.dataset.testid = "help-placeholder"' in source
+    assert 'Help coming soon' in source
+    assert 'sideNav.setAttribute("collapse-mode", "fixed")' in source
+    assert 'data-ssdc-sidebar-collapsed' in source
     assert 'className = "cds-sidebar__brand"' in source
     assert 'import GlobalAnalytics from "@carbon/pictograms/svg/global--analytics.svg?raw"' in source
     assert 'import Dashboard16 from "@carbon/icons/es/dashboard/16.js"' in source
@@ -325,6 +332,9 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert "border-inline-end: 1px solid var(--cds-sidebar-border)" in styles
     assert "--cds-background: var(--cds-sidebar-background)" in styles
     assert "background: var(--cds-sidebar-background)" in styles
+    assert ".cds-header-product__context" in styles
+    assert ".cds-header-context" in styles
+    assert "cds-side-nav:not([expanded])" in styles
     assert ".cds-page-pictogram" in styles
     assert "min-block-size: 2.75rem" in styles
     assert "Talent Intelligence Dashboard" in compiled_js

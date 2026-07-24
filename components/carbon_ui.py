@@ -67,7 +67,12 @@ def page_spec_for_slug(slug: str) -> PageSpec | None:
     return next((page for page in PAGE_SPECS if page.slug == slug), None)
 
 
-def render_shell(active_page: str, *, key: str = "carbon-shell") -> dict[str, Any] | None:
+def render_shell(
+    active_page: str,
+    *,
+    context_label: str = "Prototype data",
+    key: str = "carbon-shell",
+) -> dict[str, Any] | None:
     return _render_surface(
         "shell",
         {
@@ -81,6 +86,7 @@ def render_shell(active_page: str, *, key: str = "carbon-shell") -> dict[str, An
                 for page in PAGE_SPECS
             ],
             "active_page": active_page,
+            "context_label": context_label,
         },
         key=key,
     )

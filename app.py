@@ -33,7 +33,10 @@ pages = [
 navigation = st.navigation(pages, position="hidden")
 active_page = page_spec_for_title(getattr(navigation, "title", PAGE_SPECS[0].title))
 
-shell_action = render_shell(active_page.slug)
+shell_action = render_shell(
+    active_page.slug,
+    context_label="Prototype data" if data.is_mock else "Local data",
+)
 if shell_action and shell_action.get("type") == "navigate":
     target = page_spec_for_slug(str(shell_action.get("page", "")))
     if target:

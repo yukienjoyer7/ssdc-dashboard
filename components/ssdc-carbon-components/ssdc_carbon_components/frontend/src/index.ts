@@ -7,6 +7,7 @@ import Task16 from "@carbon/icons/es/task/16.js";
 import Search16 from "@carbon/icons/es/search/16.js";
 import WarningAlt16 from "@carbon/icons/es/warning--alt/16.js";
 import ChartLine16 from "@carbon/icons/es/chart--line/16.js";
+import Help16 from "@carbon/icons/es/help/16.js";
 import GlobalAnalytics from "@carbon/pictograms/svg/global--analytics.svg?raw";
 import ListCheckbox from "@carbon/pictograms/svg/list--checkbox.svg?raw";
 import UserSearch from "@carbon/pictograms/svg/user--search.svg?raw";
@@ -65,6 +66,7 @@ type ComponentData = {
     | "table";
   pages?: Page[];
   active_page?: string;
+  context_label?: string;
   name?: string;
   label?: string;
   options?: Record<string, Option[]>;
@@ -190,16 +192,42 @@ const renderShell = (
   header.setAttribute("aria-label", "SSDC dashboard");
   const menu = carbon("cds-header-menu-button") as HTMLElement;
   menu.dataset.testid = "sidebar-toggle";
+  menu.setAttribute("collapse-mode", "rail");
   menu.setAttribute("button-label-inactive", "Open navigation menu");
   menu.setAttribute("button-label-active", "Close navigation menu");
-  const name = carbon("cds-header-name", "SSDC") as HTMLElement;
+  const name = carbon("cds-header-name") as HTMLElement;
   name.className = "cds-header-product";
   name.setAttribute("href", "#main-content");
-  header.append(menu, name);
+  const headerBrand = document.createElement("strong");
+  headerBrand.className = "cds-header-product__name";
+  headerBrand.textContent = "SSDC";
+  const product = document.createElement("span");
+  product.className = "cds-header-product__context";
+  product.textContent = "Talent Intelligence";
+  name.append(headerBrand, product);
+
+  const global = document.createElement("div");
+  global.className = "cds-header__global";
+  const context = document.createElement("span");
+  context.className = "cds-header-context";
+  context.textContent = data.context_label ?? "Prototype data";
+  const help = carbon("cds-header-global-action") as HTMLElement;
+  help.dataset.testid = "help-placeholder";
+  help.setAttribute("button-label-inactive", "Help coming soon");
+  help.setAttribute("aria-label", "Help coming soon");
+  help.setAttribute("title", "Help center coming soon");
+  help.setAttribute("disabled", "");
+  const helpIcon = createCarbonIcon(Help16);
+  helpIcon.setAttribute("slot", "icon");
+  helpIcon.setAttribute("aria-hidden", "true");
+  help.appendChild(helpIcon);
+  global.append(context, help);
+  header.append(menu, name, global);
 
   const sideNav = carbon("cds-side-nav") as HTMLElement;
   sideNav.dataset.testid = "sidebar-nav";
   sideNav.setAttribute("aria-label", "Dashboard navigation");
+  sideNav.setAttribute("collapse-mode", "fixed");
   sideNav.setAttribute("expanded", "");
 
   const brand = document.createElement("div");
@@ -246,10 +274,21 @@ const renderShell = (
 
   const mobileQuery = window.matchMedia("(max-width: 48rem)");
   let wasMobile = mobileQuery.matches;
+  const rootNode = root.getRootNode();
+  const layoutTarget =
+    rootNode instanceof ShadowRoot ? rootNode.host : root;
+  const syncGlobalLayout = () => {
+    layoutTarget.toggleAttribute(
+      "data-ssdc-sidebar-collapsed",
+      !sideNav.hasAttribute("expanded"),
+    );
+  };
   if (wasMobile) {
     sideNav.removeAttribute("expanded");
     menu.removeAttribute("active");
     name.classList.add("cds-header-product--visible");
+  } else {
+    menu.setAttribute("active", "");
   }
 
   const syncResponsiveShell = () => {
@@ -272,16 +311,18 @@ const renderShell = (
     } else {
       sideNav.style.removeProperty("width");
     }
+    syncGlobalLayout();
     wasMobile = isMobile;
   };
   syncResponsiveShell();
 
   const onMenu = () => {
-    const open = sideNav.hasAttribute("expanded");
-    sideNav.toggleAttribute("expanded", !open);
-    menu.toggleAttribute("active", !open);
-    name.classList.toggle("cds-header-product--visible", open);
-    syncResponsiveShell();
+    queueMicrotask(() => {
+      const open = menu.hasAttribute("active");
+      sideNav.toggleAttribute("expanded", open);
+      name.classList.toggle("cds-header-product--visible", open);
+      syncResponsiveShell();
+    });
   };
   menu.addEventListener("cds-header-menu-button-toggled", onMenu);
   mobileQuery.addEventListener("change", syncResponsiveShell);
@@ -299,6 +340,7 @@ const renderShell = (
     menu.removeEventListener("cds-header-menu-button-toggled", onMenu);
     mobileQuery.removeEventListener("change", syncResponsiveShell);
     sideNav.removeEventListener("click", onNavigate);
+    layoutTarget.removeAttribute("data-ssdc-sidebar-collapsed");
   };
 };
 

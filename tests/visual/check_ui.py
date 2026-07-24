@@ -89,6 +89,30 @@ def main() -> int:
         print("INFO apply/reset interaction: stable selectors exposed; state-change automation remains partial")
         print("INFO sidebar collapse/reopen: validating the responsive shell contract separately")
 
+        desktop_toggle = page.locator("[data-testid='sidebar-toggle'] button")
+        desktop_nav = page.locator("[data-testid='sidebar-nav']")
+        if not desktop_toggle.is_visible():
+            failures.append("desktop shell: top-bar sidebar toggle is not visible")
+        else:
+            desktop_toggle.click()
+            page.wait_for_timeout(250)
+            collapsed_padding = page.locator("[data-testid='stMain']").evaluate(
+                "el => getComputedStyle(el).paddingInlineStart"
+            )
+            if (
+                desktop_nav.get_attribute("expanded") is not None
+                or collapsed_padding != "0px"
+            ):
+                failures.append(
+                    "desktop shell: sidebar did not collapse with the main gutter"
+                )
+            desktop_toggle.click()
+            page.wait_for_timeout(250)
+            if desktop_nav.get_attribute("expanded") is None:
+                failures.append("desktop shell: sidebar did not reopen")
+            else:
+                print("PASS desktop shell collapse/reopen")
+
         responsive_page = browser.new_page(viewport={"width": 768, "height": 1024})
         try:
             responsive_page.goto(base_url.rstrip("/") + "/", wait_until="domcontentloaded", timeout=30_000)
@@ -100,11 +124,17 @@ def main() -> int:
                 failures.append("tablet shell: sidebar toggle is not visible")
             toggle.click()
             responsive_page.wait_for_timeout(250)
-            if not link.is_visible():
+            if sidebar.get_attribute("expanded") is None:
                 failures.append("tablet shell: navigation did not open visibly")
             toggle.click()
             responsive_page.wait_for_timeout(250)
-            if link.is_visible():
+            collapsed_width = sidebar.evaluate(
+                "el => parseFloat(getComputedStyle(el).width)"
+            )
+            if (
+                sidebar.get_attribute("expanded") is not None
+                or collapsed_width > 1
+            ):
                 failures.append("tablet shell: navigation did not close")
             if not failures:
                 print("PASS tablet shell collapse/reopen")

@@ -163,6 +163,9 @@ def inject_theme() -> None:
             box-sizing: border-box;
             padding-inline-start: var(--dashboard-sidebar-width);
         }
+        body:has([data-ssdc-sidebar-collapsed]) [data-testid="stMain"] {
+            padding-inline-start: 0;
+        }
         [data-testid="stMainBlockContainer"], .block-container {
             box-sizing: border-box;
             width: 100%;

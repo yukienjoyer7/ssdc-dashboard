@@ -28,3 +28,8 @@ declare module "@carbon/icons/es/chart--line/16.js" {
   const icon: CarbonAssetNode;
   export default icon;
 }
+
+declare module "@carbon/icons/es/help/16.js" {
+  const icon: CarbonAssetNode;
+  export default icon;
+}
