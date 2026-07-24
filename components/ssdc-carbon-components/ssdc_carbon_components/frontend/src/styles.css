@@ -75,6 +75,10 @@
 }
 
 cds-header {
+  --cds-background: var(--app-surface-background);
+  --cds-layer: var(--app-surface-background);
+  background: var(--app-surface-background);
+  border-block-end: 1px solid var(--app-border-subtle);
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 1000;
