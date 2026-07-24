@@ -112,6 +112,7 @@ const renderShell = (
   const header = carbon("cds-header") as HTMLElement;
   header.setAttribute("aria-label", "SSDC dashboard");
   const menu = carbon("cds-header-menu-button") as HTMLElement;
+  menu.dataset.testid = "sidebar-toggle";
   menu.setAttribute("button-label-inactive", "Open navigation menu");
   menu.setAttribute("button-label-active", "Close navigation menu");
   const name = carbon("cds-header-name", "SSDC") as HTMLElement;
@@ -120,6 +121,7 @@ const renderShell = (
   header.append(menu, name);
 
   const sideNav = carbon("cds-side-nav") as HTMLElement;
+  sideNav.dataset.testid = "sidebar-nav";
   sideNav.setAttribute("aria-label", "Dashboard navigation");
   sideNav.setAttribute("expanded", "");
 
@@ -157,13 +159,47 @@ const renderShell = (
   sideNav.append(brand, divider, items);
   root.append(header, sideNav);
 
+  const mobileQuery = window.matchMedia("(max-width: 48rem)");
+  let wasMobile = mobileQuery.matches;
+  if (wasMobile) {
+    sideNav.removeAttribute("expanded");
+    menu.removeAttribute("active");
+    name.classList.add("cds-header-product--visible");
+  }
+
+  const syncResponsiveShell = () => {
+    const isMobile = mobileQuery.matches;
+    if (isMobile && !wasMobile) {
+      sideNav.removeAttribute("expanded");
+      menu.removeAttribute("active");
+      name.classList.add("cds-header-product--visible");
+    } else if (!isMobile && wasMobile) {
+      sideNav.setAttribute("expanded", "");
+      menu.setAttribute("active", "");
+      name.classList.remove("cds-header-product--visible");
+    }
+    if (isMobile) {
+      sideNav.style.setProperty(
+        "width",
+        sideNav.hasAttribute("expanded") ? "16rem" : "0",
+        "important",
+      );
+    } else {
+      sideNav.style.removeProperty("width");
+    }
+    wasMobile = isMobile;
+  };
+  syncResponsiveShell();
+
   const onMenu = () => {
     const open = sideNav.hasAttribute("expanded");
     sideNav.toggleAttribute("expanded", !open);
     menu.toggleAttribute("active", !open);
     name.classList.toggle("cds-header-product--visible", open);
+    syncResponsiveShell();
   };
   menu.addEventListener("cds-header-menu-button-toggled", onMenu);
+  mobileQuery.addEventListener("change", syncResponsiveShell);
 
   const onNavigate = (event: Event) => {
     const target = event.target as HTMLElement;
@@ -176,6 +212,7 @@ const renderShell = (
 
   return () => {
     menu.removeEventListener("cds-header-menu-button-toggled", onMenu);
+    mobileQuery.removeEventListener("change", syncResponsiveShell);
     sideNav.removeEventListener("click", onNavigate);
   };
 };
@@ -219,9 +256,11 @@ const renderFilters = (
   const actions = document.createElement("div");
   actions.className = "cds-filter-toolbar__actions";
   const toggle = carbon("cds-button", "Filters") as HTMLElement;
+  toggle.dataset.testid = "global-filter-open";
   toggle.setAttribute("kind", "primary");
   toggle.setAttribute("size", "sm");
   const reset = carbon("cds-button", "Reset") as HTMLElement;
+  reset.dataset.testid = "global-filter-reset";
   reset.setAttribute("kind", "ghost");
   reset.setAttribute("size", "sm");
   actions.append(toggle, reset);
@@ -270,6 +309,7 @@ const renderFilters = (
   controls.appendChild(datePicker);
 
   const apply = carbon("cds-button", "Apply filters") as HTMLElement;
+  apply.dataset.testid = "global-filter-apply";
   apply.setAttribute("kind", "primary");
   apply.setAttribute("size", "sm");
   panel.append(controls, apply);
