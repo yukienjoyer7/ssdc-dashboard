@@ -17,5 +17,7 @@ ssdc-carbon-components = { path = "components/ssdc-carbon-components", editable 
 
 [dependency-groups]
 dev = [
+    "playwright>=1.52",
     "pytest>=8.3",
+    "pyyaml>=6.0",
 ]

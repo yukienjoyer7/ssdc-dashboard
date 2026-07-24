@@ -1,0 +1,29 @@
+base_url: "http://127.0.0.1:8501"
+
+pages:
+  - name: executive-overview
+    title: "Executive overview"
+    path: "/"
+  - name: talent-request-management
+    title: "Talent request management"
+    path: "/talent_request_management"
+  - name: talent-matching
+    title: "Talent matching"
+    path: "/talent_matching"
+  - name: selection-monitoring
+    title: "Selection monitoring"
+    path: "/selection_monitoring"
+  - name: placement-performance
+    title: "Placement performance"
+    path: "/placement_performance"
+
+viewports:
+  - name: desktop
+    width: 1440
+    height: 1000
+  - name: laptop
+    width: 1280
+    height: 900
+  - name: tablet
+    width: 768
+    height: 1024
