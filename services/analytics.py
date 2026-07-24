@@ -384,11 +384,12 @@ def semantic_matching_table(data: DashboardData, request_id: str, filters: Filte
         return pd.DataFrame(), request
     students = data.analytic("df_student_profile")
     if students is None:
+        status_cols = [
+            "NIM", "status", "ketersediaan", "CV", "IPK",
+            "tools_normalized", "domisili", "eligible",
+        ]
         students = data.table("student_all.csv").merge(
-            data.table("status_student.csv")[
-                ["NIM", "program_studi", "semester", "status", "ketersediaan", "CV", "IPK",
-                 "tools_normalized", "bidang_minat", "jenis_penempatan_diminati", "domisili", "eligible"]
-            ].drop_duplicates("NIM"),
+            data.table("status_student.csv")[status_cols].drop_duplicates("NIM"),
             on="NIM",
             how="left",
         )

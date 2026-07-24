@@ -1,6 +1,7 @@
 import pandas as pd
 
 from services.semantic_matching import (
+    _filter_eligible_students,
     _safe,
     _tokenize_keywords,
     baseline_keyword_score,
@@ -93,3 +94,79 @@ def test_baseline_uses_bidang_studi_field() -> None:
     request = pd.Series({"bidang_studi_dibutuhkan_normalized": "Informatika", "deskripsi_requirement": "Menguasai SQL"})
     student = pd.Series({"tools_normalized": "SQL"})
     assert baseline_keyword_score(request, student) > 0
+
+
+def test_filter_eligible_includes_valid_students() -> None:
+    students = pd.DataFrame({
+        "NIM": ["001", "002"],
+        "status": ["Active", "Active"],
+        "ketersediaan": ["Available", "Available"],
+        "CV": ["Ada", "Ada"],
+        "eligible": ["Ya", "Ya"],
+    })
+    result = _filter_eligible_students(students)
+    assert len(result) == 2
+
+
+def test_filter_eligible_excludes_no_cv() -> None:
+    students = pd.DataFrame({
+        "NIM": ["001", "002"],
+        "status": ["Active", "Active"],
+        "ketersediaan": ["Available", "Available"],
+        "CV": ["Ada", "Tidak"],
+        "eligible": ["Ya", "Ya"],
+    })
+    result = _filter_eligible_students(students)
+    assert len(result) == 1
+    assert result.iloc[0]["NIM"] == "001"
+
+
+def test_filter_eligible_excludes_inactive() -> None:
+    students = pd.DataFrame({
+        "NIM": ["001", "002"],
+        "status": ["Active", "Inactive"],
+        "ketersediaan": ["Available", "Available"],
+        "CV": ["Ada", "Ada"],
+        "eligible": ["Ya", "Ya"],
+    })
+    result = _filter_eligible_students(students)
+    assert len(result) == 1
+    assert result.iloc[0]["NIM"] == "001"
+
+
+def test_filter_eligible_excludes_not_available() -> None:
+    students = pd.DataFrame({
+        "NIM": ["001", "002"],
+        "status": ["Active", "Active"],
+        "ketersediaan": ["Available", "Tidak"],
+        "CV": ["Ada", "Ada"],
+        "eligible": ["Ya", "Ya"],
+    })
+    result = _filter_eligible_students(students)
+    assert len(result) == 1
+    assert result.iloc[0]["NIM"] == "001"
+
+
+def test_filter_eligible_excludes_not_eligible() -> None:
+    students = pd.DataFrame({
+        "NIM": ["001", "002"],
+        "status": ["Active", "Active"],
+        "ketersediaan": ["Available", "Available"],
+        "CV": ["Ada", "Ada"],
+        "eligible": ["Ya", "Tidak"],
+    })
+    result = _filter_eligible_students(students)
+    assert len(result) == 1
+    assert result.iloc[0]["NIM"] == "001"
+
+
+def test_filter_eligible_all_excluded_returns_empty() -> None:
+    students = pd.DataFrame({
+        "NIM": ["001"],
+        "status": ["Inactive"],
+        "ketersediaan": ["Tidak"],
+        "CV": ["Tidak"],
+        "eligible": ["Tidak"],
+    })
+    result = _filter_eligible_students(students)
+    assert len(result) == 0
