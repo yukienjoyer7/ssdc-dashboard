@@ -295,7 +295,10 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'case "pictogram"' in source
     assert 'productDescription.textContent = "Talent Intelligence Dashboard"' in source
     assert 'link.setAttribute("aria-current", "page")' in source
-    assert 'name.classList.toggle("cds-header-product--visible", open)' in source
+    assert 'header.setAttribute("aria-label", "Dashboard header")' in source
+    assert 'header.append(menu, global)' in source
+    assert 'headerBrand.textContent = "SSDC"' not in source
+    assert 'product.textContent = "Talent Intelligence"' not in source
     assert 'className = "cds-filter-toolbar"' in source
     assert 'className = "cds-filter-toolbar__summary"' in source
     assert 'toggle.setAttribute("kind", "primary")' in source
@@ -332,7 +335,7 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert "border-inline-end: 1px solid var(--cds-sidebar-border)" in styles
     assert "--cds-background: var(--cds-sidebar-background)" in styles
     assert "background: var(--cds-sidebar-background)" in styles
-    assert ".cds-header-product__context" in styles
+    assert ".cds-header-product" not in styles
     assert ".cds-header-context" in styles
     assert "background: var(--app-surface-background)" in styles
     assert "border-block-end: 1px solid var(--app-border-subtle)" in styles

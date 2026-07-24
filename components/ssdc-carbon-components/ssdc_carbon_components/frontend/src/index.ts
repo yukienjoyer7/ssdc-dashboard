@@ -189,22 +189,12 @@ const renderShell = (
   args: FrontendRendererArgs,
 ) => {
   const header = carbon("cds-header") as HTMLElement;
-  header.setAttribute("aria-label", "SSDC dashboard");
+  header.setAttribute("aria-label", "Dashboard header");
   const menu = carbon("cds-header-menu-button") as HTMLElement;
   menu.dataset.testid = "sidebar-toggle";
   menu.setAttribute("collapse-mode", "rail");
   menu.setAttribute("button-label-inactive", "Open navigation menu");
   menu.setAttribute("button-label-active", "Close navigation menu");
-  const name = carbon("cds-header-name") as HTMLElement;
-  name.className = "cds-header-product";
-  name.setAttribute("href", "#main-content");
-  const headerBrand = document.createElement("strong");
-  headerBrand.className = "cds-header-product__name";
-  headerBrand.textContent = "SSDC";
-  const product = document.createElement("span");
-  product.className = "cds-header-product__context";
-  product.textContent = "Talent Intelligence";
-  name.append(headerBrand, product);
 
   const global = document.createElement("div");
   global.className = "cds-header__global";
@@ -222,7 +212,7 @@ const renderShell = (
   helpIcon.setAttribute("aria-hidden", "true");
   help.appendChild(helpIcon);
   global.append(context, help);
-  header.append(menu, name, global);
+  header.append(menu, global);
 
   const sideNav = carbon("cds-side-nav") as HTMLElement;
   sideNav.dataset.testid = "sidebar-nav";
@@ -286,7 +276,6 @@ const renderShell = (
   if (wasMobile) {
     sideNav.removeAttribute("expanded");
     menu.removeAttribute("active");
-    name.classList.add("cds-header-product--visible");
   } else {
     menu.setAttribute("active", "");
   }
@@ -296,11 +285,9 @@ const renderShell = (
     if (isMobile && !wasMobile) {
       sideNav.removeAttribute("expanded");
       menu.removeAttribute("active");
-      name.classList.add("cds-header-product--visible");
     } else if (!isMobile && wasMobile) {
       sideNav.setAttribute("expanded", "");
       menu.setAttribute("active", "");
-      name.classList.remove("cds-header-product--visible");
     }
     if (isMobile) {
       sideNav.style.setProperty(
@@ -320,7 +307,6 @@ const renderShell = (
     queueMicrotask(() => {
       const open = menu.hasAttribute("active");
       sideNav.toggleAttribute("expanded", open);
-      name.classList.toggle("cds-header-product--visible", open);
       syncResponsiveShell();
     });
   };
