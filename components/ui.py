@@ -9,6 +9,22 @@ from data.loaders import DashboardData
 from services.analytics import dataset_as_of_date
 
 
+ANALYTICAL_GRID_SPECS = {
+    "equal": (1, 1),
+    "main_supporting": (3, 2),
+    "supporting_main": (1, 2),
+}
+
+
+def analytical_columns(variant: str = "equal", *, key: str):
+    try:
+        spec = ANALYTICAL_GRID_SPECS[variant]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported analytical grid variant: {variant}") from exc
+    with st.container(key=f"cds-analytical-grid-{key}"):
+        return st.columns(spec, gap="medium")
+
+
 def render_page_header(kicker: str, title: str, question: str) -> None:
     st.markdown(
         '<header class="cds-page-header">'

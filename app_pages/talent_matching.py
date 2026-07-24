@@ -4,7 +4,7 @@ from components.charts import render_histogram
 from components.carbon_ui import render_feedback
 from components.states import render_empty
 from components.tables import render_downloadable_table
-from components.ui import format_count, format_percent, render_kpis, render_section
+from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
 from services.analytics import matching_table, request_table
 
@@ -72,7 +72,10 @@ def main() -> None:
             "recommendation", "explanation",
         ]
         render_downloadable_table(displayed[columns], "ssdc-ranked-shortlist.csv", "matching-table")
-        left, right = st.columns([1, 2])
+        left, right = analytical_columns(
+            "supporting_main",
+            key="matching-candidate-detail",
+        )
         with left:
             render_histogram(ranked, "match_score", "Match-score distribution", color="recommendation")
         with right:

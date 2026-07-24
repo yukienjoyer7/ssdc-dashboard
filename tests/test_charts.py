@@ -198,7 +198,7 @@ def test_single_series_color_and_layout_colorway_are_explicit(monkeypatch) -> No
 def test_executive_charts_use_surfaces_without_affecting_other_pages() -> None:
     overview = Path("app_pages/executive_overview.py").read_text()
 
-    assert 'st.columns([3, 2], gap="medium")' in overview
+    assert '"main_supporting",' in overview
     assert overview.count("with chart_surface(") == 4
     assert overview.count("show_title=False") == 4
     assert "color_map=EXECUTIVE_OVERVIEW_SERIES_COLORS" in overview

@@ -4,7 +4,7 @@ import streamlit as st
 from components.charts import render_bar, render_histogram, render_horizontal_bar, render_line
 from components.states import render_empty
 from components.tables import render_downloadable_table
-from components.ui import format_count, format_percent, render_kpis, render_section
+from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
 from services.analytics import canonical_kpis, placement_table
 
@@ -32,12 +32,18 @@ def main() -> None:
     by_program = placements["study_program"].value_counts().rename_axis("study_program").reset_index(name="placements").head(10)
     by_type = placements["placement_type"].value_counts().rename_axis("placement_type").reset_index(name="placements")
     render_section("Placement outcomes", "Compare completed placement records across time and operating dimensions.")
-    left, right = st.columns(2)
+    left, right = analytical_columns(
+        "equal",
+        key="placement-outcomes-primary",
+    )
     with left:
         render_line(trend, "month", "placements", "Placement trend")
     with right:
         render_horizontal_bar(by_company, "placements", "company_name", "Placements by company")
-    left, right = st.columns(2)
+    left, right = analytical_columns(
+        "equal",
+        key="placement-outcomes-secondary",
+    )
     with left:
         render_horizontal_bar(by_program, "placements", "study_program", "Placements by study program")
     with right:

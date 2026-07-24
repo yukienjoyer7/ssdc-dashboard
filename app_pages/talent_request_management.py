@@ -3,7 +3,7 @@ import streamlit as st
 
 from components.charts import render_bar, render_horizontal_bar
 from components.tables import render_downloadable_table
-from components.ui import format_count, format_days, render_kpis, render_section
+from components.ui import analytical_columns, format_count, format_days, render_kpis, render_section
 from app_pages.common import start_page
 from services.analytics import canonical_kpis, request_table
 
@@ -51,12 +51,18 @@ def main() -> None:
     action_labels = filtered["action_label"].value_counts().rename_axis("action_label").reset_index(name="count")
 
     render_section("Request workload", "The charts are sorted to surface aging, shortage, and priority concentration.")
-    left, right = st.columns(2)
+    left, right = analytical_columns(
+        "equal",
+        key="request-workload-primary",
+    )
     with left:
         render_bar(aging, "aging_band", "count", "Request aging distribution", color="aging_band")
     with right:
         render_horizontal_bar(gaps, "headcount_gap", "label", "Largest headcount gaps")
-    left, right = st.columns(2)
+    left, right = analytical_columns(
+        "equal",
+        key="request-workload-secondary",
+    )
     with left:
         render_horizontal_bar(supply, "candidate_applications", "label", "Candidate applications", color="action_label")
     with right:

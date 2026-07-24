@@ -60,6 +60,14 @@ SPACING = {
     "09": "3rem",
 }
 
+DASHBOARD_LAYOUT = {
+    "content_max_width": "1400px",
+    "sidebar_width": "16rem",
+    "gutter_wide": "2rem",
+    "gutter_medium": "1.5rem",
+    "gutter_narrow": "1rem",
+}
+
 CHART_CATEGORICAL = [
     "#4589ff",
     "#009d9a",
@@ -126,7 +134,11 @@ def _typography_css_tokens() -> str:
         f"            --cds-spacing-{name}: {value};"
         for name, value in SPACING.items()
     ]
-    return "\n".join([*app_tokens, *spacing_tokens])
+    layout_tokens = [
+        f"            --dashboard-{name.replace('_', '-')}: {value};"
+        for name, value in DASHBOARD_LAYOUT.items()
+    ]
+    return "\n".join([*app_tokens, *spacing_tokens, *layout_tokens])
 
 
 def spacing_px(token: str) -> int:
@@ -147,9 +159,18 @@ def inject_theme() -> None:
         [data-testid="stAppViewContainer"], [data-testid="stMain"] {
             background: var(--app-surface-layer-01);
         }
-        .block-container {
-            max-width: none;
-            padding: calc(3rem + var(--cds-spacing-06)) 2rem var(--cds-spacing-09) 18rem;
+        [data-testid="stMain"] {
+            box-sizing: border-box;
+            padding-inline-start: var(--dashboard-sidebar-width);
+        }
+        [data-testid="stMainBlockContainer"], .block-container {
+            box-sizing: border-box;
+            width: 100%;
+            max-width: var(--dashboard-content-max-width);
+            margin-inline: auto;
+            padding: calc(3rem + var(--cds-spacing-06))
+                var(--dashboard-gutter-wide)
+                var(--cds-spacing-09);
         }
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
             font-family: var(--app-font-family);
@@ -246,9 +267,29 @@ def inject_theme() -> None:
             line-height: 1.125rem;
             margin: var(--cds-spacing-02) 0 0;
         }
+        @media (max-width: 75rem) {
+            [class*="st-key-cds-analytical-grid-"] [data-testid="stHorizontalBlock"] {
+                flex-direction: column;
+            }
+            [class*="st-key-cds-analytical-grid-"] [data-testid="stColumn"] {
+                flex: 1 1 auto !important;
+                width: 100% !important;
+                min-width: 100% !important;
+            }
+        }
+        @media (max-width: 56.25rem) {
+            [data-testid="stMainBlockContainer"], .block-container {
+                padding-inline: var(--dashboard-gutter-medium);
+            }
+        }
         @media (max-width: 48rem) {
-            .block-container {
-                padding: calc(3rem + var(--cds-spacing-06)) var(--cds-spacing-05) var(--cds-spacing-09);
+            [data-testid="stMain"] {
+                padding-inline-start: 0;
+            }
+        }
+        @media (max-width: 40rem) {
+            [data-testid="stMainBlockContainer"], .block-container {
+                padding-inline: var(--dashboard-gutter-narrow);
             }
         }
         </style>

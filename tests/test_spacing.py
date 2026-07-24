@@ -55,10 +55,9 @@ def test_shared_theme_uses_spacing_tokens_without_stacked_header_margins(
     css = str(captured["body"])
     for token, value in theme.SPACING.items():
         assert f"--cds-spacing-{token}: {value};" in css
-    assert (
-        "padding: calc(3rem + var(--cds-spacing-06)) 2rem "
-        "var(--cds-spacing-09) 18rem;"
-    ) in css
+    assert "padding: calc(3rem + var(--cds-spacing-06))" in css
+    assert "var(--dashboard-gutter-wide)" in css
+    assert "var(--cds-spacing-09);" in css
     assert '.cds-page-header {\n            max-width: 52rem;\n            margin: 0;' in css
     assert '.cds-section-header {\n            max-width: 56rem;\n            margin: 0;' in css
     assert "margin-block-end: var(--cds-spacing-03);" in css

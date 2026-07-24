@@ -3,7 +3,7 @@ import streamlit as st
 
 from components.charts import chart_surface, render_bar, render_horizontal_bar, render_line
 from components.tables import render_downloadable_table
-from components.ui import format_count, format_percent, render_kpis, render_section
+from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
 from config.theme import CHART_PRIMARY, EXECUTIVE_OVERVIEW_SERIES_COLORS
 from services.analytics import canonical_kpis, request_table, selection_table, placement_table
@@ -58,7 +58,10 @@ def main() -> None:
     action_labels = requests["action_label"].value_counts().rename_axis("action_label").reset_index(name="count")
 
     render_section("Pipeline movement", "Request and placement events by month.")
-    left, right = st.columns([3, 2], gap="medium")
+    left, right = analytical_columns(
+        "main_supporting",
+        key="overview-pipeline-movement",
+    )
     with left:
         with chart_surface(
             "Talent requests and placements",
@@ -89,7 +92,10 @@ def main() -> None:
                 series_color=CHART_PRIMARY,
             )
 
-    left, right = st.columns(2, gap="medium")
+    left, right = analytical_columns(
+        "equal",
+        key="overview-secondary-analysis",
+    )
     with left:
         with chart_surface(
             "Largest fulfilment gaps",

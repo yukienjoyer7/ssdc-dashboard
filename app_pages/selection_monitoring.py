@@ -3,7 +3,7 @@ import streamlit as st
 from components.charts import render_bar, render_horizontal_bar
 from components.states import render_empty
 from components.tables import render_downloadable_table
-from components.ui import format_count, render_kpis, render_section
+from components.ui import analytical_columns, format_count, render_kpis, render_section
 from app_pages.common import start_page
 from services.analytics import canonical_kpis, selection_table
 
@@ -53,7 +53,10 @@ def main() -> None:
     aging = filtered.groupby("progress_student", as_index=False)["stage_aging_days"].mean().rename(columns={"progress_student": "stage", "stage_aging_days": "average_days"}).sort_values("average_days")
     risks = filtered.groupby("company_name", as_index=False)[["follow_up_overdue", "ghosting_warning"]].sum().sort_values("ghosting_warning", ascending=False).head(10)
     render_section("Selection risk", "Use the action table to identify the record, stage, and next follow-up context.")
-    left, right = st.columns(2)
+    left, right = analytical_columns(
+        "equal",
+        key="selection-risk",
+    )
     with left:
         render_bar(stages, "stage", "count", "Selection-stage distribution", color="stage")
     with right:
