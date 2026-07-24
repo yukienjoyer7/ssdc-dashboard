@@ -36,3 +36,29 @@ uv run python -m compileall app.py config components data services app_pages tes
 
 Every iteration must review the complete application. Prefer shared-system corrections, re-test after coherent batches, and document regression risks. Do not begin open-ended redesign or invent selectors merely to make checks pass.
 
+# 13. Git and Commit Discipline
+
+You are expected to create local commits throughout the autonomous improvement loop.
+
+Commits must be:
+
+1. **Atomic**
+2. **Conventional Commits compliant**
+3. **Validated before commit**
+4. **Limited to one logical change**
+
+Do not wait until the end of the entire experiment to create one large commit.
+
+## Atomic Commit Rule
+
+Each commit should represent one coherent change that can be understood,
+reviewed, and reverted independently.
+
+Good:
+
+```text
+fix(ui): reduce excessive section spacing
+refactor(ui): centralize analytical surface styling
+fix(charts): stabilize category color mapping
+test(ui): add stable selectors for filter controls
+```

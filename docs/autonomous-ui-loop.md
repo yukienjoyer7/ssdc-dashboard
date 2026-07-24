@@ -30,3 +30,29 @@ Convergence requires all of the following: every page overall score ≥4.0; no p
 
 Failure handling: distinguish app failures, deterministic harness failures, environment/browser failures, and review uncertainty. Fix or document only what is in scope. Do not fabricate screenshots, scores, or accessibility compliance. Git safety: preserve the current branch and user changes; do not switch, merge, rebase, reset, push, rewrite history, or modify Git configuration.
 
+# 13. Git and Commit Discipline
+
+You are expected to create local commits throughout the autonomous improvement loop.
+
+Commits must be:
+
+1. **Atomic**
+2. **Conventional Commits compliant**
+3. **Validated before commit**
+4. **Limited to one logical change**
+
+Do not wait until the end of the entire experiment to create one large commit.
+
+## Atomic Commit Rule
+
+Each commit should represent one coherent change that can be understood,
+reviewed, and reverted independently.
+
+Good:
+
+```text
+fix(ui): reduce excessive section spacing
+refactor(ui): centralize analytical surface styling
+fix(charts): stabilize category color mapping
+test(ui): add stable selectors for filter controls
+```
