@@ -1,11 +1,12 @@
 import streamlit as st
 
-from components.charts import chart_surface, render_histogram
+from components.charts import chart_surface, render_bar
 from components.carbon_ui import render_feedback
 from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, control_group, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
+from config.theme import RECOMMENDATION_COLORS
 from services.analytics import matching_table, request_table
 
 
@@ -79,16 +80,29 @@ def main() -> None:
         )
         with left:
             with chart_surface(
-                "Match-score distribution",
-                "Candidate scores grouped by recommendation outcome.",
+                "Candidates by match score",
+                "Exact score values grouped by recommendation outcome.",
                 key="matching-score-distribution",
             ):
-                render_histogram(
-                    ranked,
-                    "match_score",
-                    "Match-score distribution",
+                score_counts = (
+                    ranked.groupby(["match_score", "recommendation"], as_index=False)
+                    .size()
+                    .rename(columns={"size": "candidates"})
+                    .sort_values("match_score")
+                )
+                score_counts["score_label"] = score_counts["match_score"].astype(int).astype(str)
+                render_bar(
+                    score_counts,
+                    "score_label",
+                    "candidates",
+                    "Candidates by match score",
                     color="recommendation",
                     show_title=False,
+                    color_map=RECOMMENDATION_COLORS,
+                    x_title="Match score",
+                    y_title="Candidates",
+                    category_order=score_counts["score_label"].drop_duplicates().tolist(),
+                    tick_angle=0,
                 )
         with right:
             candidate_ids = displayed["NIM"].tolist()

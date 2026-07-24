@@ -107,6 +107,52 @@ CARBON_STATUS_COLORS = {
     "error": "#da1e28",
 }
 
+ACTION_LABEL_COLORS = {
+    "Belum Dikirim": CARBON_STATUS_COLORS["warning"],
+    "Kurang Kandidat": CARBON_STATUS_COLORS["info"],
+    "Belum Terpenuhi": CARBON_STATUS_COLORS["error"],
+    "Terpenuhi": CARBON_STATUS_COLORS["success"],
+    "Closed": TEXT_COLORS["secondary"],
+}
+
+ACTION_LABEL_ORDER = [
+    "Belum Dikirim",
+    "Kurang Kandidat",
+    "Belum Terpenuhi",
+    "Terpenuhi",
+    "Closed",
+]
+
+SELECTION_STAGE_ORDER = [
+    "Submitted",
+    "Interview User",
+    "FU 1",
+    "FU 2",
+    "FU 3",
+    "Finish",
+    "Placement",
+    "Ghosting",
+    "Rejected",
+]
+
+SELECTION_STAGE_COLORS = {
+    "Submitted": CARBON_STATUS_COLORS["info"],
+    "Interview User": "#8a3ffc",
+    "FU 1": "#009d9a",
+    "FU 2": "#009d9a",
+    "FU 3": "#009d9a",
+    "Finish": TEXT_COLORS["secondary"],
+    "Placement": CARBON_STATUS_COLORS["success"],
+    "Ghosting": CARBON_STATUS_COLORS["error"],
+    "Rejected": "#8d8d8d",
+}
+
+RECOMMENDATION_COLORS = {
+    "Strong match": CARBON_STATUS_COLORS["success"],
+    "Potential match": CARBON_STATUS_COLORS["info"],
+    "Review": CARBON_STATUS_COLORS["warning"],
+}
+
 
 def _typography_css_tokens() -> str:
     surface_token_names = {
@@ -270,6 +316,9 @@ def inject_theme() -> None:
             padding: var(--cds-spacing-05);
             transition: border-color 110ms ease-out;
         }
+        [class*="st-key-cds-chart-surface-compact-"] {
+            min-height: 18rem;
+        }
         [class*="st-key-cds-chart-surface-"]:hover {
             border-color: var(--app-border-strong) !important;
         }
@@ -289,6 +338,31 @@ def inject_theme() -> None:
             font-weight: var(--app-weight-regular);
             line-height: 1.125rem;
             margin: var(--cds-spacing-02) 0 0;
+        }
+        .cds-chart-insight {
+            display: flex;
+            min-height: 10rem;
+            flex-direction: column;
+            justify-content: center;
+            border-left: 3px solid var(--app-interactive);
+            padding: var(--cds-spacing-05) var(--cds-spacing-06);
+            background: var(--app-surface-layer-01);
+        }
+        .cds-chart-insight__value {
+            color: var(--app-text-primary);
+            font-size: 2rem;
+            font-weight: var(--app-weight-semibold);
+            line-height: 1.1;
+        }
+        .cds-chart-insight__label,
+        .cds-chart-insight__detail {
+            margin: var(--cds-spacing-02) 0 0;
+            color: var(--app-text-primary);
+            font-size: var(--app-type-body-compact);
+            line-height: 1.4;
+        }
+        .cds-chart-insight__detail {
+            color: var(--app-text-secondary);
         }
         @media (max-width: 75rem) {
             [class*="st-key-cds-analytical-grid-"] [data-testid="stHorizontalBlock"] {

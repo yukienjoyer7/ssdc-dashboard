@@ -1,10 +1,12 @@
 import pandas as pd
 import streamlit as st
 
+from components.chart_data import REQUEST_LABEL_COLUMN, ordered_counts, with_request_labels
 from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, control_group, format_count, format_days, render_kpis, render_section
 from app_pages.common import start_page
+from config.theme import ACTION_LABEL_COLORS, ACTION_LABEL_ORDER, CHART_PRIMARY
 from services.analytics import canonical_kpis, request_table
 
 
@@ -47,9 +49,11 @@ def main() -> None:
             labels=["0-7 days", "8-14 days", "15-30 days", ">30 days"],
         )
     )["aging_band"].value_counts(sort=False).rename_axis("aging_band").reset_index(name="count")
-    gaps = filtered.nlargest(10, "headcount_gap").assign(label=lambda frame: frame["company_name"] + " / " + frame["nama_posisi"])
-    supply = filtered.nlargest(10, "requested_headcount").assign(label=lambda frame: frame["company_name"] + " / " + frame["nama_posisi"])
-    action_labels = filtered["action_label"].value_counts().rename_axis("action_label").reset_index(name="count")
+    aging = aging.loc[aging["count"].gt(0)].reset_index(drop=True)
+    gaps = with_request_labels(filtered.loc[filtered["headcount_gap"].gt(0)].nlargest(10, "headcount_gap"))
+    supply = with_request_labels(filtered.nlargest(10, "candidate_applications"))
+    action_labels = ordered_counts(filtered["action_label"], ACTION_LABEL_ORDER)
+    action_labels = action_labels.rename(columns={"category": "action_label"})
 
     render_section("Request workload", "The charts are sorted to surface aging, shortage, and priority concentration.")
     left, right = analytical_columns(
@@ -67,8 +71,13 @@ def main() -> None:
                 "aging_band",
                 "count",
                 "Request aging distribution",
-                color="aging_band",
                 show_title=False,
+                series_color=CHART_PRIMARY,
+                x_title="Aging band",
+                y_title="Requests",
+                category_order=aging["aging_band"].tolist(),
+                show_legend=False,
+                tick_angle=-20,
             )
     with right:
         with chart_surface(
@@ -79,9 +88,11 @@ def main() -> None:
             render_horizontal_bar(
                 gaps,
                 "headcount_gap",
-                "label",
+                REQUEST_LABEL_COLUMN,
                 "Largest headcount gaps",
                 show_title=False,
+                x_title="Headcount gap",
+                y_title="Request",
             )
     left, right = analytical_columns(
         "equal",
@@ -96,10 +107,14 @@ def main() -> None:
             render_horizontal_bar(
                 supply,
                 "candidate_applications",
-                "label",
+                REQUEST_LABEL_COLUMN,
                 "Candidate applications",
                 color="action_label",
                 show_title=False,
+                color_map=ACTION_LABEL_COLORS,
+                x_title="Applications",
+                y_title="Request",
+                show_legend=False,
             )
     with right:
         with chart_surface(
@@ -114,6 +129,12 @@ def main() -> None:
                 "Requests by action label",
                 color="action_label",
                 show_title=False,
+                color_map=ACTION_LABEL_COLORS,
+                x_title="Action label",
+                y_title="Requests",
+                category_order=action_labels["action_label"].tolist(),
+                show_legend=False,
+                tick_angle=-25,
             )
 
     render_section("Action table", "Select a request ID to preserve it for the matching page.")

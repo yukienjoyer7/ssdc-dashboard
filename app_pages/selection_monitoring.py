@@ -1,10 +1,12 @@
 import streamlit as st
 
+from components.chart_data import ordered_counts
 from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, control_group, format_count, render_kpis, render_section
 from app_pages.common import start_page
+from config.theme import CARBON_STATUS_COLORS, SELECTION_STAGE_COLORS, SELECTION_STAGE_ORDER
 from services.analytics import canonical_kpis, selection_table
 
 
@@ -22,7 +24,7 @@ def main() -> None:
     kpis = canonical_kpis(data, filters)
     with control_group("Filter records", key="selection-filters"):
         show_follow_up = st.checkbox("Follow-up overdue only", key="selection_follow_up_only")
-        show_ghosting = st.checkbox("Ghosting warning only", key="selection_ghosting_only")
+        show_ghosting = st.checkbox("Ghosting cases only", key="selection_ghosting_only")
         stage_options = ["All stages", *sorted(selection["progress_student"].dropna().unique().tolist())]
         stage = st.selectbox("Current stage", stage_options, key="selection_stage")
     filtered = selection.copy()
@@ -50,9 +52,22 @@ def main() -> None:
         {"label": "FU3", "value": format_count(fu_counts.get("FU 3", 0))},
     ], columns_per_row=8, variant="compact")
 
-    stages = filtered["progress_student"].value_counts().rename_axis("stage").reset_index(name="count")
-    aging = filtered.groupby("progress_student", as_index=False)["stage_aging_days"].mean().rename(columns={"progress_student": "stage", "stage_aging_days": "average_days"}).sort_values("average_days")
-    risks = filtered.groupby("company_name", as_index=False)[["follow_up_overdue", "ghosting_warning"]].sum().sort_values("ghosting_warning", ascending=False).head(10)
+    stages = ordered_counts(filtered["progress_student"], SELECTION_STAGE_ORDER)
+    stages = stages.rename(columns={"category": "stage"})
+    aging = (
+        filtered.groupby("progress_student", as_index=False)["stage_aging_days"]
+        .mean()
+        .rename(columns={"progress_student": "stage", "stage_aging_days": "average_days"})
+        .sort_values("average_days", ascending=False)
+    )
+    aging["average_days"] = aging["average_days"].round(1)
+    risks = (
+        filtered.groupby("company_name", as_index=False)[["follow_up_overdue", "ghosting_warning"]]
+        .sum()
+        .loc[lambda frame: frame["ghosting_warning"].gt(0)]
+        .sort_values("ghosting_warning", ascending=False)
+        .head(10)
+    )
     render_section("Selection risk", "Use the action table to identify the record, stage, and next follow-up context.")
     left, right = analytical_columns(
         "equal",
@@ -71,6 +86,12 @@ def main() -> None:
                 "Selection-stage distribution",
                 color="stage",
                 show_title=False,
+                color_map=SELECTION_STAGE_COLORS,
+                x_title="Selection stage",
+                y_title="Candidates",
+                category_order=stages["stage"].tolist(),
+                show_legend=False,
+                tick_angle=-25,
             )
     with right:
         with chart_surface(
@@ -84,19 +105,27 @@ def main() -> None:
                 "stage",
                 "Average aging by stage",
                 show_title=False,
+                x_title="Average days",
+                y_title="Selection stage",
+                category_order=aging["stage"].tolist(),
+                show_legend=False,
             )
     with chart_surface(
-        "Ghosting warnings by company",
-        "Companies grouped by active ghosting-warning records.",
-        key="selection-ghosting-warnings",
+        "Ghosting cases by company",
+        "Companies with one or more canonical ghosting outcomes.",
+        key="selection-ghosting-cases",
     ):
         render_bar(
             risks,
             "company_name",
             "ghosting_warning",
-            "Ghosting warnings by company",
-            color="company_name",
+            "Ghosting cases by company",
             show_title=False,
+            series_color=CARBON_STATUS_COLORS["error"],
+            x_title="Company",
+            y_title="Ghosting cases",
+            show_legend=False,
+            tick_angle=-20,
         )
 
     render_section("Follow-up action table", "Current-stage records are shown with the source status and prototype warning flags.")

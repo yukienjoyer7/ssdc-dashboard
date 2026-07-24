@@ -167,6 +167,22 @@ def test_business_series_colors_are_stable_with_partial_data(monkeypatch) -> Non
     assert figures[-1].data[0].line.color == "#009d9a"
 
 
+def test_line_renderer_can_keep_month_labels_categorical(monkeypatch) -> None:
+    figures: list[object] = []
+    monkeypatch.setattr(charts.st, "plotly_chart", lambda figure, **options: figures.append(figure))
+
+    charts.render_line(
+        pd.DataFrame({"month": ["2026-01", "2026-02"], "count": [1, 2]}),
+        "month",
+        "count",
+        "Placement trend",
+        show_title=False,
+        x_type="category",
+    )
+
+    assert figures[0].layout.xaxis.type == "category"
+
+
 def test_single_series_color_and_layout_colorway_are_explicit(monkeypatch) -> None:
     figures: list[object] = []
     frame = pd.DataFrame(

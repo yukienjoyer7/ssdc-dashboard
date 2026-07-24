@@ -1,11 +1,17 @@
-import pandas as pd
 import streamlit as st
 
+from components.chart_data import REQUEST_LABEL_COLUMN, monthly_counts, ordered_counts, with_request_labels
 from components.charts import chart_surface, render_bar, render_horizontal_bar, render_line
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
-from config.theme import CHART_PRIMARY, EXECUTIVE_OVERVIEW_SERIES_COLORS
+from config.theme import (
+    ACTION_LABEL_COLORS,
+    ACTION_LABEL_ORDER,
+    CHART_PRIMARY,
+    EXECUTIVE_OVERVIEW_SERIES_COLORS,
+    SELECTION_STAGE_ORDER,
+)
 from services.analytics import canonical_kpis, request_table, selection_table, placement_table
 
 
@@ -47,15 +53,18 @@ def main() -> None:
         key="executive-pipeline-volume",
     )
 
-    trend_requests = requests.assign(month=pd.to_datetime(requests["request_date"]).dt.to_period("M").astype(str)).groupby("month", as_index=False).size().rename(columns={"size": "count"})
-    trend_placements = placements.assign(month=pd.to_datetime(placements["placement_date"]).dt.to_period("M").astype(str)).groupby("month", as_index=False).size().rename(columns={"size": "count"})
-    trend = pd.concat([
-        trend_requests.assign(metric="Talent requests"),
-        trend_placements.assign(metric="Placements"),
-    ], ignore_index=True)
-    stage_counts = selection["progress_student"].value_counts().rename_axis("stage").reset_index(name="count")
-    gap = requests.nlargest(8, "headcount_gap").assign(label=lambda frame: frame["company_name"] + " / " + frame["nama_posisi"])
-    action_labels = requests["action_label"].value_counts().rename_axis("action_label").reset_index(name="count")
+    trend = monthly_counts(
+        {
+            "Talent requests": (requests, "request_date"),
+            "Placements": (placements, "placement_date"),
+        },
+        "count",
+    )
+    stage_counts = ordered_counts(selection["progress_student"], SELECTION_STAGE_ORDER)
+    stage_counts = stage_counts.rename(columns={"category": "stage"})
+    gap = with_request_labels(requests.loc[requests["headcount_gap"].gt(0)].nlargest(8, "headcount_gap"))
+    action_labels = ordered_counts(requests["action_label"], ACTION_LABEL_ORDER)
+    action_labels = action_labels.rename(columns={"category": "action_label"})
 
     render_section("Pipeline movement", "Request and placement events by month.")
     left, right = analytical_columns(
@@ -76,6 +85,9 @@ def main() -> None:
                 color="metric",
                 show_title=False,
                 color_map=EXECUTIVE_OVERVIEW_SERIES_COLORS,
+                x_title="Month",
+                y_title="Records",
+                x_type="category",
             )
     with right:
         with chart_surface(
@@ -90,6 +102,10 @@ def main() -> None:
                 "Current selection-stage distribution",
                 show_title=False,
                 series_color=CHART_PRIMARY,
+                x_title="Candidates",
+                y_title="Selection stage",
+                category_order=stage_counts["stage"].tolist(),
+                show_legend=False,
             )
 
     left, right = analytical_columns(
@@ -105,9 +121,11 @@ def main() -> None:
             render_horizontal_bar(
                 gap,
                 "headcount_gap",
-                "label",
+                REQUEST_LABEL_COLUMN,
                 "Largest fulfilment gaps",
                 show_title=False,
+                x_title="Headcount gap",
+                y_title="Request",
             )
     with right:
         with chart_surface(
@@ -122,6 +140,12 @@ def main() -> None:
                 "Requests by action label",
                 color="action_label",
                 show_title=False,
+                color_map=ACTION_LABEL_COLORS,
+                x_title="Action label",
+                y_title="Requests",
+                category_order=action_labels["action_label"].tolist(),
+                show_legend=False,
+                tick_angle=-25,
             )
 
     render_section("Requests requiring action", "Use the request-management page to inspect the reason and next operational step.")
