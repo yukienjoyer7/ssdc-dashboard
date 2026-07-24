@@ -102,13 +102,20 @@ def _load_source_tables(data_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     return df_request[existing].drop_duplicates("id_talent_req"), df_student
 
 
-def _encode_texts(texts: list[str], model: Any, show_progress: bool = True) -> np.ndarray:
-    return model.encode(
-        texts,
+def _encode_texts(
+    texts: list[str],
+    model: Any,
+    show_progress: bool = True,
+    prompt_name: str | None = None,
+) -> np.ndarray:
+    kwargs: dict[str, Any] = dict(
         batch_size=BATCH_SIZE,
         show_progress_bar=show_progress,
         normalize_embeddings=True,
     )
+    if prompt_name is not None:
+        kwargs["prompt_name"] = prompt_name
+    return model.encode(texts, **kwargs)
 
 
 def build_all(data_dir: str | Path | None = None, top_k: int = TOP_K) -> dict[str, Any]:
@@ -127,7 +134,7 @@ def build_all(data_dir: str | Path | None = None, top_k: int = TOP_K) -> dict[st
     print(f"Loading model {MODEL_NAME} ...")
     model = SentenceTransformer(MODEL_NAME, trust_remote_code=True)
     print("Encoding request vectors ...")
-    request_vecs = _encode_texts(request_texts, model)
+    request_vecs = _encode_texts(request_texts, model, prompt_name="query")
     print(f"Encoding {len(student_texts)} student vectors ...")
     student_vecs = _encode_texts(student_texts, model)
     rows: list[dict[str, Any]] = []
