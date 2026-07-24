@@ -1,4 +1,5 @@
-from collections.abc import Iterable
+from collections.abc import Iterator, Iterable
+from contextlib import contextmanager
 from html import escape
 
 import pandas as pd
@@ -23,6 +24,17 @@ def analytical_columns(variant: str = "equal", *, key: str):
         raise ValueError(f"Unsupported analytical grid variant: {variant}") from exc
     with st.container(key=f"cds-analytical-grid-{key}"):
         return st.columns(spec, gap="medium")
+
+
+@contextmanager
+def control_group(label: str, *, key: str) -> Iterator[None]:
+    """Render related page controls in one compact, labelled group."""
+    with st.container(key=f"cds-control-group-{key}"):
+        st.markdown(
+            f'<p class="cds-control-group__label">{escape(label)}</p>',
+            unsafe_allow_html=True,
+        )
+        yield
 
 
 def render_page_header(kicker: str, title: str, question: str) -> None:

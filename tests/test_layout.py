@@ -59,6 +59,8 @@ def test_theme_constrains_the_main_region_responsively(monkeypatch) -> None:
     assert "var(--dashboard-gutter-wide)" in css
     assert "@media (max-width: 75rem)" in css
     assert '[class*="st-key-cds-analytical-grid-"]' in css
+    assert '[class*="st-key-cds-control-group-"]' in css
+    assert ".cds-control-group__label" in css
     assert "flex-direction: column;" in css
     assert "@media (max-width: 56.25rem)" in css
     assert "padding-inline: var(--dashboard-gutter-medium);" in css
@@ -107,6 +109,37 @@ def test_analytical_columns_use_only_the_shared_grid_specs(monkeypatch) -> None:
 
     with pytest.raises(ValueError, match="Unsupported analytical grid variant"):
         ui.analytical_columns("irregular", key="invalid")
+
+
+def test_control_group_uses_a_stable_shared_container(monkeypatch) -> None:
+    container_keys: list[str] = []
+    markdown_calls: list[tuple[str, bool]] = []
+
+    class FakeContainer:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        ui.st,
+        "container",
+        lambda *, key: container_keys.append(key) or FakeContainer(),
+    )
+    monkeypatch.setattr(
+        ui.st,
+        "markdown",
+        lambda body, **options: markdown_calls.append((body, options["unsafe_allow_html"])),
+    )
+
+    with ui.control_group("Filter requests", key="request-filters"):
+        pass
+
+    assert container_keys == ["cds-control-group-request-filters"]
+    assert markdown_calls == [
+        ('<p class="cds-control-group__label">Filter requests</p>', True),
+    ]
 
 
 def test_dashboard_pages_use_the_shared_analytical_grid() -> None:

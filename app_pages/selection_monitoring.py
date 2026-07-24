@@ -3,7 +3,7 @@ import streamlit as st
 from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.states import render_empty
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, format_count, render_kpis, render_section
+from components.ui import analytical_columns, control_group, format_count, render_kpis, render_section
 from app_pages.common import start_page
 from services.analytics import canonical_kpis, selection_table
 
@@ -20,10 +20,11 @@ def main() -> None:
     )
     selection = selection_table(data, filters)
     kpis = canonical_kpis(data, filters)
-    show_follow_up = st.checkbox("Follow-up overdue only", key="selection_follow_up_only")
-    show_ghosting = st.checkbox("Ghosting warning only", key="selection_ghosting_only")
-    stage_options = ["All stages", *sorted(selection["progress_student"].dropna().unique().tolist())]
-    stage = st.selectbox("Current stage", stage_options, key="selection_stage")
+    with control_group("Filter records", key="selection-filters"):
+        show_follow_up = st.checkbox("Follow-up overdue only", key="selection_follow_up_only")
+        show_ghosting = st.checkbox("Ghosting warning only", key="selection_ghosting_only")
+        stage_options = ["All stages", *sorted(selection["progress_student"].dropna().unique().tolist())]
+        stage = st.selectbox("Current stage", stage_options, key="selection_stage")
     filtered = selection.copy()
     if show_follow_up:
         filtered = filtered.loc[filtered["follow_up_overdue"]].copy()

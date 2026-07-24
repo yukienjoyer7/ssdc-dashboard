@@ -230,6 +230,20 @@ def inject_theme() -> None:
             font-weight: var(--app-weight-regular);
             line-height: 1.45;
         }
+        [class*="st-key-cds-control-group-"] {
+            gap: var(--cds-spacing-02);
+            margin-block-end: var(--cds-spacing-04);
+            padding-block: var(--cds-spacing-02);
+            border-block: 1px solid var(--app-border-subtle);
+        }
+        .cds-control-group__label {
+            margin: 0 0 var(--cds-spacing-02);
+            color: var(--app-text-secondary);
+            font-size: var(--app-type-label);
+            font-weight: var(--app-weight-semibold);
+            letter-spacing: 0.02em;
+            line-height: 1rem;
+        }
         .carbon-chart-title {
             color: var(--app-text-primary);
             font-size: var(--app-type-chart-title);

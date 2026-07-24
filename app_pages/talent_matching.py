@@ -4,7 +4,7 @@ from components.charts import chart_surface, render_histogram
 from components.carbon_ui import render_feedback
 from components.states import render_empty
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
+from components.ui import analytical_columns, control_group, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
 from services.analytics import matching_table, request_table
 
@@ -49,8 +49,9 @@ def main() -> None:
         key="matching-request-requirements",
     )
 
-    eligibility_only = st.checkbox("Show eligible candidates only", value=True, key="matching_eligible_only")
-    min_score = st.slider("Minimum match score", 0, 100, 0, key="matching_min_score")
+    with control_group("Refine shortlist", key="matching-filters"):
+        eligibility_only = st.checkbox("Show eligible candidates only", value=True, key="matching_eligible_only")
+        min_score = st.slider("Minimum match score", 0, 100, 0, key="matching_min_score")
     displayed = ranked.loc[ranked["match_score"] >= min_score].copy()
     if eligibility_only:
         displayed = displayed.loc[displayed["eligible"]].copy()

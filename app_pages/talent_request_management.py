@@ -3,7 +3,7 @@ import streamlit as st
 
 from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, format_count, format_days, render_kpis, render_section
+from components.ui import analytical_columns, control_group, format_count, format_days, render_kpis, render_section
 from app_pages.common import start_page
 from services.analytics import canonical_kpis, request_table
 
@@ -21,9 +21,10 @@ def main() -> None:
     requests = request_table(data, filters)
     kpis = canonical_kpis(data, filters)
     categories = ["All action labels", "Belum Dikirim", "Kurang Kandidat", "Belum Terpenuhi", "Terpenuhi", "Closed"]
-    category = st.selectbox("Action label", categories, key="request_action_label")
-    min_aging = st.slider("Minimum request aging", 0, int(requests["aging_days"].max()) if not requests.empty else 0, 0, key="request_min_aging")
-    min_gap = st.number_input("Minimum headcount gap", min_value=0, value=0, step=1, key="request_min_gap")
+    with control_group("Filter requests", key="request-filters"):
+        category = st.selectbox("Action label", categories, key="request_action_label")
+        min_aging = st.slider("Minimum request aging", 0, int(requests["aging_days"].max()) if not requests.empty else 0, 0, key="request_min_aging")
+        min_gap = st.number_input("Minimum headcount gap", min_value=0, value=0, step=1, key="request_min_gap")
     filtered = requests.loc[(requests["aging_days"] >= min_aging) & (requests["headcount_gap"] >= min_gap)].copy()
     if category != "All action labels":
         filtered = filtered.loc[filtered["action_label"] == category].copy()
