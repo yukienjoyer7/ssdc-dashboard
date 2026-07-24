@@ -38,7 +38,7 @@ def main() -> None:
         {"label": "Average active aging", "value": format_days(average_aging)},
         {"label": "Overdue request count", "value": format_count(overdue)},
         {"label": "Unsent request count", "value": format_count(unsent)},
-    ])
+    ], columns_per_row=6, variant="compact")
 
     aging = filtered.assign(
         aging_band=pd.cut(

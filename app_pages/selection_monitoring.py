@@ -47,7 +47,7 @@ def main() -> None:
         {"label": "FU1", "value": format_count(fu_counts.get("FU 1", 0))},
         {"label": "FU2", "value": format_count(fu_counts.get("FU 2", 0))},
         {"label": "FU3", "value": format_count(fu_counts.get("FU 3", 0))},
-    ], columns_per_row=4)
+    ], columns_per_row=8, variant="compact")
 
     stages = filtered["progress_student"].value_counts().rename_axis("stage").reset_index(name="count")
     aging = filtered.groupby("progress_student", as_index=False)["stage_aging_days"].mean().rename(columns={"progress_student": "stage", "stage_aging_days": "average_days"}).sort_values("average_days")

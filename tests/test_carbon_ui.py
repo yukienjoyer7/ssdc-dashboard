@@ -229,7 +229,11 @@ def test_executive_overview_uses_the_required_kpi_groups() -> None:
     assert options[1]["section_label"] == "Pipeline volume"
 
 
-def test_other_pages_keep_the_default_kpi_variant() -> None:
+def test_kpi_variants_match_page_hierarchy() -> None:
+    expected_variants = {
+        "talent_request_management.py": ["compact"],
+        "selection_monitoring.py": ["compact"],
+    }
     for page in Path("app_pages").glob("*.py"):
         if page.name == "executive_overview.py":
             continue
@@ -241,10 +245,14 @@ def test_other_pages_keep_the_default_kpi_variant() -> None:
             and isinstance(node.func, ast.Name)
             and node.func.id == "render_kpis"
         ]
-        assert all(
-            not any(keyword.arg == "variant" for keyword in call.keywords)
+        variants = [
+            next(
+                (keyword.value.value for keyword in call.keywords if keyword.arg == "variant"),
+                "default",
+            )
             for call in calls
-        )
+        ]
+        assert variants == expected_variants.get(page.name, ["default"] * len(calls))
 
 
 def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
