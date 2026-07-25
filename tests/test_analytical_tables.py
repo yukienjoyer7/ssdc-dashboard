@@ -5,10 +5,15 @@ import pandas as pd
 from data.contracts import FilterState
 from data.mock_data import build_mock_tables
 from services.analytical_tables import (
+    _build_dimensional_performance,
     build_company_performance,
+    build_placement_type_performance,
+    build_program_performance,
     build_request_table,
+    build_sector_performance,
     build_selection_table,
     build_student_profile,
+    build_work_arrangement_performance,
 )
 from services.analytics import resolve_outcome
 
@@ -189,3 +194,201 @@ def test_selection_stale_flag_consistent() -> None:
     fresh = result.loc[~result["stale_flag"]]
     if not fresh.empty:
         assert (fresh["selection_aging_days"] <= 14).all()
+
+
+def _build_test_tables() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    tables = build_mock_tables()
+    df_request = build_request_table(
+        tables["talent_request.csv"],
+        tables["tracking_company.csv"],
+        tables["tracking_student.csv"],
+        _dummy_as_of(),
+    )
+    df_selection = build_selection_table(
+        tables["tracking_student.csv"],
+        tables["tracking_company.csv"],
+        tables["status_student.csv"],
+        _dummy_as_of(),
+    )
+    df_company = tables["company.csv"]
+    return df_selection, df_request, df_company
+
+
+_RATE_COLUMNS = [
+    "total_applications", "unique_candidates", "placements",
+    "ghosting", "rejected", "requested_headcount",
+    "placement_rate", "ghosting_rate", "rejection_rate", "fulfillment_rate",
+]
+
+
+def test_program_performance_grain_is_unique() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_program_performance(df_selection, df_request)
+    assert result["study_program"].is_unique
+
+
+def test_program_performance_has_expected_columns() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_program_performance(df_selection, df_request)
+    for col in _RATE_COLUMNS:
+        assert col in result.columns
+
+
+def test_program_performance_rates_in_range() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_program_performance(df_selection, df_request)
+    for col in ["placement_rate", "ghosting_rate", "rejection_rate", "fulfillment_rate"]:
+        assert result[col].between(0, 100).all()
+
+
+def test_placement_type_performance_grain_is_unique() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_placement_type_performance(df_selection, df_request)
+    assert result["placement_type"].is_unique
+
+
+def test_placement_type_performance_has_expected_columns() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_placement_type_performance(df_selection, df_request)
+    for col in _RATE_COLUMNS:
+        assert col in result.columns
+
+
+def test_placement_type_performance_rates_in_range() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_placement_type_performance(df_selection, df_request)
+    for col in ["placement_rate", "ghosting_rate", "rejection_rate", "fulfillment_rate"]:
+        assert result[col].between(0, 100).all()
+
+
+def test_sector_performance_grain_is_unique() -> None:
+    df_selection, df_request, df_company = _build_test_tables()
+    result = build_sector_performance(df_selection, df_request, df_company)
+    assert result["industry_sector"].is_unique
+
+
+def test_sector_performance_has_expected_columns() -> None:
+    df_selection, df_request, df_company = _build_test_tables()
+    result = build_sector_performance(df_selection, df_request, df_company)
+    for col in _RATE_COLUMNS:
+        assert col in result.columns
+
+
+def test_sector_performance_rates_in_range() -> None:
+    df_selection, df_request, df_company = _build_test_tables()
+    result = build_sector_performance(df_selection, df_request, df_company)
+    for col in ["placement_rate", "ghosting_rate", "rejection_rate", "fulfillment_rate"]:
+        assert result[col].between(0, 100).all()
+
+
+def test_work_arrangement_performance_grain_is_unique() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_work_arrangement_performance(df_selection, df_request)
+    assert result["working_arrangement"].is_unique
+
+
+def test_work_arrangement_performance_has_expected_columns() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_work_arrangement_performance(df_selection, df_request)
+    for col in _RATE_COLUMNS:
+        assert col in result.columns
+
+
+def test_work_arrangement_performance_rates_in_range() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_work_arrangement_performance(df_selection, df_request)
+    for col in ["placement_rate", "ghosting_rate", "rejection_rate", "fulfillment_rate"]:
+        assert result[col].between(0, 100).all()
+
+
+def test_dimensional_performance_placement_rate_formula() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_program_performance(df_selection, df_request)
+    expected = (result["placements"] / result["total_applications"].replace(0, pd.NA) * 100).fillna(0).round(1)
+    pd.testing.assert_series_equal(result["placement_rate"], expected, check_names=False)
+
+
+def test_dimensional_performance_ghosting_rate_formula() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_placement_type_performance(df_selection, df_request)
+    expected = (result["ghosting"] / result["total_applications"].replace(0, pd.NA) * 100).fillna(0).round(1)
+    pd.testing.assert_series_equal(result["ghosting_rate"], expected, check_names=False)
+
+
+def test_dimensional_performance_rejection_rate_formula() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_program_performance(df_selection, df_request)
+    expected = (result["rejected"] / result["total_applications"].replace(0, pd.NA) * 100).fillna(0).round(1)
+    pd.testing.assert_series_equal(result["rejection_rate"], expected, check_names=False)
+
+
+def test_dimensional_performance_no_negative_rates() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    for builder in [
+        lambda: build_program_performance(df_selection, df_request),
+        lambda: build_placement_type_performance(df_selection, df_request),
+        lambda: build_work_arrangement_performance(df_selection, df_request),
+    ]:
+        result = builder()
+        for col in ["placement_rate", "ghosting_rate", "rejection_rate", "fulfillment_rate"]:
+            assert (result[col] >= 0).all()
+
+
+def test_dimensional_performance_empty_selection() -> None:
+    empty = pd.DataFrame()
+    result = _build_dimensional_performance(empty, pd.DataFrame(), "study_program")
+    assert result.empty
+
+
+def test_dimensional_performance_missing_dimension_column() -> None:
+    df = pd.DataFrame({"NIM": ["001"], "canonical_outcome": ["Placement"], "id_talent_req": ["TR001"]})
+    result = _build_dimensional_performance(df, pd.DataFrame(), "nonexistent_col")
+    assert result.empty
+
+
+def test_dimensional_performance_unknown_dimension_fallback() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    df_selection = df_selection.copy()
+    df_selection.loc[0, "study_program"] = pd.NA
+    result = build_program_performance(df_selection, df_request)
+    assert "Unknown" in result["study_program"].values
+
+
+def test_sector_performance_missing_company_returns_empty() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_sector_performance(df_selection, df_request, pd.DataFrame())
+    assert result.empty
+
+
+def test_sector_performance_missing_id_company_returns_empty() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    bad_company = pd.DataFrame({"industry_sector": ["Tech"]})
+    result = build_sector_performance(df_selection, df_request, bad_company)
+    assert result.empty
+
+
+def test_work_arrangement_performance_missing_request_returns_empty() -> None:
+    df_selection, _, _ = _build_test_tables()
+    result = build_work_arrangement_performance(df_selection, pd.DataFrame())
+    assert result.empty
+
+
+def test_work_arrangement_performance_missing_working_arrangement_returns_empty() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    bad_request = df_request[["id_talent_req"]].copy()
+    result = build_work_arrangement_performance(df_selection, bad_request)
+    assert result.empty
+
+
+def test_dimensional_performance_unique_candidates_leq_applications() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_program_performance(df_selection, df_request)
+    assert (result["unique_candidates"] <= result["total_applications"]).all()
+
+
+def test_dimensional_performance_outcomes_sum_leq_applications() -> None:
+    df_selection, df_request, _ = _build_test_tables()
+    result = build_placement_type_performance(df_selection, df_request)
+    outcome_sum = result["placements"] + result["ghosting"] + result["rejected"]
+    assert (outcome_sum <= result["total_applications"]).all()
+
