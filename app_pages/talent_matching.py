@@ -49,6 +49,14 @@ def main() -> None:
         key="matching-request-requirements",
     )
 
+    if ranked.attrs.get("score_source") == "rule_based_fallback":
+        render_feedback(
+            "Pencocokan sementara",
+            "Skor semantik belum tersedia; hasil berikut menggunakan pencocokan berbasis aturan.",
+            kind="warning",
+            key="matching-semantic-fallback",
+        )
+
     if ranked.empty:
         render_empty(
             "Skor semantik tidak tersedia",

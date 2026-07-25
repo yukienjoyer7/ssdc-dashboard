@@ -370,6 +370,24 @@ def _load_semantic_scores() -> pd.DataFrame | None:
     return _SEMANTIC_SCORES_CACHE
 
 
+def _rule_based_matching_fallback(
+    data: DashboardData,
+    request_id: str,
+    filters: FilterState,
+) -> tuple[pd.DataFrame, pd.Series | None]:
+    """Keep matching usable when the optional semantic artifact is absent."""
+    ranked, request = matching_table(data, request_id, filters)
+    if request is None or ranked.empty:
+        return ranked, request
+    ranked = ranked.copy()
+    ranked["semantic_score"] = ranked["match_score"].astype(float) / 100
+    ranked["semantic_rank"] = (
+        ranked["semantic_score"].rank(method="first", ascending=False).astype(int)
+    )
+    ranked.attrs["score_source"] = "rule_based_fallback"
+    return ranked, request
+
+
 def semantic_matching_table(data: DashboardData, request_id: str, filters: FilterState) -> tuple[pd.DataFrame, pd.Series | None]:
     requests = request_table(data, filters)
     selected = requests.loc[requests["id_talent_req"] == request_id]
@@ -378,10 +396,10 @@ def semantic_matching_table(data: DashboardData, request_id: str, filters: Filte
     request = selected.iloc[0]
     scores = _load_semantic_scores()
     if scores is None:
-        return pd.DataFrame(), request
+        return _rule_based_matching_fallback(data, request_id, filters)
     req_scores = scores.loc[scores["id_talent_req"] == request_id]
     if req_scores.empty:
-        return pd.DataFrame(), request
+        return _rule_based_matching_fallback(data, request_id, filters)
     students = data.analytic("df_student_profile")
     if students is None:
         status_cols = [
@@ -410,7 +428,9 @@ def semantic_matching_table(data: DashboardData, request_id: str, filters: Filte
     ranked["explanation"] = ranked.apply(_semantic_explanation, axis=1)
     if filters.study_program != "All study programs":
         ranked = ranked.loc[ranked["program_studi"] == filters.study_program].copy()
-    return ranked.sort_values("semantic_score", ascending=False).reset_index(drop=True), request
+    ranked = ranked.sort_values("semantic_score", ascending=False).reset_index(drop=True)
+    ranked.attrs["score_source"] = "semantic"
+    return ranked, request
 
 
 def _semantic_explanation(row: pd.Series) -> str:

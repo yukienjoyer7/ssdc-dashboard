@@ -80,9 +80,11 @@ def test_semantic_matching_returns_none_for_missing_request() -> None:
 def test_semantic_matching_returns_request_when_scores_missing(monkeypatch) -> None:
     monkeypatch.setattr("services.analytics._load_semantic_scores", lambda: None)
     result, request = semantic_matching_table(_mock_dashboard(), "TR001", FilterState())
-    assert result.empty
+    assert not result.empty
     assert request is not None
     assert request["id_talent_req"] == "TR001"
+    assert {"semantic_score", "semantic_rank"}.issubset(result.columns)
+    assert result.attrs["score_source"] == "rule_based_fallback"
 
 
 def test_semantic_matching_returns_ranked_results(monkeypatch) -> None:
