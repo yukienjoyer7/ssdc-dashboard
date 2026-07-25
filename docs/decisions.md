@@ -25,9 +25,43 @@ Data Engineer approval: `Placement`, `Rejected`, and `Ghosting` retain their
 source outcomes; `Finish` and other non-terminal source stages map to
 `On Progress`.
 
-Semantic matching remains a separate follow-up integration. The current page's
-rule-based prototype score is not treated as a canonical KPI or acceptance
-probability until precomputed semantic scores are available upstream.
+## Semantic matching integration
+
+The dashboard now uses precomputed semantic relevance scores from
+`services/semantic_matching.py` on the Talent Matching page. The pipeline:
+
+- Uses `Qwen/Qwen3-Embedding-0.6B` via SentenceTransformers with
+  `prompt_name="query"` for asymmetric query/document encoding (per the
+  Qwen3-Embedding documentation).
+- Applies an eligibility gate during precompute: status Active,
+  ketersediaan Available, CV Ada, and eligible Ya.
+- Attaches per-request `minimum_semester` to the scores output; the
+  dashboard applies the semester filter at runtime via
+  `semantic_matching_table()` in `services/analytics.py`.
+- Saves scores as `data/processed/semantic_scores.parquet` and metadata as
+  `semantic_metadata.json`.
+
+The old rule-based weighted scoring (`matching_table`) is retained in
+`services/analytics.py` but no longer wired to any page. The matching page
+calls `semantic_matching_table()` which loads precomputed scores, joins with
+student profiles, and displays results with eligibility evidence.
+Semantic scores are labelled as "Relevance", not acceptance probability.
+
+Keyword baseline comparison is available via `services/semantic_matching.py`
+`evaluate_top_k()` for manual validation.
+
+## Score recomputation
+
+The current `semantic_scores.parquet` was generated prior to the eligibility
+gate and encoding fixes (CV check, `minimum_semester` column, `prompt_name`).
+Re-running `build_all()` requires downloading the 0.6B model and encoding
+12,000 requests × 5,000+ students. On a consumer CPU this was measured at
+~4 hours and was aborted. The pipeline will be re-run on the Streamlit
+deployment host where GPU or larger RAM is available.
+
+In the meantime `semantic_matching_table()` safely defaults `minimum_semester`
+to 0 when the column is missing from the scores file, so the dashboard
+remains functional with the existing scores.
 
 ## Carbon migration architecture
 

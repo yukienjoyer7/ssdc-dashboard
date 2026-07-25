@@ -10,6 +10,7 @@ dependencies = [
     "pyarrow>=15",
     "ssdc-carbon-components",
     "streamlit>=1.59",
+    "sentence-transformers>=3",
 ]
 
 [tool.uv.sources]

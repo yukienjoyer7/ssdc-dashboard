@@ -26,6 +26,8 @@ COLUMN_LABELS_ID = {
     "ketersediaan": "Ketersediaan",
     "eligible": "Memenuhi syarat",
     "match_score": "Skor kecocokan",
+    "semantic_score": "Skor relevansi",
+    "semantic_rank": "Peringkat relevansi",
     "recommendation": "Rekomendasi",
     "explanation": "Penjelasan",
     "progress_student": "Tahap seleksi",
@@ -58,6 +60,8 @@ DISPLAY_VALUES_ID = {
     "Potential match": "Kandidat potensial",
     "Review": "Tinjau",
     "Eligible": "Memenuhi syarat",
+    "Active": "Aktif",
+    "Available": "Tersedia",
     "true": "Ya",
     "false": "Tidak",
 }

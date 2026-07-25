@@ -27,5 +27,6 @@ current system date.
   `On Progress`; the mapping remains conditional on the upstream audit.
 - Request action labels are `Belum Dikirim`, `Kurang Kandidat`,
   `Belum Terpenuhi`, `Terpenuhi`, and `Closed`.
-- Semantic relevance ranking is not implemented by this KPI change. The
-  matching page's current rule-based score remains explicitly provisional.
+- Semantic relevance ranking uses precomputed cosine similarity scores
+  from Qwen3-Embedding-0.6B. Scores are relevance indicators (0–1),
+  not acceptance probabilities.

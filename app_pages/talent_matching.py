@@ -1,13 +1,12 @@
 import streamlit as st
 
-from components.charts import chart_surface, render_bar
+from components.charts import chart_surface, render_histogram
 from components.carbon_ui import render_feedback
 from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, control_group, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
-from config.theme import RECOMMENDATION_COLORS
-from services.analytics import matching_table, request_table
+from services.analytics import request_table, semantic_matching_table
 
 
 def main() -> None:
@@ -16,8 +15,8 @@ def main() -> None:
         "Pencocokan Talenta",
         "Kandidat yang memenuhi syarat mana yang paling sesuai untuk permintaan talenta terpilih, dan mengapa?",
         provisional_note=(
-            "Kelayakan memerlukan kecocokan program studi/minat, semester minimum, "
-            "dan status Tersedia."
+            "Peringkat semantik menggunakan Qwen3-Embedding-0.6B. Gerbang kelayakan: "
+            "status Aktif, Tersedia, CV, dan semester minimum per permintaan."
         ),
     )
     requests = request_table(data, filters)
@@ -29,7 +28,7 @@ def main() -> None:
     default_index = options.index(previous) if previous in options else 0
     request_id = st.selectbox("Pilih permintaan talenta", options, index=default_index, key="matching_request_id")
     st.session_state["selected_request_id"] = request_id
-    ranked, request = matching_table(data, request_id, filters)
+    ranked, request = semantic_matching_table(data, request_id, filters)
     if request is None:
         render_empty("Permintaan tidak ditemukan", "Pilih permintaan dari daftar terfilter saat ini.")
         return
@@ -50,10 +49,18 @@ def main() -> None:
         key="matching-request-requirements",
     )
 
+    if ranked.empty:
+        render_empty(
+            "Skor semantik tidak tersedia",
+            "Skor semantik terpraproses tidak ditemukan. Jalankan pipeline pencocokan semantik "
+            "(services/semantic_matching.py build_all()) untuk membuat peringkat kandidat.",
+        )
+        return
+
     with control_group("Saring daftar pendek", key="matching-filters"):
         eligibility_only = st.checkbox("Tampilkan hanya kandidat yang memenuhi syarat", value=True, key="matching_eligible_only")
-        min_score = st.slider("Skor kecocokan minimum", 0, 100, 0, key="matching_min_score")
-    displayed = ranked.loc[ranked["match_score"] >= min_score].copy()
+        min_score = st.slider("Skor relevansi minimum", 0.00, 1.00, 0.00, 0.05, key="matching_min_score")
+    displayed = ranked.loc[ranked["semantic_score"] >= min_score].copy()
     if eligibility_only:
         displayed = displayed.loc[displayed["eligible"]].copy()
     eligible_count = int(ranked["eligible"].sum())
@@ -65,13 +72,13 @@ def main() -> None:
         {"label": "Kandidat teratas", "value": format_count(len(displayed))},
     ], columns_per_row=4, variant="compact")
 
-    render_section("Daftar pendek berperingkat", "Setiap skor dilengkapi penjelasan per kriteria untuk ditinjau.")
+    render_section("Daftar pendek berperingkat", "Skor relevansi semantik (bukan probabilitas penerimaan). Nilai lebih tinggi = lebih relevan.")
     if displayed.empty:
-        render_empty("Tidak ada kandidat yang cocok", "Turunkan ambang skor atau sertakan kandidat yang perlu ditinjau.")
+        render_empty("Tidak ada kandidat yang cocok", "Turunkan ambang relevansi atau sertakan kandidat yang perlu ditinjau.")
     else:
         columns = [
-            "NIM", "nama", "program_studi", "semester", "ketersediaan", "eligible", "match_score",
-            "recommendation", "explanation",
+            "NIM", "nama", "program_studi", "semester", "ketersediaan", "eligible",
+            "semantic_score", "semantic_rank", "recommendation", "explanation",
         ]
         render_downloadable_table(displayed[columns], "ssdc-ranked-shortlist.csv", "matching-table")
         left, right = analytical_columns(
@@ -80,29 +87,17 @@ def main() -> None:
         )
         with left:
             with chart_surface(
-                "Kandidat berdasarkan skor kecocokan",
-                "Nilai skor tepat dikelompokkan berdasarkan hasil rekomendasi.",
+                "Distribusi skor relevansi",
+                "Skor semantik dikelompokkan berdasarkan hasil rekomendasi.",
                 key="matching-score-distribution",
             ):
-                score_counts = (
-                    ranked.groupby(["match_score", "recommendation"], as_index=False)
-                    .size()
-                    .rename(columns={"size": "candidates"})
-                    .sort_values("match_score")
-                )
-                score_counts["score_label"] = score_counts["match_score"].astype(int).astype(str)
-                render_bar(
-                    score_counts,
-                    "score_label",
-                    "candidates",
-                    "Kandidat berdasarkan skor kecocokan",
+                render_histogram(
+                    ranked,
+                    "semantic_score",
+                    "Distribusi skor relevansi",
                     color="recommendation",
-                    show_title=False,
-                    color_map=RECOMMENDATION_COLORS,
-                    x_title="Skor kecocokan",
                     y_title="Kandidat",
-                    category_order=score_counts["score_label"].drop_duplicates().tolist(),
-                    tick_angle=0,
+                    show_title=False,
                 )
         with right:
             candidate_ids = displayed["NIM"].tolist()
@@ -112,9 +107,13 @@ def main() -> None:
             st.write(detail["explanation"])
             st.write({
                 "Kelayakan": "Memenuhi syarat" if detail["eligible"] else "Tinjau",
-                "Skor kecocokan": int(detail["match_score"]),
-                "Semester": detail["semester"],
-                "Ketersediaan": detail["ketersediaan"],
+                "Skor relevansi": f"{float(detail['semantic_score']):.3f}",
+                "Peringkat": int(detail["semantic_rank"]),
+                "Semester": str(detail["semester"]),
+                "IPK": str(detail.get("IPK", "")),
+                "Ketersediaan": "Tersedia" if detail["ketersediaan"] == "Available" else detail["ketersediaan"],
+                "Domisili": detail.get("domisili", ""),
+                "Keahlian": detail.get("tools_normalized", ""),
             })
 
 

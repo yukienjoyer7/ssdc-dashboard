@@ -29,9 +29,11 @@ def wait_for_render(page: Page) -> None:
     # Carbon components hydrate independently of Streamlit's status widget.
     # Wait for a rendered KPI tile so screenshots never capture plain fallback text.
     page.locator(".cds-kpi-card").first.wait_for(state="visible", timeout=30_000)
-    # Plotly hydrates after Streamlit's status widget; wait for the first graph
-    # so captures contain the actual analytical marks rather than a blank surface.
-    page.locator(".js-plotly-plot").first.wait_for(state="visible", timeout=30_000)
+    # A page may have analytical marks or an explicit empty state when an
+    # optional upstream artifact (such as semantic scores) is unavailable.
+    page.locator(".js-plotly-plot, cds-inline-notification").first.wait_for(
+        state="visible", timeout=30_000
+    )
     page.wait_for_timeout(500)
 
 

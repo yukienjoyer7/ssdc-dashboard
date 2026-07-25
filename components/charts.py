@@ -40,6 +40,9 @@ DISPLAY_LABELS_ID = {
     "Monitor": "Pantau",
     "Strong match": "Kecocokan kuat",
     "Potential match": "Kandidat potensial",
+    "Eligible": "Memenuhi syarat",
+    "Active": "Aktif",
+    "Available": "Tersedia",
     "Review": "Tinjau",
     "Unknown company": "Perusahaan tidak diketahui",
 }
