@@ -6,6 +6,11 @@ from data.contracts import FilterState
 from data.loaders import DashboardData
 from data.mock_data import build_mock_tables
 from services.analytics import (
+    _HIGH_SCORE_NO_MATCH_NOTE,
+    _compute_caution,
+    _compute_matched_skills,
+    _rule_based_matching_fallback,
+    _tokenize_keywords,
     canonical_kpis,
     dataset_as_of_date,
     matching_table,
@@ -110,3 +115,102 @@ def test_semantic_matching_respects_study_program_filter(monkeypatch) -> None:
     filters = FilterState(study_program="Statistika")
     result, _ = semantic_matching_table(_mock_dashboard(), "TR001", filters)
     assert all(program == "Statistika" for program in result["program_studi"])
+
+
+def test_tokenize_keywords_splits_and_filters_stopwords() -> None:
+    result = _tokenize_keywords("Python, SQL; data analysis")
+    assert "python" in result
+    assert "sql" in result
+    assert "data" in result
+    assert "analysis" in result
+    stopwords_result = _tokenize_keywords("yang mampu dan serta")
+    assert stopwords_result == set()
+
+
+def test_compute_matched_skills_returns_overlap() -> None:
+    request = pd.Series({
+        "bidang_studi_dibutuhkan_normalized": "Statistika, Manajemen",
+        "deskripsi_requirement": "Python, SQL, data analysis",
+    })
+    student = pd.Series({
+        "tools_normalized": "Python, Excel, SQL",
+        "semantic_score": 0.85,
+    })
+    result = _compute_matched_skills(request, student)
+    assert "python" in result
+    assert "sql" in result
+
+
+def test_compute_matched_skills_high_score_no_overlap() -> None:
+    request = pd.Series({
+        "bidang_studi_dibutuhkan_normalized": "Statistika",
+        "deskripsi_requirement": "data analysis",
+    })
+    student = pd.Series({
+        "tools_normalized": "Figma, Adobe XD",
+        "semantic_score": 0.85,
+    })
+    result = _compute_matched_skills(request, student)
+    assert result == _HIGH_SCORE_NO_MATCH_NOTE
+
+
+def test_compute_matched_skills_low_score_no_overlap() -> None:
+    request = pd.Series({
+        "bidang_studi_dibutuhkan_normalized": "Statistika",
+        "deskripsi_requirement": "data analysis",
+    })
+    student = pd.Series({
+        "tools_normalized": "Figma, Adobe XD",
+        "semantic_score": 0.3,
+    })
+    result = _compute_matched_skills(request, student)
+    assert result == ""
+
+
+def test_compute_caution_detects_empty_tools() -> None:
+    request = pd.Series({
+        "deskripsi_requirement": "This is a detailed requirement with more than twenty characters",
+    })
+    student = pd.Series({
+        "tools_normalized": "",
+        "sync_date": "2026-01-10",
+    })
+    as_of = pd.Timestamp("2026-01-20")
+    result = _compute_caution(request, student, as_of)
+    assert "Data tools kosong" in result
+
+
+def test_compute_caution_detects_vague_requirement() -> None:
+    request = pd.Series({
+        "deskripsi_requirement": "Short",
+    })
+    student = pd.Series({
+        "tools_normalized": "Python",
+        "sync_date": "2026-01-10",
+    })
+    as_of = pd.Timestamp("2026-01-20")
+    result = _compute_caution(request, student, as_of)
+    assert "Requirement tidak jelas" in result
+
+
+def test_compute_caution_detects_stale_sync() -> None:
+    request = pd.Series({
+        "deskripsi_requirement": "This is a detailed requirement with more than twenty characters",
+    })
+    student = pd.Series({
+        "tools_normalized": "Python, SQL",
+        "sync_date": "2025-12-01",
+    })
+    as_of = pd.Timestamp("2026-01-20")
+    result = _compute_caution(request, student, as_of)
+    assert "Data profil lama" in result
+
+
+def test_rule_based_fallback_produces_explainability_columns() -> None:
+    ranked, request = _rule_based_matching_fallback(
+        _mock_dashboard(), "TR001", FilterState()
+    )
+    assert request is not None
+    assert not ranked.empty
+    assert "matched_skills" in ranked.columns
+    assert "caution" in ranked.columns

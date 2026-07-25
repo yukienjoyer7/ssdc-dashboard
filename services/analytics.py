@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from pathlib import Path
 
@@ -322,7 +323,9 @@ def matching_table(data: DashboardData, request_id: str, filters: FilterState) -
         return frame.sort_values(["eligible", "match_score", "IPK"], ascending=False).reset_index(drop=True), request
 
     students = data.table("student_all.csv")
-    status = data.table("status_student.csv")[["NIM", "ketersediaan", "status", "IPK"]].drop_duplicates("NIM")
+    status = data.table("status_student.csv")[
+        ["NIM", "ketersediaan", "status", "IPK", "tools_normalized", "sync_date"]
+    ].drop_duplicates("NIM")
     frame = students.merge(status, on="NIM", how="left")
     if filters.study_program != "All study programs":
         frame = frame.loc[frame["program_studi"] == filters.study_program].copy()
@@ -359,6 +362,16 @@ def _matching_explanation(row: pd.Series) -> str:
 _SEMANTIC_SCORES_PATH = Path(__file__).resolve().parents[1] / "data" / "processed" / "semantic_scores.parquet"
 _SEMANTIC_SCORES_CACHE: pd.DataFrame | None = None
 
+_KEYWORD_STOPWORDS = frozenset({
+    "", "nan", "none", "dan", "serta", "atau", "yang", "dengan",
+    "mampu", "dasar", "dalam", "baik", "menguasai", "untuk", "dari",
+    "pada", "secara", "juga", "dapat", "memiliki",
+})
+_HIGH_SCORE_NO_MATCH_NOTE = (
+    "Relevansi semantik tinggi tanpa kecocokan kata kunci langsung. "
+    "Tinjau bidang minat dan kompetensi kandidat secara manual."
+)
+
 
 def _load_semantic_scores() -> pd.DataFrame | None:
     global _SEMANTIC_SCORES_CACHE
@@ -384,6 +397,13 @@ def _rule_based_matching_fallback(
     ranked["semantic_rank"] = (
         ranked["semantic_score"].rank(method="first", ascending=False).astype(int)
     )
+    as_of = dataset_as_of_date(data)
+    ranked["matched_skills"] = ranked.apply(
+        lambda row: _compute_matched_skills(request, row), axis=1
+    )
+    ranked["caution"] = ranked.apply(
+        lambda row: _compute_caution(request, row, as_of), axis=1
+    )
     ranked.attrs["score_source"] = "rule_based_fallback"
     return ranked, request
 
@@ -404,17 +424,20 @@ def semantic_matching_table(data: DashboardData, request_id: str, filters: Filte
     if students is None:
         status_cols = [
             "NIM", "status", "ketersediaan", "CV", "IPK",
-            "tools_normalized", "domisili", "eligible",
+            "tools_normalized", "domisili", "eligible", "sync_date",
         ]
         students = data.table("student_all.csv").merge(
             data.table("status_student.csv")[status_cols].drop_duplicates("NIM"),
             on="NIM",
             how="left",
         )
+    student_cols = [
+        "NIM", "nama", "program_studi", "semester", "status", "ketersediaan",
+        "CV", "IPK", "tools_normalized", "bidang_minat",
+        "jenis_penempatan_diminati", "domisili", "eligible", "sync_date",
+    ]
     ranked = req_scores.merge(
-        students[["NIM", "nama", "program_studi", "semester", "status", "ketersediaan",
-                   "CV", "IPK", "tools_normalized", "bidang_minat",
-                   "jenis_penempatan_diminati", "domisili", "eligible"]],
+        students[[c for c in student_cols if c in students.columns]],
         on="NIM",
         how="left",
     )
@@ -426,6 +449,13 @@ def semantic_matching_table(data: DashboardData, request_id: str, filters: Filte
     ranked["recommendation"] = "Review"
     ranked.loc[ranked["eligible"], "recommendation"] = "Eligible"
     ranked["explanation"] = ranked.apply(_semantic_explanation, axis=1)
+    as_of = dataset_as_of_date(data)
+    ranked["matched_skills"] = ranked.apply(
+        lambda row: _compute_matched_skills(request, row), axis=1
+    )
+    ranked["caution"] = ranked.apply(
+        lambda row: _compute_caution(request, row, as_of), axis=1
+    )
     if filters.study_program != "All study programs":
         ranked = ranked.loc[ranked["program_studi"] == filters.study_program].copy()
     ranked = ranked.sort_values("semantic_score", ascending=False).reset_index(drop=True)
@@ -449,6 +479,44 @@ def _semantic_explanation(row: pd.Series) -> str:
         badges.append(f"Semester {int(row.get('semester_num', 0))} < {min_sem}")
     score = float(row.get("semantic_score", 0))
     return f"Kelayakan: {'; '.join(badges)} | Relevansi: {score:.3f}"
+
+
+def _tokenize_keywords(text: str) -> set[str]:
+    return {
+        word for word in re.split(r"[\s,;/]+", str(text).lower().strip())
+        if word and len(word) >= 2 and word not in _KEYWORD_STOPWORDS
+    }
+
+
+def _compute_matched_skills(request: pd.Series, student: pd.Series) -> str:
+    req_text = (
+        str(request.get("bidang_studi_dibutuhkan_normalized", ""))
+        + " "
+        + str(request.get("deskripsi_requirement", ""))
+    )
+    req_kw = _tokenize_keywords(req_text)
+    student_kw = _tokenize_keywords(str(student.get("tools_normalized", "")))
+    overlap = req_kw & student_kw
+    if overlap:
+        return ", ".join(sorted(overlap))
+    score = float(student.get("semantic_score", 0))
+    if score >= 0.7:
+        return _HIGH_SCORE_NO_MATCH_NOTE
+    return ""
+
+
+def _compute_caution(request: pd.Series, student: pd.Series, as_of: pd.Timestamp) -> str:
+    warnings: list[str] = []
+    tools = str(student.get("tools_normalized", "")).strip()
+    if not tools or tools.lower() in ("", "nan", "tidak tersedia"):
+        warnings.append("Data tools kosong")
+    req_text = str(request.get("deskripsi_requirement", "")).strip()
+    if not req_text or req_text.lower() in ("", "nan", "prototype requirement", "tidak tersedia") or len(req_text) < 20:
+        warnings.append("Requirement tidak jelas")
+    sync = pd.to_datetime(student.get("sync_date"), errors="coerce")
+    if pd.notna(sync) and pd.notna(as_of) and (as_of - sync).days > 30:
+        warnings.append("Data profil lama")
+    return "; ".join(warnings)
 
 
 def date_bounds(data: DashboardData) -> tuple[date, date]:

@@ -29,6 +29,8 @@ COLUMN_LABELS_ID = {
     "semantic_score": "Skor relevansi",
     "semantic_rank": "Peringkat relevansi",
     "recommendation": "Rekomendasi",
+    "matched_skills": "Keahlian cocok",
+    "caution": "Perhatian",
     "explanation": "Penjelasan",
     "progress_student": "Tahap seleksi",
     "canonical_outcome": "Hasil kanonis",

@@ -104,7 +104,8 @@ def main() -> None:
     else:
         columns = [
             "NIM", "nama", "program_studi", "semester", "ketersediaan", "eligible",
-            "semantic_score", "semantic_rank", "recommendation", "explanation",
+            "semantic_score", "semantic_rank", "recommendation",
+            "matched_skills", "caution", "explanation",
         ]
         render_downloadable_table(displayed[columns], "ssdc-ranked-shortlist.csv", "matching-table")
         left, right = analytical_columns(
@@ -140,6 +141,8 @@ def main() -> None:
                 "Ketersediaan": "Tersedia" if detail["ketersediaan"] == "Available" else detail["ketersediaan"],
                 "Domisili": detail.get("domisili", ""),
                 "Keahlian": detail.get("tools_normalized", ""),
+                "Keahlian cocok": detail.get("matched_skills", ""),
+                "Perhatian": detail.get("caution", ""),
             })
 
 
