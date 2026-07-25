@@ -28,14 +28,14 @@ def _mock_dashboard() -> DashboardData:
 def test_carbon_page_registry_is_complete_and_resolves_navigation_targets() -> None:
     assert len(PAGE_SPECS) == 5
     assert [page.title for page in PAGE_SPECS] == [
-        "Executive overview",
-        "Talent request management",
-        "Talent matching",
-        "Selection monitoring",
-        "Placement performance",
+        "Ringkasan Eksekutif",
+        "Manajemen Permintaan Talenta",
+        "Pencocokan Talenta",
+        "Pemantauan Seleksi",
+        "Kinerja Penempatan",
     ]
-    assert page_spec_for_slug("talent-matching").title == "Talent matching"
-    assert page_spec_for_title("Placement performance").slug == "placement-performance"
+    assert page_spec_for_slug("talent-matching").title == "Pencocokan Talenta"
+    assert page_spec_for_title("Kinerja Penempatan").slug == "placement-performance"
     assert page_spec_for_slug("missing") is None
 
 
@@ -63,7 +63,7 @@ def test_shell_preserves_page_registry_and_active_route(monkeypatch) -> None:
     assert captured["view"] == "shell"
     assert captured["key"] == "test-shell"
     assert captured["data"]["active_page"] == "talent-matching"
-    assert captured["data"]["context_label"] == "Prototype data"
+    assert captured["data"]["context_label"] == "Data prototipe"
     assert [page["slug"] for page in captured["data"]["pages"]] == [
         page.slug for page in PAGE_SPECS
     ]
@@ -144,10 +144,10 @@ def test_data_status_preserves_technical_details_behind_disclosure(monkeypatch) 
     assert captured["kpi_status"] == "provisional"
     assert captured["warnings"] == ["Review the source contract."]
     assert "source" not in captured
-    assert details["Source"] == "/private/data_clean"
-    assert details["Records"] == f"{captured['record_count']:,}"
-    assert details["Dataset as of"] == captured["as_of_date"]
-    assert "Pending PM/Data Engineer validation." in details["Validation notes"]
+    assert details["Sumber"] == "/private/data_clean"
+    assert details["Catatan"] == f"{captured['record_count']:,}"
+    assert details["Data per"] == captured["as_of_date"]
+    assert "Menunggu validasi PM/Engineer Data." in details["Catatan validasi"]
 
 
 def test_data_status_identifies_mock_data(monkeypatch) -> None:
@@ -235,13 +235,13 @@ def test_executive_overview_uses_the_required_kpi_groups() -> None:
     ]
 
     assert groups == [
-        ["Requested headcount", "Placements", "Placement rate", "Ghosting rate"],
-        ["Total companies", "Total talent requests", "Candidate applications", "Unique candidates"],
+        ["Kebutuhan talenta", "Penempatan", "Tingkat penempatan", "Tingkat ghosting"],
+        ["Total perusahaan", "Total permintaan talenta", "Lamaran kandidat", "Kandidat unik"],
     ]
     assert options[0]["variant"] == "primary"
-    assert options[0]["section_label"] == "Primary outcomes"
+    assert options[0]["section_label"] == "Hasil utama"
     assert options[1]["variant"] == "secondary"
-    assert options[1]["section_label"] == "Pipeline volume"
+    assert options[1]["section_label"] == "Volume proses"
 
 
 def test_kpi_variants_match_page_hierarchy() -> None:
@@ -280,12 +280,12 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     compiled_css = "\n".join(path.read_text() for path in build.glob("index-*.css"))
     assert compiled_js
     assert compiled_css
-    assert 'setAttribute("aria-label", "Dashboard navigation")' in source
+    assert 'setAttribute("aria-label", "Navigasi dasbor")' in source
     assert 'button-label-inactive' in source
     assert 'menu.setAttribute("collapse-mode", "rail")' in source
     assert 'className = "cds-header__global"' in source
     assert 'help.dataset.testid = "help-placeholder"' in source
-    assert 'Help coming soon' in source
+    assert 'Bantuan segera hadir' in source
     assert 'sideNav.setAttribute("collapse-mode", "fixed")' in source
     assert 'data-ssdc-sidebar-collapsed' in source
     assert 'className = "cds-sidebar__brand"' in source
@@ -293,9 +293,9 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert 'import Dashboard16 from "@carbon/icons/es/dashboard/16.js"' in source
     assert 'iconNode.setAttribute("slot", "title-icon")' in source
     assert 'case "pictogram"' in source
-    assert 'productDescription.textContent = "Talent Intelligence Dashboard"' in source
+    assert 'productDescription.textContent = "Dasbor Intelijen Talenta"' in source
     assert 'link.setAttribute("aria-current", "page")' in source
-    assert 'header.setAttribute("aria-label", "Dashboard header")' in source
+    assert 'header.setAttribute("aria-label", "Header dasbor")' in source
     assert 'header.append(menu, global)' in source
     assert 'link.setAttribute("aria-label", page.title)' in source
     assert 'new MutationObserver(syncGlobalLayout)' in source
@@ -348,7 +348,7 @@ def test_compiled_carbon_assets_and_accessibility_hooks_exist() -> None:
     assert "display: none" in styles
     assert ".cds-page-pictogram" in styles
     assert "min-block-size: 2.75rem" in styles
-    assert "Talent Intelligence Dashboard" in compiled_js
+    assert "Dasbor Intelijen Talenta" in compiled_js
     assert ".cds-sidebar__brand" in compiled_css
     assert "@media (max-width: 64rem)" in styles
     assert "@media (max-width: 40rem)" in styles

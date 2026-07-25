@@ -7,8 +7,8 @@ def render_empty(title: str, detail: str) -> None:
 
 def render_provisional_note(text: str) -> None:
     render_feedback(
-        "Prototype logic",
-        f"{text} Pending PM/Data Engineer validation.",
+        "Logika prototipe",
+        f"{text} Menunggu validasi PM/Engineer Data.",
         kind="warning",
         key=f"prototype-{text[:24].lower().replace(' ', '-')}",
     )

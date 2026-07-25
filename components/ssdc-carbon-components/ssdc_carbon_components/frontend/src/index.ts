@@ -172,7 +172,7 @@ const optionSelect = (
   select.setAttribute("label-text", label);
   select.setAttribute("value", selected);
   values.forEach((option) => {
-    const item = carbon("cds-select-item", option.label) as HTMLElement & {
+    const item = carbon("cds-select-item", translateFilterValue(option.label)) as HTMLElement & {
       value?: string;
     };
     item.setAttribute("value", option.value);
@@ -183,29 +183,36 @@ const optionSelect = (
   return { wrapper, select };
 };
 
+const translateFilterValue = (value: string) => ({
+  "All companies": "Semua perusahaan",
+  "All study programs": "Semua program studi",
+  "All request statuses": "Semua status permintaan",
+  "All placement types": "Semua jenis penempatan",
+}[value] ?? value);
+
 const renderShell = (
   root: HTMLElement,
   data: ComponentData,
   args: FrontendRendererArgs,
 ) => {
   const header = carbon("cds-header") as HTMLElement;
-  header.setAttribute("aria-label", "Dashboard header");
+  header.setAttribute("aria-label", "Header dasbor");
   const menu = carbon("cds-header-menu-button") as HTMLElement;
   menu.dataset.testid = "sidebar-toggle";
   menu.setAttribute("collapse-mode", "rail");
-  menu.setAttribute("button-label-inactive", "Open navigation menu");
-  menu.setAttribute("button-label-active", "Close navigation menu");
+  menu.setAttribute("button-label-inactive", "Buka menu navigasi");
+  menu.setAttribute("button-label-active", "Tutup menu navigasi");
 
   const global = document.createElement("div");
   global.className = "cds-header__global";
   const context = document.createElement("span");
   context.className = "cds-header-context";
-  context.textContent = data.context_label ?? "Prototype data";
+  context.textContent = data.context_label ?? "Data prototipe";
   const help = carbon("cds-header-global-action") as HTMLElement;
   help.dataset.testid = "help-placeholder";
-  help.setAttribute("button-label-inactive", "Help coming soon");
-  help.setAttribute("aria-label", "Help coming soon");
-  help.setAttribute("title", "Help center coming soon");
+  help.setAttribute("button-label-inactive", "Bantuan segera hadir");
+  help.setAttribute("aria-label", "Bantuan segera hadir");
+  help.setAttribute("title", "Pusat bantuan segera hadir");
   help.setAttribute("disabled", "");
   const helpIcon = createCarbonIcon(Help16);
   helpIcon.setAttribute("slot", "icon");
@@ -216,7 +223,7 @@ const renderShell = (
 
   const sideNav = carbon("cds-side-nav") as HTMLElement;
   sideNav.dataset.testid = "sidebar-nav";
-  sideNav.setAttribute("aria-label", "Dashboard navigation");
+  sideNav.setAttribute("aria-label", "Navigasi dasbor");
   sideNav.setAttribute("collapse-mode", "fixed");
   sideNav.setAttribute("expanded", "");
 
@@ -229,7 +236,7 @@ const renderShell = (
 
   const productDescription = document.createElement("span");
   productDescription.className = "cds-sidebar__product-description";
-  productDescription.textContent = "Talent Intelligence Dashboard";
+  productDescription.textContent = "Dasbor Intelijen Talenta";
   brand.append(productName, productDescription);
 
   const divider = document.createElement("div");
@@ -359,7 +366,7 @@ const renderShell = (
 
 const renderPictogram = (root: HTMLElement, data: ComponentData) => {
   root.appendChild(
-    createPictogram(data.name ?? "", data.label ?? "Page pictogram"),
+  createPictogram(data.name ?? "", data.label ?? "Piktogram halaman"),
   );
 };
 
@@ -377,7 +384,7 @@ const renderFilters = (
   content.className = "cds-filter-toolbar__content";
   const title = document.createElement("strong");
   title.className = "cds-filter-toolbar__title";
-  title.textContent = "Global filters";
+  title.textContent = "Filter global";
   const summary = document.createElement("div");
   summary.className = "cds-filter-toolbar__summary";
   const summaryValues = document.createElement("span");
@@ -386,26 +393,26 @@ const renderFilters = (
   [filters.request_status, filters.placement_type].forEach((value) => {
     if (value && !value.startsWith("All ")) activeValues.push(value);
   });
-  summaryValues.textContent = activeValues.join(" · ");
+  summaryValues.textContent = activeValues.map(translateFilterValue).join(" · ");
   const summarySeparator = document.createElement("span");
   summarySeparator.className = "cds-filter-toolbar__summary-separator";
   summarySeparator.setAttribute("aria-hidden", "true");
-  summarySeparator.textContent = " · ";
+  summarySeparator.textContent = "\u00a0·\u00a0";
   const summaryDate = document.createElement("span");
   summaryDate.className = "cds-filter-toolbar__summary-date";
   summaryDate.textContent =
-    [filters.date_start, filters.date_end].filter(Boolean).join(" to ") ||
-    "All dates";
+    [filters.date_start, filters.date_end].filter(Boolean).join(" sampai ") ||
+    "Semua tanggal";
   summary.append(summaryValues, summarySeparator, summaryDate);
   content.append(title, summary);
 
   const actions = document.createElement("div");
   actions.className = "cds-filter-toolbar__actions";
-  const toggle = carbon("cds-button", "Filters") as HTMLElement;
+  const toggle = carbon("cds-button", "Filter") as HTMLElement;
   toggle.dataset.testid = "global-filter-open";
   toggle.setAttribute("kind", "primary");
   toggle.setAttribute("size", "sm");
-  const reset = carbon("cds-button", "Reset") as HTMLElement;
+  const reset = carbon("cds-button", "Atur ulang") as HTMLElement;
   reset.dataset.testid = "global-filter-reset";
   reset.setAttribute("kind", "ghost");
   reset.setAttribute("size", "sm");
@@ -420,25 +427,25 @@ const renderFilters = (
   const optionControls = [
     optionSelect(
       "company",
-      "Company",
+      "Perusahaan",
       data.options?.company ?? [],
       filters.company,
     ),
     optionSelect(
       "study_program",
-      "Study program",
+      "Program studi",
       data.options?.study_program ?? [],
       filters.study_program,
     ),
     optionSelect(
       "request_status",
-      "Request status",
+      "Status permintaan",
       data.options?.request_status ?? [],
       filters.request_status,
     ),
     optionSelect(
       "placement_type",
-      "Placement type",
+      "Jenis penempatan",
       data.options?.placement_type ?? [],
       filters.placement_type,
     ),
@@ -452,14 +459,14 @@ const renderFilters = (
   datePicker.setAttribute("value", `${filters.date_start}/${filters.date_end}`);
   const dateFrom = carbon("cds-date-picker-input") as HTMLElement;
   dateFrom.setAttribute("kind", "from");
-  dateFrom.setAttribute("label-text", "Start date");
+  dateFrom.setAttribute("label-text", "Tanggal mulai");
   const dateTo = carbon("cds-date-picker-input") as HTMLElement;
   dateTo.setAttribute("kind", "to");
-  dateTo.setAttribute("label-text", "End date");
+  dateTo.setAttribute("label-text", "Tanggal selesai");
   datePicker.append(dateFrom, dateTo);
   controls.appendChild(datePicker);
 
-  const apply = carbon("cds-button", "Apply filters") as HTMLElement;
+  const apply = carbon("cds-button", "Terapkan filter") as HTMLElement;
   apply.dataset.testid = "global-filter-apply";
   apply.setAttribute("kind", "primary");
   apply.setAttribute("size", "sm");
@@ -569,9 +576,9 @@ const renderKpis = (
 const formatStatusDate = (value?: string) => {
   const parts = (value ?? "").split("-").map(Number);
   if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) {
-    return "Unavailable";
+    return "Tidak tersedia";
   }
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -586,21 +593,21 @@ const renderDataStatus = (
 ) => {
   const container = document.createElement("section");
   container.className = "cds-data-status";
-  container.setAttribute("aria-label", "Data status");
+  container.setAttribute("aria-label", "Status data");
 
   const summary = document.createElement("div");
   summary.className = "cds-data-status__summary";
   const meta = document.createElement("span");
   meta.className = "cds-data-status__meta";
-  meta.textContent = `Updated ${formatStatusDate(data.as_of_date)} · ${(
+  meta.textContent = `Diperbarui ${formatStatusDate(data.as_of_date)} · ${(
     data.record_count ?? 0
-  ).toLocaleString("en-US")} records`;
+  ).toLocaleString("id-ID")} catatan`;
 
   const tags = document.createElement("div");
   tags.className = "cds-data-status__tags";
   const modeTag = carbon(
     "cds-tag",
-    data.mode === "prototype" ? "Prototype data" : "Local data",
+    data.mode === "prototype" ? "Data prototipe" : "Data lokal",
   ) as HTMLElement;
   modeTag.className = "cds-data-status__tag";
   modeTag.setAttribute(
@@ -613,8 +620,8 @@ const renderDataStatus = (
   const kpiTag = carbon(
     "cds-tag",
     data.kpi_status === "validated"
-      ? "Validated KPI logic"
-      : "Provisional KPI logic",
+      ? "Logika KPI tervalidasi"
+      : "Logika KPI pratinjau",
   ) as HTMLElement;
   kpiTag.className = "cds-data-status__tag";
   kpiTag.setAttribute(
@@ -625,7 +632,7 @@ const renderDataStatus = (
   tags.appendChild(kpiTag);
 
   if ((data.warnings?.length ?? 0) > 0 && data.mode !== "prototype") {
-    const warningTag = carbon("cds-tag", "Data warning") as HTMLElement;
+    const warningTag = carbon("cds-tag", "Peringatan data") as HTMLElement;
     warningTag.className = "cds-data-status__tag";
     warningTag.setAttribute("type", "yellow");
     warningTag.setAttribute("size", "sm");
@@ -633,7 +640,7 @@ const renderDataStatus = (
   }
 
   const detailsId = `data-details-${args.key.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
-  const detailsToggle = carbon("cds-button", "Data details") as HTMLElement;
+  const detailsToggle = carbon("cds-button", "Detail data") as HTMLElement;
   detailsToggle.className = "cds-data-status__toggle";
   detailsToggle.setAttribute("kind", "ghost");
   detailsToggle.setAttribute("size", "sm");
@@ -661,7 +668,7 @@ const renderDataStatus = (
   const warningSection = document.createElement("div");
   warningSection.className = "cds-data-status__warnings";
   const warningTitle = document.createElement("strong");
-  warningTitle.textContent = "Data contract warnings";
+  warningTitle.textContent = "Peringatan kontrak data";
   warningSection.appendChild(warningTitle);
   if ((data.warnings ?? []).length) {
     const warningList = document.createElement("ul");
@@ -673,7 +680,7 @@ const renderDataStatus = (
     warningSection.appendChild(warningList);
   } else {
     const noWarnings = document.createElement("p");
-    noWarnings.textContent = "No data-contract warnings.";
+    noWarnings.textContent = "Tidak ada peringatan kontrak data.";
     warningSection.appendChild(noWarnings);
   }
   detailsPanel.append(detailsList, warningSection);
@@ -694,7 +701,7 @@ const renderFeedback = (root: HTMLElement, data: ComponentData) => {
   notification.setAttribute("kind", data.kind ?? "info");
   notification.setAttribute("low-contrast", "");
   notification.setAttribute("open", "");
-  notification.setAttribute("title", data.title ?? "Information");
+  notification.setAttribute("title", data.title ?? "Informasi");
   notification.setAttribute("subtitle", data.subtitle ?? "");
   root.appendChild(notification);
 };
@@ -711,10 +718,10 @@ const renderTable = (
     const empty = carbon("cds-tile");
     empty.className = "cds-table-empty";
     const emptyTitle = document.createElement("strong");
-    emptyTitle.textContent = data.empty_title ?? "No records match";
+    emptyTitle.textContent = data.empty_title ?? "Tidak ada catatan yang cocok";
     const emptyDetail = document.createElement("p");
     emptyDetail.textContent =
-      data.empty_detail ?? "Adjust the active filters and try again.";
+      data.empty_detail ?? "Sesuaikan filter aktif lalu coba lagi.";
     empty.append(emptyTitle, emptyDetail);
     surface.appendChild(empty);
     root.appendChild(surface);
@@ -745,16 +752,16 @@ const renderTable = (
   table.append(head, body);
 
   const pagination = carbon("cds-pagination") as HTMLElement;
-  pagination.setAttribute("aria-label", "Table pagination");
+  pagination.setAttribute("aria-label", "Paginasi tabel");
   pagination.setAttribute("page", String(data.page ?? 1));
   pagination.setAttribute("page-size", String(data.page_size ?? 50));
   pagination.setAttribute("total-pages", String(data.total_pages ?? 1));
   pagination.setAttribute("total-items", String(data.total_rows ?? 0));
   pagination.setAttribute("start", String(data.row_offset ?? 0));
   pagination.setAttribute("page-size-input-disabled", "");
-  pagination.setAttribute("items-per-page-text", "Rows per page");
-  pagination.setAttribute("forward-text", "Next page");
-  pagination.setAttribute("backward-text", "Previous page");
+  pagination.setAttribute("items-per-page-text", "Baris per halaman");
+  pagination.setAttribute("forward-text", "Halaman berikutnya");
+  pagination.setAttribute("backward-text", "Halaman sebelumnya");
   pagination.className = "table-pagination";
   surface.append(table, pagination);
   root.appendChild(surface);

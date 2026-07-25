@@ -80,9 +80,9 @@ def render_data_status(
     as_of = dataset_as_of_date(data)
     record_count = sum(len(frame) for frame in data.tables.values())
     as_of_label = as_of.date().isoformat() if not pd.isna(as_of) else ""
-    validation_note = provisional_note.format(as_of_date=as_of_label or "Unavailable")
-    validation_note = f"{validation_note} Pending PM/Data Engineer validation."
-    mode_label = "Prototype preview" if data.is_mock else "Local cleaned data"
+    validation_note = provisional_note.format(as_of_date=as_of_label or "Tidak tersedia")
+    validation_note = f"{validation_note} Menunggu validasi PM/Engineer Data."
+    mode_label = "Pratinjau prototipe" if data.is_mock else "Data lokal terkurasi"
     render_data_status_surface(
         mode="prototype" if data.is_mock else "local",
         record_count=record_count,
@@ -90,11 +90,11 @@ def render_data_status(
         kpi_status="provisional",
         detail_items=[
             {"label": "Mode", "value": mode_label},
-            {"label": "Source", "value": data.source},
-            {"label": "Records", "value": f"{record_count:,}"},
-            {"label": "Dataset as of", "value": as_of_label or "Unavailable"},
-            {"label": "KPI status", "value": "Provisional"},
-            {"label": "Validation notes", "value": validation_note},
+            {"label": "Sumber", "value": data.source},
+            {"label": "Catatan", "value": f"{record_count:,}"},
+            {"label": "Data per", "value": as_of_label or "Tidak tersedia"},
+            {"label": "Status KPI", "value": "Pratinjau"},
+            {"label": "Catatan validasi", "value": validation_note},
         ],
         warnings=list(data.warnings),
         key=key,
@@ -143,4 +143,4 @@ def format_percent(value: float) -> str:
 
 
 def format_days(value: float) -> str:
-    return f"{value:.0f} days"
+    return f"{value:.0f} hari"

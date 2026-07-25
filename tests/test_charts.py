@@ -151,7 +151,10 @@ def test_business_series_colors_are_stable_with_partial_data(monkeypatch) -> Non
         color_map=EXECUTIVE_OVERVIEW_SERIES_COLORS,
     )
     full_colors = {trace.name: trace.line.color for trace in figures[-1].data}
-    assert full_colors == EXECUTIVE_OVERVIEW_SERIES_COLORS
+    assert full_colors == {
+        "Permintaan talenta": EXECUTIVE_OVERVIEW_SERIES_COLORS["Talent requests"],
+        "Penempatan": EXECUTIVE_OVERVIEW_SERIES_COLORS["Placements"],
+    }
 
     placements_only = full_frame.loc[full_frame["metric"] == "Placements"]
     charts.render_line(
@@ -163,7 +166,7 @@ def test_business_series_colors_are_stable_with_partial_data(monkeypatch) -> Non
         show_title=False,
         color_map=EXECUTIVE_OVERVIEW_SERIES_COLORS,
     )
-    assert figures[-1].data[0].name == "Placements"
+    assert figures[-1].data[0].name == "Penempatan"
     assert figures[-1].data[0].line.color == "#009d9a"
 
 

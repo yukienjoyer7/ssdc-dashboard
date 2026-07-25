@@ -13,7 +13,7 @@ from data.loaders import load_dashboard_data
 
 
 st.set_page_config(
-    page_title="SSDC 2026 Dashboard",
+    page_title="Dasbor SSDC 2026",
     page_icon=":material/monitoring:",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -35,7 +35,7 @@ active_page = page_spec_for_title(getattr(navigation, "title", PAGE_SPECS[0].tit
 
 shell_action = render_shell(
     active_page.slug,
-    context_label="Prototype data" if data.is_mock else "Local data",
+    context_label="Data prototipe" if data.is_mock else "Data lokal",
 )
 if shell_action and shell_action.get("type") == "navigate":
     target = page_spec_for_slug(str(shell_action.get("page", "")))

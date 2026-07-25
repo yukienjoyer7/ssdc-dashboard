@@ -17,6 +17,55 @@ from config.theme import (
 
 BAR_LABEL_COLOR = "#ffffff"
 
+DISPLAY_LABELS_ID = {
+    "Talent requests": "Permintaan talenta",
+    "Placements": "Penempatan",
+    "Submitted": "Dikirim",
+    "Interview User": "Wawancara pengguna",
+    "FU 1": "TL 1",
+    "FU 2": "TL 2",
+    "FU 3": "TL 3",
+    "Finish": "Selesai",
+    "Placement": "Penempatan",
+    "Ghosting": "Ghosting",
+    "Rejected": "Ditolak",
+    "On Progress": "Dalam proses",
+    "Closed": "Ditutup",
+    "Draft": "Draf",
+    "Shortlisted": "Daftar pendek",
+    "On Review": "Dalam peninjauan",
+    "Available": "Tersedia",
+    "Unavailable": "Tidak tersedia",
+    "Untracked": "Tidak terlacak",
+    "Monitor": "Pantau",
+    "Strong match": "Kecocokan kuat",
+    "Potential match": "Kandidat potensial",
+    "Review": "Tinjau",
+    "Unknown company": "Perusahaan tidak diketahui",
+}
+
+
+def _localized_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    localized = frame.copy()
+    for column in localized.select_dtypes(include=["object", "string", "category"]).columns:
+        localized[column] = localized[column].map(
+            lambda value: DISPLAY_LABELS_ID.get(str(value), value) if pd.notna(value) else value
+        )
+    return localized
+
+
+def _localized_color_map(color_map: Mapping[str, str] | None) -> dict[str, str]:
+    return {
+        DISPLAY_LABELS_ID.get(str(label), label): color
+        for label, color in (color_map or {}).items()
+    }
+
+
+def _localized_order(category_order: list[str] | None) -> list[str] | None:
+    if category_order is None:
+        return None
+    return [DISPLAY_LABELS_ID.get(str(label), label) for label in category_order]
+
 
 def _base_layout(figure, height: int = 300):
     figure.update_layout(
@@ -106,8 +155,8 @@ def _chart_title(title: str) -> None:
 
 def _chart_empty(title: str) -> None:
     render_feedback(
-        "No chart data",
-        "No records match the active filters for this view.",
+        "Tidak ada data grafik",
+        "Tidak ada catatan yang cocok dengan filter aktif untuk tampilan ini.",
         key=f"chart-empty-{title.lower().replace(' ', '-')}",
     )
 
@@ -171,13 +220,14 @@ def render_bar(
         return
     if show_title:
         _chart_title(title)
+    frame = _localized_frame(frame)
     figure = px.bar(
         frame,
         x=x,
         y=y,
         color=color,
         color_discrete_sequence=CHART_CATEGORICAL,
-        color_discrete_map=dict(color_map or {}),
+        color_discrete_map=_localized_color_map(color_map),
         text_auto=True,
     )
     figure.update_traces(textfont_color=BAR_LABEL_COLOR)
@@ -188,7 +238,7 @@ def render_bar(
         x_title=x_title,
         y_title=y_title,
         tick_angle=tick_angle,
-        category_order=category_order,
+        category_order=_localized_order(category_order),
     )
     if show_legend is not None:
         figure.update_layout(showlegend=show_legend)
@@ -216,13 +266,14 @@ def render_horizontal_bar(
         return
     if show_title:
         _chart_title(title)
+    frame = _localized_frame(frame)
     figure = px.bar(
         frame,
         x=x,
         y=y,
         color=color,
         color_discrete_sequence=CHART_CATEGORICAL,
-        color_discrete_map=dict(color_map or {}),
+        color_discrete_map=_localized_color_map(color_map),
         orientation="h",
         text_auto=True,
     )
@@ -233,7 +284,7 @@ def render_horizontal_bar(
         figure,
         x_title=x_title,
         y_title=y_title,
-        category_order=category_order,
+        category_order=_localized_order(category_order),
         horizontal=True,
     )
     if show_legend is not None:
@@ -263,6 +314,7 @@ def render_line(
         return
     if show_title:
         _chart_title(title)
+    frame = _localized_frame(frame)
     figure = px.line(
         frame,
         x=x,
@@ -270,7 +322,7 @@ def render_line(
         color=color,
         markers=True,
         color_discrete_sequence=CHART_CATEGORICAL,
-        color_discrete_map=dict(color_map or {}),
+        color_discrete_map=_localized_color_map(color_map),
     )
     if series_color:
         figure.update_traces(line_color=series_color, marker_color=series_color)
@@ -278,7 +330,7 @@ def render_line(
         figure,
         x_title=x_title,
         y_title=y_title,
-        category_order=category_order,
+        category_order=_localized_order(category_order),
     )
     if show_legend is not None:
         figure.update_layout(showlegend=show_legend)

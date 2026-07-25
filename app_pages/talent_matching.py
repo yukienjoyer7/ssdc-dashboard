@@ -12,62 +12,62 @@ from services.analytics import matching_table, request_table
 
 def main() -> None:
     data, filters = start_page(
-        "03 / Candidate shortlist",
-        "Talent Matching",
-        "Which eligible students are the strongest matches for a selected talent request, and why?",
+        "03 / Daftar pendek kandidat",
+        "Pencocokan Talenta",
+        "Kandidat yang memenuhi syarat mana yang paling sesuai untuk permintaan talenta terpilih, dan mengapa?",
         provisional_note=(
-            "Eligibility requires a study-program/interest match, minimum semester, "
-            "and Available status."
+            "Kelayakan memerlukan kecocokan program studi/minat, semester minimum, "
+            "dan status Tersedia."
         ),
     )
     requests = request_table(data, filters)
     if requests.empty:
-        render_empty("No requests available", "Adjust the global filters before selecting a request.")
+        render_empty("Tidak ada permintaan tersedia", "Sesuaikan filter global sebelum memilih permintaan.")
         return
     options = requests["id_talent_req"].tolist()
     previous = st.session_state.get("selected_request_id")
     default_index = options.index(previous) if previous in options else 0
-    request_id = st.selectbox("Select talent request", options, index=default_index, key="matching_request_id")
+    request_id = st.selectbox("Pilih permintaan talenta", options, index=default_index, key="matching_request_id")
     st.session_state["selected_request_id"] = request_id
     ranked, request = matching_table(data, request_id, filters)
     if request is None:
-        render_empty("Request not found", "Choose a request from the current filtered list.")
+        render_empty("Permintaan tidak ditemukan", "Pilih permintaan dari daftar terfilter saat ini.")
         return
 
     render_kpis(
         [
-            {"label": "Company", "value": str(request["company_name"])},
-            {"label": "Position", "value": str(request["nama_posisi"])},
-            {"label": "Requested headcount", "value": format_count(request["requested_headcount"])},
+            {"label": "Perusahaan", "value": str(request["company_name"])},
+            {"label": "Posisi", "value": str(request["nama_posisi"])},
+            {"label": "Kebutuhan talenta", "value": format_count(request["requested_headcount"])},
         ],
         key="matching-request-context",
     )
     render_feedback(
-        "Request requirements",
-        f"Study program: {request['bidang_studi_dibutuhkan']} · "
-        f"Minimum semester: {request['minimum_semester']} · "
-        f"Placement: {request['jenis_penempatan']}",
+        "Persyaratan permintaan",
+        f"Program studi: {request['bidang_studi_dibutuhkan']} · "
+        f"Semester minimum: {request['minimum_semester']} · "
+        f"Penempatan: {request['jenis_penempatan']}",
         key="matching-request-requirements",
     )
 
-    with control_group("Refine shortlist", key="matching-filters"):
-        eligibility_only = st.checkbox("Show eligible candidates only", value=True, key="matching_eligible_only")
-        min_score = st.slider("Minimum match score", 0, 100, 0, key="matching_min_score")
+    with control_group("Saring daftar pendek", key="matching-filters"):
+        eligibility_only = st.checkbox("Tampilkan hanya kandidat yang memenuhi syarat", value=True, key="matching_eligible_only")
+        min_score = st.slider("Skor kecocokan minimum", 0, 100, 0, key="matching_min_score")
     displayed = ranked.loc[ranked["match_score"] >= min_score].copy()
     if eligibility_only:
         displayed = displayed.loc[displayed["eligible"]].copy()
     eligible_count = int(ranked["eligible"].sum())
     eligibility_rate = eligible_count / len(ranked) * 100 if len(ranked) else 0
     render_kpis([
-        {"label": "Evaluated candidates", "value": format_count(len(ranked))},
-        {"label": "Eligible candidates", "value": format_count(eligible_count)},
-        {"label": "Eligibility rate", "value": format_percent(eligibility_rate)},
-        {"label": "Top-k candidates", "value": format_count(len(displayed))},
+        {"label": "Kandidat dievaluasi", "value": format_count(len(ranked))},
+        {"label": "Kandidat memenuhi syarat", "value": format_count(eligible_count)},
+        {"label": "Tingkat kelayakan", "value": format_percent(eligibility_rate)},
+        {"label": "Kandidat teratas", "value": format_count(len(displayed))},
     ], columns_per_row=4, variant="compact")
 
-    render_section("Ranked shortlist", "Every score includes criterion-level explanation for review.")
+    render_section("Daftar pendek berperingkat", "Setiap skor dilengkapi penjelasan per kriteria untuk ditinjau.")
     if displayed.empty:
-        render_empty("No candidates match", "Lower the score threshold or include candidates who need review.")
+        render_empty("Tidak ada kandidat yang cocok", "Turunkan ambang skor atau sertakan kandidat yang perlu ditinjau.")
     else:
         columns = [
             "NIM", "nama", "program_studi", "semester", "ketersediaan", "eligible", "match_score",
@@ -80,8 +80,8 @@ def main() -> None:
         )
         with left:
             with chart_surface(
-                "Candidates by match score",
-                "Exact score values grouped by recommendation outcome.",
+                "Kandidat berdasarkan skor kecocokan",
+                "Nilai skor tepat dikelompokkan berdasarkan hasil rekomendasi.",
                 key="matching-score-distribution",
             ):
                 score_counts = (
@@ -95,26 +95,26 @@ def main() -> None:
                     score_counts,
                     "score_label",
                     "candidates",
-                    "Candidates by match score",
+                    "Kandidat berdasarkan skor kecocokan",
                     color="recommendation",
                     show_title=False,
                     color_map=RECOMMENDATION_COLORS,
-                    x_title="Match score",
-                    y_title="Candidates",
+                    x_title="Skor kecocokan",
+                    y_title="Kandidat",
                     category_order=score_counts["score_label"].drop_duplicates().tolist(),
                     tick_angle=0,
                 )
         with right:
             candidate_ids = displayed["NIM"].tolist()
-            chosen = st.selectbox("Candidate detail", candidate_ids, key="matching_candidate_detail")
+            chosen = st.selectbox("Detail kandidat", candidate_ids, key="matching_candidate_detail")
             detail = displayed.loc[displayed["NIM"] == chosen].iloc[0]
             st.markdown(f"**{detail['nama']}** · {detail['program_studi']}")
             st.write(detail["explanation"])
             st.write({
-                "Eligibility": "Eligible" if detail["eligible"] else "Review",
-                "Match score": int(detail["match_score"]),
+                "Kelayakan": "Memenuhi syarat" if detail["eligible"] else "Tinjau",
+                "Skor kecocokan": int(detail["match_score"]),
                 "Semester": detail["semester"],
-                "Availability": detail["ketersediaan"],
+                "Ketersediaan": detail["ketersediaan"],
             })
 
 

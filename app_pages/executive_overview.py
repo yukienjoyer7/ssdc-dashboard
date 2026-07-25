@@ -17,10 +17,10 @@ from services.analytics import canonical_kpis, request_table, selection_table, p
 
 def main() -> None:
     data, filters = start_page(
-        "01 / Command view",
-        "Executive Overview",
-        "What is the current overall condition of talent demand, fulfilment, selection activity, and placement outcomes?",
-        provisional_note="Canonical KPI preview; dataset as-of date: {as_of_date}.",
+        "01 / Tampilan ringkasan",
+        "Ringkasan Eksekutif",
+        "Bagaimana kondisi terkini permintaan talenta, pemenuhan, aktivitas seleksi, dan hasil penempatan?",
+        provisional_note="Pratinjau KPI kanonis; tanggal data: {as_of_date}.",
     )
     requests = request_table(data, filters)
     selection = selection_table(data, filters)
@@ -32,47 +32,47 @@ def main() -> None:
     render_kpis(
         [
             {
-                "label": "Requested headcount",
+                "label": "Kebutuhan talenta",
                 "value": format_count(kpis["KPI-03"]),
-                "help": f"Across {format_count(kpis['KPI-02'])} talent requests",
+                "help": f"Dari {format_count(kpis['KPI-02'])} permintaan talenta",
             },
             {
-                "label": "Placements",
+                "label": "Penempatan",
                 "value": format_count(kpis["KPI-06"]),
-                "help": f"{format_percent(kpis['KPI-09'])} of requested headcount",
+                "help": f"{format_percent(kpis['KPI-09'])} dari kebutuhan talenta",
             },
             {
-                "label": "Placement rate",
+                "label": "Tingkat penempatan",
                 "value": format_percent(kpis["KPI-07"]),
                 "help": (
-                    f"{format_count(kpis['KPI-06'])} placements from "
-                    f"{format_count(kpis['KPI-04'])} applications"
+                    f"{format_count(kpis['KPI-06'])} penempatan dari "
+                    f"{format_count(kpis['KPI-04'])} lamaran"
                 ),
             },
             {
-                "label": "Ghosting rate",
+                "label": "Tingkat ghosting",
                 "value": format_percent(kpis["KPI-08"]),
                 "help": (
-                    f"{format_count(ghosting_cases)} ghosting cases from "
-                    f"{format_count(kpis['KPI-04'])} applications"
+                    f"{format_count(ghosting_cases)} kasus ghosting dari "
+                    f"{format_count(kpis['KPI-04'])} lamaran"
                 ),
             },
         ],
         columns_per_row=4,
         variant="primary",
-        section_label="Primary outcomes",
+        section_label="Hasil utama",
         key="executive-primary-outcomes",
     )
     render_kpis(
         [
-            {"label": "Total companies", "value": format_count(kpis["KPI-01"])},
-            {"label": "Total talent requests", "value": format_count(kpis["KPI-02"])},
-            {"label": "Candidate applications", "value": format_count(kpis["KPI-04"])},
-            {"label": "Unique candidates", "value": format_count(kpis["KPI-05"])},
+            {"label": "Total perusahaan", "value": format_count(kpis["KPI-01"])},
+            {"label": "Total permintaan talenta", "value": format_count(kpis["KPI-02"])},
+            {"label": "Lamaran kandidat", "value": format_count(kpis["KPI-04"])},
+            {"label": "Kandidat unik", "value": format_count(kpis["KPI-05"])},
         ],
         columns_per_row=4,
         variant="secondary",
-        section_label="Pipeline volume",
+        section_label="Volume proses",
         key="executive-pipeline-volume",
     )
 
@@ -89,44 +89,44 @@ def main() -> None:
     action_labels = ordered_counts(requests["action_label"], ACTION_LABEL_ORDER)
     action_labels = action_labels.rename(columns={"category": "action_label"})
 
-    render_section("Pipeline movement", "Request and placement events by month.")
+    render_section("Pergerakan proses", "Peristiwa permintaan dan penempatan per bulan.")
     left, right = analytical_columns(
         "main_supporting",
         key="overview-pipeline-movement",
     )
     with left:
         with chart_surface(
-            "Talent requests and placements",
-            "Monthly movement of talent requests and completed placements.",
+            "Permintaan talenta dan penempatan",
+            "Pergerakan bulanan permintaan talenta dan penempatan selesai.",
             key="overview-request-placement-trend",
         ):
             render_line(
                 trend,
                 "month",
                 "count",
-                "Talent requests and placements",
+                "Permintaan talenta dan penempatan",
                 color="metric",
                 show_title=False,
                 color_map=EXECUTIVE_OVERVIEW_SERIES_COLORS,
-                x_title="Month",
-                y_title="Records",
+                x_title="Bulan",
+                y_title="Catatan",
                 x_type="category",
             )
     with right:
         with chart_surface(
-            "Current selection-stage distribution",
-            "Candidate records grouped by their current selection stage.",
+            "Distribusi tahap seleksi saat ini",
+            "Catatan kandidat dikelompokkan berdasarkan tahap seleksi saat ini.",
             key="overview-selection-stage",
         ):
             render_horizontal_bar(
                 stage_counts,
                 "count",
                 "stage",
-                "Current selection-stage distribution",
+                "Distribusi tahap seleksi saat ini",
                 show_title=False,
                 series_color=CHART_PRIMARY,
-                x_title="Candidates",
-                y_title="Selection stage",
+                x_title="Kandidat",
+                y_title="Tahap seleksi",
                 category_order=stage_counts["stage"].tolist(),
                 show_legend=False,
             )
@@ -137,47 +137,47 @@ def main() -> None:
     )
     with left:
         with chart_surface(
-            "Largest fulfilment gaps",
-            "Requests with the largest remaining headcount shortfall.",
+            "Kesenjangan pemenuhan terbesar",
+            "Permintaan dengan kekurangan kebutuhan talenta tersisa terbesar.",
             key="overview-fulfilment-gaps",
         ):
             render_horizontal_bar(
                 gap,
                 "headcount_gap",
                 REQUEST_LABEL_COLUMN,
-                "Largest fulfilment gaps",
+                "Kesenjangan pemenuhan terbesar",
                 show_title=False,
-                x_title="Headcount gap",
-                y_title="Request",
+                x_title="Kesenjangan kebutuhan",
+                y_title="Permintaan",
             )
     with right:
         with chart_surface(
-            "Requests by action label",
-            "Request volume grouped by its current action label.",
+            "Permintaan berdasarkan label tindakan",
+            "Volume permintaan berdasarkan label tindakan saat ini.",
             key="overview-action-labels",
         ):
             render_bar(
                 action_labels,
                 "action_label",
                 "count",
-                "Requests by action label",
+                "Permintaan berdasarkan label tindakan",
                 color="action_label",
                 show_title=False,
                 color_map=ACTION_LABEL_COLORS,
-                x_title="Action label",
-                y_title="Requests",
+                x_title="Label tindakan",
+                y_title="Permintaan",
                 category_order=action_labels["action_label"].tolist(),
                 show_legend=False,
                 tick_angle=-25,
             )
 
-    render_section("Requests requiring action", "Use the request-management page to inspect the reason and next operational step.")
+    render_section("Permintaan yang memerlukan tindakan", "Gunakan halaman manajemen permintaan untuk meninjau alasan dan langkah operasional berikutnya.")
     action_columns = [
         "id_talent_req", "company_name", "nama_posisi", "requested_headcount", "placements",
         "headcount_gap", "request_aging_days", "action_label",
     ]
     render_downloadable_table(actions[action_columns], "ssdc-action-requests.csv", "overview-actions")
-    st.page_link("app_pages/talent_request_management.py", label="Open Talent Request Management", icon=":material/arrow_forward:")
+    st.page_link("app_pages/talent_request_management.py", label="Buka Manajemen Permintaan Talenta", icon=":material/arrow_forward:")
 
 
 if __name__ == "__main__":

@@ -12,21 +12,21 @@ from services.analytics import canonical_kpis, selection_table
 
 def main() -> None:
     data, filters = start_page(
-        "04 / Follow-up queue",
-        "Selection Monitoring",
-        "Which candidate-selection records are stalled, overdue for follow-up, or at risk of ghosting?",
+        "04 / Antrean tindak lanjut",
+        "Pemantauan Seleksi",
+        "Catatan seleksi kandidat mana yang terhenti, terlambat ditindaklanjuti, atau berisiko ghosting?",
         provisional_note=(
-            "Selection Aging uses dataset as-of date {as_of_date}; "
-            "stale threshold remains configurable at 14 days."
+            "Usia Seleksi menggunakan tanggal data {as_of_date}; "
+            "ambang kedaluwarsa tetap dapat diatur pada 14 hari."
         ),
     )
     selection = selection_table(data, filters)
     kpis = canonical_kpis(data, filters)
-    with control_group("Filter records", key="selection-filters"):
-        show_follow_up = st.checkbox("Follow-up overdue only", key="selection_follow_up_only")
-        show_ghosting = st.checkbox("Ghosting cases only", key="selection_ghosting_only")
+    with control_group("Filter catatan", key="selection-filters"):
+        show_follow_up = st.checkbox("Hanya tindak lanjut yang terlambat", key="selection_follow_up_only")
+        show_ghosting = st.checkbox("Hanya kasus ghosting", key="selection_ghosting_only")
         stage_options = ["All stages", *sorted(selection["progress_student"].dropna().unique().tolist())]
-        stage = st.selectbox("Current stage", stage_options, key="selection_stage")
+        stage = st.selectbox("Tahap saat ini", stage_options, format_func=lambda value: "Semua tahap" if value == "All stages" else value, key="selection_stage")
     filtered = selection.copy()
     if show_follow_up:
         filtered = filtered.loc[filtered["follow_up_overdue"]].copy()
@@ -42,14 +42,14 @@ def main() -> None:
     stale = int(filtered["stale_flag"].sum()) if not filtered.empty else 0
     fu_counts = filtered["progress_student"].value_counts()
     render_kpis([
-        {"label": "On Progress", "value": format_count(on_progress)},
-        {"label": "Placement", "value": format_count(placements)},
-        {"label": "Rejected", "value": format_count(rejected)},
+        {"label": "Dalam proses", "value": format_count(on_progress)},
+        {"label": "Penempatan", "value": format_count(placements)},
+        {"label": "Ditolak", "value": format_count(rejected)},
         {"label": "Ghosting", "value": format_count(ghosting)},
-        {"label": "Stale cases", "value": format_count(stale)},
-        {"label": "FU1", "value": format_count(fu_counts.get("FU 1", 0))},
-        {"label": "FU2", "value": format_count(fu_counts.get("FU 2", 0))},
-        {"label": "FU3", "value": format_count(fu_counts.get("FU 3", 0))},
+        {"label": "Kasus kedaluwarsa", "value": format_count(stale)},
+        {"label": "TL 1", "value": format_count(fu_counts.get("FU 1", 0))},
+        {"label": "TL 2", "value": format_count(fu_counts.get("FU 2", 0))},
+        {"label": "TL 3", "value": format_count(fu_counts.get("FU 3", 0))},
     ], columns_per_row=8, variant="compact")
 
     stages = ordered_counts(filtered["progress_student"], SELECTION_STAGE_ORDER)
@@ -68,69 +68,69 @@ def main() -> None:
         .sort_values("ghosting_warning", ascending=False)
         .head(10)
     )
-    render_section("Selection risk", "Use the action table to identify the record, stage, and next follow-up context.")
+    render_section("Risiko seleksi", "Gunakan tabel tindakan untuk mengidentifikasi catatan, tahap, dan konteks tindak lanjut berikutnya.")
     left, right = analytical_columns(
         "equal",
         key="selection-risk",
     )
     with left:
         with chart_surface(
-            "Selection-stage distribution",
-            "Current candidate records grouped by selection stage.",
+            "Distribusi tahap seleksi",
+            "Catatan kandidat saat ini dikelompokkan berdasarkan tahap seleksi.",
             key="selection-stage-distribution",
         ):
             render_bar(
                 stages,
                 "stage",
                 "count",
-                "Selection-stage distribution",
+                "Distribusi tahap seleksi",
                 color="stage",
                 show_title=False,
                 color_map=SELECTION_STAGE_COLORS,
-                x_title="Selection stage",
-                y_title="Candidates",
+                x_title="Tahap seleksi",
+                y_title="Kandidat",
                 category_order=stages["stage"].tolist(),
                 show_legend=False,
                 tick_angle=-25,
             )
     with right:
         with chart_surface(
-            "Average aging by stage",
-            "Mean age of records within each current stage.",
+            "Rata-rata usia berdasarkan tahap",
+            "Rata-rata usia catatan dalam setiap tahap saat ini.",
             key="selection-average-aging",
         ):
             render_horizontal_bar(
                 aging,
                 "average_days",
                 "stage",
-                "Average aging by stage",
+                "Rata-rata usia berdasarkan tahap",
                 show_title=False,
-                x_title="Average days",
-                y_title="Selection stage",
+                x_title="Rata-rata hari",
+                y_title="Tahap seleksi",
                 category_order=aging["stage"].tolist(),
                 show_legend=False,
             )
     with chart_surface(
-        "Ghosting cases by company",
-        "Companies with one or more canonical ghosting outcomes.",
+        "Kasus ghosting berdasarkan perusahaan",
+        "Perusahaan dengan satu atau lebih hasil ghosting kanonis.",
         key="selection-ghosting-cases",
     ):
         render_bar(
             risks,
             "company_name",
             "ghosting_warning",
-            "Ghosting cases by company",
+            "Kasus ghosting berdasarkan perusahaan",
             show_title=False,
             series_color=CARBON_STATUS_COLORS["error"],
-            x_title="Company",
-            y_title="Ghosting cases",
+            x_title="Perusahaan",
+            y_title="Kasus ghosting",
             show_legend=False,
             tick_angle=-20,
         )
 
-    render_section("Follow-up action table", "Current-stage records are shown with the source status and prototype warning flags.")
+    render_section("Tabel tindakan tindak lanjut", "Catatan tahap saat ini ditampilkan bersama status sumber dan penanda peringatan prototipe.")
     if filtered.empty:
-        render_empty("No records match", "Change the stage or warning filters to broaden the follow-up queue.")
+        render_empty("Tidak ada catatan yang cocok", "Ubah tahap atau filter peringatan untuk memperluas antrean tindak lanjut.")
     else:
         columns = [
             "id_tracking_student", "NIM", "student_name", "id_talent_req", "company_name", "position",

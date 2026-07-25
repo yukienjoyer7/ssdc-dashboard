@@ -41,11 +41,11 @@ class PageSpec:
 
 
 PAGE_SPECS = (
-    PageSpec("executive-overview", "Executive overview", "monitoring", "dashboard", "global--analytics", "app_pages/executive_overview.py"),
-    PageSpec("talent-request-management", "Talent request management", "task_alt", "task", "list--checkbox", "app_pages/talent_request_management.py"),
-    PageSpec("talent-matching", "Talent matching", "person_search", "search", "user--search", "app_pages/talent_matching.py"),
-    PageSpec("selection-monitoring", "Selection monitoring", "notifications_active", "warning--alt", "chart--stepper", "app_pages/selection_monitoring.py"),
-    PageSpec("placement-performance", "Placement performance", "insights", "chart--line", "user--analytics", "app_pages/placement_performance.py"),
+    PageSpec("executive-overview", "Ringkasan Eksekutif", "monitoring", "dashboard", "global--analytics", "app_pages/executive_overview.py"),
+    PageSpec("talent-request-management", "Manajemen Permintaan Talenta", "task_alt", "task", "list--checkbox", "app_pages/talent_request_management.py"),
+    PageSpec("talent-matching", "Pencocokan Talenta", "person_search", "search", "user--search", "app_pages/talent_matching.py"),
+    PageSpec("selection-monitoring", "Pemantauan Seleksi", "notifications_active", "warning--alt", "chart--stepper", "app_pages/selection_monitoring.py"),
+    PageSpec("placement-performance", "Kinerja Penempatan", "insights", "chart--line", "user--analytics", "app_pages/placement_performance.py"),
 )
 
 
@@ -70,7 +70,7 @@ def page_spec_for_slug(slug: str) -> PageSpec | None:
 def render_shell(
     active_page: str,
     *,
-    context_label: str = "Prototype data",
+    context_label: str = "Data prototipe",
     key: str = "carbon-shell",
 ) -> dict[str, Any] | None:
     return _render_surface(
@@ -238,8 +238,8 @@ def render_table(
     columns: list[tuple[str, str]],
     key: str,
     page_size: int = DEFAULT_TABLE_PAGE_SIZE,
-    empty_title: str = "No records match",
-    empty_detail: str = "Adjust the active filters and try again.",
+    empty_title: str = "Tidak ada catatan yang cocok",
+    empty_detail: str = "Sesuaikan filter aktif lalu coba lagi.",
 ) -> dict[str, Any] | None:
     safe_columns = [key for key, _ in columns]
     page_size = max(1, int(page_size))
@@ -274,9 +274,18 @@ def render_table(
 
 def _table_rows(frame: pd.DataFrame, columns: list[str]) -> list[dict[str, Any]]:
     return [
-        {column: _json_safe(value) for column, value in record.items()}
+        {column: _display_table_value(column, value) for column, value in record.items()}
         for record in frame[columns].to_dict("records")
     ]
+
+
+def _display_table_value(column: str, value: Any) -> Any:
+    from components.tables import DISPLAY_VALUES_ID
+
+    safe = _json_safe(value)
+    if isinstance(safe, bool):
+        return "Ya" if safe else "Tidak"
+    return DISPLAY_VALUES_ID.get(str(safe), safe)
 
 
 def _json_safe(value: Any) -> Any:

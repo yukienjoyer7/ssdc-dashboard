@@ -123,7 +123,7 @@ def main() -> int:
             else:
                 print("PASS desktop hover does not expand collapsed rail")
                 collapsed_link.click()
-                page.get_by_text("Talent Matching", exact=True).first.wait_for(
+                page.get_by_text("Pencocokan Talenta", exact=True).first.wait_for(
                     state="visible", timeout=10_000
                 )
                 print("PASS desktop collapsed icon rail navigation")
