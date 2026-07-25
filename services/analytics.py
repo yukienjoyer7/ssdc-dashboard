@@ -323,7 +323,9 @@ def matching_table(data: DashboardData, request_id: str, filters: FilterState) -
         return frame.sort_values(["eligible", "match_score", "IPK"], ascending=False).reset_index(drop=True), request
 
     students = data.table("student_all.csv")
-    status = data.table("status_student.csv")[["NIM", "ketersediaan", "status", "IPK"]].drop_duplicates("NIM")
+    status = data.table("status_student.csv")[
+        ["NIM", "ketersediaan", "status", "IPK", "tools_normalized", "sync_date"]
+    ].drop_duplicates("NIM")
     frame = students.merge(status, on="NIM", how="left")
     if filters.study_program != "All study programs":
         frame = frame.loc[frame["program_studi"] == filters.study_program].copy()
@@ -394,6 +396,13 @@ def _rule_based_matching_fallback(
     ranked["semantic_score"] = ranked["match_score"].astype(float) / 100
     ranked["semantic_rank"] = (
         ranked["semantic_score"].rank(method="first", ascending=False).astype(int)
+    )
+    as_of = dataset_as_of_date(data)
+    ranked["matched_skills"] = ranked.apply(
+        lambda row: _compute_matched_skills(request, row), axis=1
+    )
+    ranked["caution"] = ranked.apply(
+        lambda row: _compute_caution(request, row, as_of), axis=1
     )
     ranked.attrs["score_source"] = "rule_based_fallback"
     return ranked, request
