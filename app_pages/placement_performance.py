@@ -5,7 +5,7 @@ from components.chart_data import monthly_counts
 from components.charts import chart_surface, render_bar, render_dot_plot, render_horizontal_bar, render_insight, render_line
 from components.states import render_empty
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
+from components.ui import analytical_columns, format_count, format_percent, render_divider, render_kpis, render_section
 from app_pages.common import start_page
 from config.theme import CHART_PRIMARY, PLACEMENT_TYPE_COLORS
 from services.analytics import canonical_kpis, placement_table
@@ -16,8 +16,8 @@ def main() -> None:
         "05 / Tinjauan hasil",
         "Kinerja Penempatan",
         "Seberapa efektif proses penempatan, dan di mana hasilnya berbeda berdasarkan perusahaan, program studi, dan jenis penempatan?",
-        provisional_note="Penyebut tingkat kanonis diterapkan; tanggal data: {as_of_date}.",
     )
+    render_divider()
     placements = placement_table(data, filters)
     kpis = canonical_kpis(data, filters)
     render_kpis([

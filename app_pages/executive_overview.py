@@ -3,7 +3,7 @@ import streamlit as st
 from components.chart_data import REQUEST_LABEL_COLUMN, monthly_counts, ordered_counts, with_request_labels
 from components.charts import chart_surface, render_bar, render_horizontal_bar, render_line
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
+from components.ui import analytical_columns, format_count, format_percent, render_divider, render_kpis, render_section
 from app_pages.common import start_page
 from config.theme import (
     ACTION_LABEL_COLORS,
@@ -20,8 +20,8 @@ def main() -> None:
         "01 / Tampilan ringkasan",
         "Ringkasan Eksekutif",
         "Bagaimana kondisi terkini permintaan talenta, pemenuhan, aktivitas seleksi, dan hasil penempatan?",
-        provisional_note="Pratinjau KPI kanonis; tanggal data: {as_of_date}.",
     )
+    render_divider()
     requests = request_table(data, filters)
     selection = selection_table(data, filters)
     placements = placement_table(data, filters)

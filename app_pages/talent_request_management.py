@@ -4,7 +4,7 @@ import streamlit as st
 from components.chart_data import REQUEST_LABEL_COLUMN, ordered_counts, with_request_labels
 from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, control_group, format_count, format_days, format_percent, render_kpis, render_section
+from components.ui import analytical_columns, control_group, format_count, format_days, format_percent, render_divider, render_kpis, render_section
 from app_pages.common import start_page
 from config.theme import ACTION_LABEL_COLORS, ACTION_LABEL_ORDER, CHART_PRIMARY
 from services.analytics import canonical_kpis, request_table
@@ -15,11 +15,8 @@ def main() -> None:
         "02 / Antrean operasional",
         "Manajemen Permintaan Talenta",
         "Permintaan talenta mana yang memerlukan tindakan, dan mengapa?",
-        provisional_note=(
-            "Usia Permintaan menggunakan tanggal data {as_of_date}; "
-            "label tindakan bersifat deterministik dan bukan skor berbobot."
-        ),
     )
+    render_divider()
     requests = request_table(data, filters)
     kpis = canonical_kpis(data, filters)
     categories = ["All action labels", "Belum Dikirim", "Kurang Kandidat", "Belum Terpenuhi", "Terpenuhi", "Closed"]

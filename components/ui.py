@@ -71,6 +71,13 @@ def render_page_header(
     st.markdown(header, unsafe_allow_html=True)
 
 
+def render_divider() -> None:
+    """Separate the page description from the content below it. Pages whose
+    first element is a control_group already get this from its own border;
+    use this on pages that don't for a consistent header/content break."""
+    st.markdown('<hr class="cds-divider" />', unsafe_allow_html=True)
+
+
 def render_data_status(
     data: DashboardData,
     provisional_note: str,

@@ -4,7 +4,7 @@ from components.chart_data import ordered_counts
 from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.states import render_empty
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, control_group, format_count, format_percent, render_kpis, render_section
+from components.ui import analytical_columns, control_group, format_count, format_percent, render_divider, render_kpis, render_section
 from app_pages.common import start_page
 from config.theme import CARBON_STATUS_COLORS, SELECTION_STAGE_COLORS, SELECTION_STAGE_ORDER
 from services.analytics import canonical_kpis, selection_table
@@ -15,11 +15,8 @@ def main() -> None:
         "04 / Antrean tindak lanjut",
         "Pemantauan Seleksi",
         "Catatan seleksi kandidat mana yang terhenti, terlambat ditindaklanjuti, atau berisiko ghosting?",
-        provisional_note=(
-            "Usia Seleksi menggunakan tanggal data {as_of_date}; "
-            "ambang kedaluwarsa tetap dapat diatur pada 14 hari."
-        ),
     )
+    render_divider()
     selection = selection_table(data, filters)
     kpis = canonical_kpis(data, filters)
     with control_group("Filter catatan", key="selection-filters"):

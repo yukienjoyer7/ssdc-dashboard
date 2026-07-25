@@ -278,6 +278,11 @@ def inject_theme() -> None:
             font-weight: var(--app-weight-regular);
             line-height: 1.5;
         }
+        .cds-divider {
+            border: none;
+            border-top: 1px solid var(--app-border-subtle);
+            margin: var(--cds-spacing-04) 0;
+        }
         .carbon-source {
             border-left: 3px solid var(--app-interactive);
             background: var(--app-surface-background);
@@ -305,10 +310,25 @@ def inject_theme() -> None:
             line-height: 1.45;
         }
         [class*="st-key-cds-control-group-"] {
-            gap: var(--cds-spacing-04);
+            gap: var(--cds-spacing-05);
             margin-block-end: var(--cds-spacing-03);
-            padding-block: var(--cds-spacing-03);
+            padding-block: var(--cds-spacing-04);
             border-block: 1px solid var(--app-border-subtle);
+        }
+        /* These two control groups sit right after cds-divider (page header),
+           so their own top border would double it up. */
+        [class*="st-key-cds-control-group-request-filters"],
+        [class*="st-key-cds-control-group-selection-filters"] {
+            border-block-start: none;
+        }
+        /* Streamlit collapses the markdown wrapper around the group label to
+           height:0 (overflow:visible lets the text still draw, but "auto"
+           resolves to 0 here -- an explicit height is what actually holds
+           the box open), so the flex gap ends up measured from a phantom
+           zero-height box and the label crowds the next control. */
+        [class*="st-key-cds-control-group-"] .stElementContainer:has(.cds-control-group__label),
+        [class*="st-key-cds-control-group-"] .stMarkdown:has(.cds-control-group__label) {
+            height: 1rem !important;
         }
         .cds-control-group__label {
             display: block;
