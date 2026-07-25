@@ -15,6 +15,8 @@ from config.theme import (
     spacing_px,
 )
 
+BAR_LABEL_COLOR = "#ffffff"
+
 
 def _base_layout(figure, height: int = 300):
     figure.update_layout(
@@ -178,6 +180,7 @@ def render_bar(
         color_discrete_map=dict(color_map or {}),
         text_auto=True,
     )
+    figure.update_traces(textfont_color=BAR_LABEL_COLOR)
     if series_color:
         figure.update_traces(marker_color=series_color)
     _update_axes(
@@ -223,6 +226,7 @@ def render_horizontal_bar(
         orientation="h",
         text_auto=True,
     )
+    figure.update_traces(textfont_color=BAR_LABEL_COLOR)
     if series_color:
         figure.update_traces(marker_color=series_color)
     _update_axes(

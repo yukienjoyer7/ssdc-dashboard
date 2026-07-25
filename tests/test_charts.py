@@ -208,7 +208,27 @@ def test_single_series_color_and_layout_colorway_are_explicit(monkeypatch) -> No
 
     figure = figures[0]
     assert all(trace.marker.color == "#4589ff" for trace in figure.data)
+    assert all(trace.textfont.color == "#ffffff" for trace in figure.data)
     assert list(figure.layout.colorway) == CHART_CATEGORICAL
+
+
+def test_vertical_bar_labels_use_white_text(monkeypatch) -> None:
+    figures: list[object] = []
+    monkeypatch.setattr(
+        charts.st,
+        "plotly_chart",
+        lambda figure, **options: figures.append(figure),
+    )
+
+    charts.render_bar(
+        pd.DataFrame({"label": ["A", "B"], "count": [8, 4]}),
+        "label",
+        "count",
+        "Counts",
+        show_title=False,
+    )
+
+    assert all(trace.textfont.color == "#ffffff" for trace in figures[0].data)
 
 
 def test_all_analytical_pages_use_shared_chart_surfaces() -> None:
