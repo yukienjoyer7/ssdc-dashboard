@@ -247,7 +247,7 @@ def test_executive_overview_uses_the_required_kpi_groups() -> None:
 def test_kpi_variants_match_page_hierarchy() -> None:
     expected_variants = {
         "talent_request_management.py": ["primary"],
-        "talent_matching.py": ["primary", "primary"],
+        "talent_matching.py": ["primary", "primary", "compact"],
         "selection_monitoring.py": ["primary"],
         "placement_performance.py": ["primary"],
     }

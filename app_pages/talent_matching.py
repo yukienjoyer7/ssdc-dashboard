@@ -129,20 +129,89 @@ def main() -> None:
             candidate_ids = displayed["NIM"].tolist()
             chosen = st.selectbox("Detail kandidat", candidate_ids, key="matching_candidate_detail")
             detail = displayed.loc[displayed["NIM"] == chosen].iloc[0]
-            st.markdown(f"**{detail['nama']}** · {detail['program_studi']}")
-            st.write(detail["explanation"])
-            st.write({
-                "Kelayakan": "Memenuhi syarat" if detail["eligible"] else "Tinjau",
-                "Skor relevansi": f"{float(detail['semantic_score']):.3f}",
-                "Peringkat": int(detail["semantic_rank"]),
-                "Semester": str(detail["semester"]),
-                "IPK": str(detail.get("IPK", "")),
-                "Ketersediaan": "Tersedia" if detail["ketersediaan"] == "Available" else detail["ketersediaan"],
-                "Domisili": detail.get("domisili", ""),
-                "Keahlian": detail.get("tools_normalized", ""),
-                "Keahlian cocok": detail.get("matched_skills", ""),
-                "Perhatian": detail.get("caution", ""),
-            })
+            
+            # Header
+            eligible = bool(detail.get("eligible", False))
+            kelayakan_label = "Memenuhi syarat" if eligible else "Tinjau"
+            tag_class = "cds-candidate-detail__tag--success" if eligible else "cds-candidate-detail__tag--warning"
+            kelayakan_tag = f'<span class="cds-candidate-detail__tag {tag_class}">{kelayakan_label}</span>'
+            
+            st.markdown(
+                '<div class="cds-candidate-detail__header">'
+                f'<p class="cds-candidate-detail__name">{detail["nama"]}</p>'
+                f'<p class="cds-candidate-detail__program">{detail["program_studi"]} · {kelayakan_label}</p>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+            
+            # Explanation
+            explanation = detail.get("explanation", "")
+            if explanation:
+                st.markdown(
+                    f'<div class="cds-candidate-detail__explanation">{explanation}</div>',
+                    unsafe_allow_html=True,
+                )
+            
+            # KPI metrics
+            render_kpis([
+                {"label": "Skor relevansi", "value": f"{float(detail['semantic_score']):.3f}"},
+                {"label": "Peringkat", "value": str(int(detail["semantic_rank"]))},
+                {"label": "Semester", "value": str(detail.get("semester", ""))},
+                {"label": "IPK", "value": f"{float(detail.get('IPK', 0)):.2f}" if detail.get("IPK") else "-"},
+            ], columns_per_row=4, variant="compact")
+            
+            # Detail fields
+            ketersediaan = str(detail.get("ketersediaan", ""))
+            ketersedia_label = "Tersedia" if ketersediaan == "Available" else ketersediaan
+            domisili = str(detail.get("domisili", ""))
+            keahlian = str(detail.get("tools_normalized", ""))
+            keahlian_cocok = str(detail.get("matched_skills", ""))
+            caution = str(detail.get("caution", ""))
+            
+            fields = []
+            fields.append(
+                '<div class="cds-candidate-detail__field">'
+                '<span class="cds-candidate-detail__label">Kelayakan</span>'
+                f'<span>{kelayakan_tag}</span>'
+                '</div>'
+            )
+            fields.append(
+                '<div class="cds-candidate-detail__field">'
+                '<span class="cds-candidate-detail__label">Ketersediaan</span>'
+                f'<span class="cds-candidate-detail__value">{ketersedia_label}</span>'
+                '</div>'
+            )
+            if domisili:
+                fields.append(
+                    '<div class="cds-candidate-detail__field">'
+                    '<span class="cds-candidate-detail__label">Domisili</span>'
+                    f'<span class="cds-candidate-detail__value">{domisili}</span>'
+                    '</div>'
+                )
+            if keahlian:
+                fields.append(
+                    '<div class="cds-candidate-detail__field">'
+                    '<span class="cds-candidate-detail__label">Keahlian</span>'
+                    f'<span class="cds-candidate-detail__skills">{keahlian}</span>'
+                    '</div>'
+                )
+            if keahlian_cocok:
+                fields.append(
+                    '<div class="cds-candidate-detail__field">'
+                    '<span class="cds-candidate-detail__label">Keahlian cocok</span>'
+                    f'<span class="cds-candidate-detail__skills">{keahlian_cocok}</span>'
+                    '</div>'
+                )
+            
+            fields_html = '<div class="cds-candidate-detail__fields">' + "".join(fields) + '</div>'
+            st.markdown(fields_html, unsafe_allow_html=True)
+            
+            # Caution
+            if caution:
+                st.markdown(
+                    f'<div class="cds-candidate-detail__caution">{caution}</div>',
+                    unsafe_allow_html=True,
+                )
 
 
 if __name__ == "__main__":
