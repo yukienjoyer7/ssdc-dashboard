@@ -425,6 +425,53 @@ def _build_dimensional_performance(
     return result[[col for col in columns if col in result.columns]].reset_index(drop=True)
 
 
+def build_program_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+) -> pd.DataFrame:
+    return _build_dimensional_performance(
+        df_selection, df_request, "study_program", "study_program"
+    )
+
+
+def build_placement_type_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+) -> pd.DataFrame:
+    return _build_dimensional_performance(
+        df_selection, df_request, "placement_type", "placement_type"
+    )
+
+
+def build_sector_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+    df_company: pd.DataFrame,
+) -> pd.DataFrame:
+    if df_company is None or "industry_sector" not in df_company.columns or "id_company" not in df_company.columns:
+        return pd.DataFrame()
+    company_sector = df_company[["id_company", "industry_sector"]].drop_duplicates("id_company")
+    selection = df_selection.merge(company_sector, on="id_company", how="left")
+    selection["industry_sector"] = selection["industry_sector"].fillna("Unknown")
+    return _build_dimensional_performance(
+        selection, df_request, "industry_sector", "industry_sector"
+    )
+
+
+def build_work_arrangement_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+) -> pd.DataFrame:
+    if df_request is None or "working_arrangement" not in df_request.columns or "id_talent_req" not in df_request.columns:
+        return pd.DataFrame()
+    request_wa = df_request[["id_talent_req", "working_arrangement"]].drop_duplicates("id_talent_req")
+    selection = df_selection.merge(request_wa, on="id_talent_req", how="left")
+    selection["working_arrangement"] = selection["working_arrangement"].fillna("Unknown")
+    return _build_dimensional_performance(
+        selection, df_request, "working_arrangement", "working_arrangement"
+    )
+
+
 def _load_table(data_dir: Path, filename: str) -> pd.DataFrame:
     path = data_dir / filename
     if not path.exists():
