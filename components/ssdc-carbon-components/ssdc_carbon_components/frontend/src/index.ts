@@ -1,0 +1,818 @@
+import {
+  FrontendRenderer,
+  FrontendRendererArgs,
+} from "@streamlit/component-v2-lib";
+import Dashboard16 from "@carbon/icons/es/dashboard/16.js";
+import Task16 from "@carbon/icons/es/task/16.js";
+import Search16 from "@carbon/icons/es/search/16.js";
+import WarningAlt16 from "@carbon/icons/es/warning--alt/16.js";
+import ChartLine16 from "@carbon/icons/es/chart--line/16.js";
+import Help16 from "@carbon/icons/es/help/16.js";
+import GlobalAnalytics from "@carbon/pictograms/svg/global--analytics.svg?raw";
+import ListCheckbox from "@carbon/pictograms/svg/list--checkbox.svg?raw";
+import UserSearch from "@carbon/pictograms/svg/user--search.svg?raw";
+import ChartStepper from "@carbon/pictograms/svg/chart--stepper.svg?raw";
+import UserAnalytics from "@carbon/pictograms/svg/user--analytics.svg?raw";
+import "@carbon/web-components/es/components/button/index.js";
+import "@carbon/web-components/es/components/data-table/index.js";
+import "@carbon/web-components/es/components/date-picker/index.js";
+import "@carbon/web-components/es/components/notification/index.js";
+import "@carbon/web-components/es/components/pagination/index.js";
+import "@carbon/web-components/es/components/select/index.js";
+import "@carbon/web-components/es/components/tag/index.js";
+import "@carbon/web-components/es/components/tile/index.js";
+import "@carbon/web-components/es/components/ui-shell/index.js";
+import "./styles.css";
+
+type Option = { value: string; label: string };
+type Page = {
+  slug: string;
+  title: string;
+  icon: string;
+  pictogram: string;
+};
+type CarbonIconNode = {
+  elem: string;
+  attrs?: Record<string, string | number>;
+  content?: CarbonIconNode[];
+};
+type FilterValues = {
+  date_start: string;
+  date_end: string;
+  company: string;
+  study_program: string;
+  request_status: string;
+  placement_type: string;
+};
+type TableColumn = { key: string; label: string };
+type TableRow = Record<string, string | number | boolean | null>;
+type DetailItem = { label: string; value: string };
+type KpiVariant = "default" | "primary" | "compact" | "secondary";
+type KpiItem = {
+  label: string;
+  value: string;
+  help?: string;
+  delta?: string;
+  delta_kind?: "neutral" | "positive" | "negative";
+};
+type ComponentData = {
+  view:
+    | "shell"
+    | "pictogram"
+    | "filters"
+    | "kpis"
+    | "feedback"
+    | "data_status"
+    | "table";
+  pages?: Page[];
+  active_page?: string;
+  context_label?: string;
+  name?: string;
+  label?: string;
+  options?: Record<string, Option[]>;
+  filters?: FilterValues;
+  items?: KpiItem[];
+  variant?: KpiVariant;
+  section_label?: string;
+  columns_per_row?: number;
+  kind?: "info" | "warning" | "error" | "success";
+  title?: string;
+  subtitle?: string;
+  mode?: "local" | "prototype";
+  record_count?: number;
+  as_of_date?: string;
+  kpi_status?: "provisional" | "validated";
+  detail_items?: DetailItem[];
+  warnings?: string[];
+  rows?: TableRow[];
+  columns?: TableColumn[];
+  page?: number;
+  page_size?: number;
+  total_pages?: number;
+  total_rows?: number;
+  row_offset?: number;
+  empty_title?: string;
+  empty_detail?: string;
+};
+
+const rootFor = (parentElement: FrontendRendererArgs["parentElement"]) => {
+  const root = parentElement.querySelector<HTMLElement>(".component-root");
+  if (!root) throw new Error("Carbon component root not found");
+  return root;
+};
+
+const carbon = (tag: string, text?: string) => {
+  const node = document.createElement(tag);
+  if (text) node.textContent = text;
+  return node;
+};
+
+const navigationIcons: Record<string, CarbonIconNode> = {
+  dashboard: Dashboard16,
+  task: Task16,
+  search: Search16,
+  "warning--alt": WarningAlt16,
+  "chart--line": ChartLine16,
+};
+
+const pictograms: Record<string, string> = {
+  "global--analytics": GlobalAnalytics,
+  "list--checkbox": ListCheckbox,
+  "user--search": UserSearch,
+  "chart--stepper": ChartStepper,
+  "user--analytics": UserAnalytics,
+};
+
+const createCarbonIcon = (data: CarbonIconNode): SVGElement => {
+  const node = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    data.elem,
+  );
+  Object.entries(data.attrs ?? {}).forEach(([key, value]) => {
+    node.setAttribute(key, String(value));
+  });
+  (data.content ?? []).forEach((child) =>
+    node.appendChild(createCarbonIcon(child)),
+  );
+  return node;
+};
+
+const createPictogram = (name: string, label: string): HTMLElement => {
+  const wrapper = document.createElement("div");
+  wrapper.className = "cds-page-pictogram";
+  wrapper.setAttribute("role", "img");
+  wrapper.setAttribute("aria-label", label);
+  const markup = pictograms[name];
+  if (!markup) return wrapper;
+  wrapper.innerHTML = markup;
+  const svg = wrapper.querySelector("svg");
+  if (svg) {
+    svg.setAttribute("aria-hidden", "true");
+    svg.classList.add("cds-page-pictogram__svg");
+    svg.removeAttribute("width");
+    svg.removeAttribute("height");
+  }
+  return wrapper;
+};
+
+const emit = (args: FrontendRendererArgs, payload: Record<string, unknown>) => {
+  args.setTriggerValue("action", payload);
+};
+
+const optionSelect = (
+  key: string,
+  label: string,
+  values: Option[],
+  selected: string,
+) => {
+  const wrapper = document.createElement("div");
+  wrapper.className = "filter-control";
+  const select = carbon("cds-select") as HTMLElement & { value?: string };
+  select.setAttribute("id", key);
+  select.setAttribute("label-text", label);
+  select.setAttribute("value", selected);
+  values.forEach((option) => {
+    const item = carbon("cds-select-item", translateFilterValue(option.label)) as HTMLElement & {
+      value?: string;
+    };
+    item.setAttribute("value", option.value);
+    if (option.value === selected) item.setAttribute("selected", "");
+    select.appendChild(item);
+  });
+  wrapper.appendChild(select);
+  return { wrapper, select };
+};
+
+const translateFilterValue = (value: string) => ({
+  "All companies": "Semua perusahaan",
+  "All study programs": "Semua program studi",
+  "All request statuses": "Semua status permintaan",
+  "All placement types": "Semua jenis penempatan",
+}[value] ?? value);
+
+const renderShell = (
+  root: HTMLElement,
+  data: ComponentData,
+  args: FrontendRendererArgs,
+) => {
+  const header = carbon("cds-header") as HTMLElement;
+  header.setAttribute("aria-label", "Header dasbor");
+  const menu = carbon("cds-header-menu-button") as HTMLElement;
+  menu.dataset.testid = "sidebar-toggle";
+  menu.setAttribute("collapse-mode", "rail");
+  menu.setAttribute("button-label-inactive", "Buka menu navigasi");
+  menu.setAttribute("button-label-active", "Tutup menu navigasi");
+
+  const global = document.createElement("div");
+  global.className = "cds-header__global";
+  const context = document.createElement("span");
+  context.className = "cds-header-context";
+  context.textContent = data.context_label ?? "Data prototipe";
+  const help = carbon("cds-header-global-action") as HTMLElement;
+  help.dataset.testid = "help-placeholder";
+  help.setAttribute("button-label-inactive", "Bantuan segera hadir");
+  help.setAttribute("aria-label", "Bantuan segera hadir");
+  help.setAttribute("title", "Pusat bantuan segera hadir");
+  help.setAttribute("disabled", "");
+  const helpIcon = createCarbonIcon(Help16);
+  helpIcon.setAttribute("slot", "icon");
+  helpIcon.setAttribute("aria-hidden", "true");
+  help.appendChild(helpIcon);
+  global.append(context, help);
+  header.append(menu, global);
+
+  const sideNav = carbon("cds-side-nav") as HTMLElement;
+  sideNav.dataset.testid = "sidebar-nav";
+  sideNav.setAttribute("aria-label", "Navigasi dasbor");
+  sideNav.setAttribute("collapse-mode", "fixed");
+  sideNav.setAttribute("expanded", "");
+
+  const brand = document.createElement("div");
+  brand.className = "cds-sidebar__brand";
+
+  const productName = document.createElement("strong");
+  productName.className = "cds-sidebar__product-name";
+  productName.textContent = "SSDC";
+
+  const productDescription = document.createElement("span");
+  productDescription.className = "cds-sidebar__product-description";
+  productDescription.textContent = "Dasbor Intelijen Talenta";
+  brand.append(productName, productDescription);
+
+  const divider = document.createElement("div");
+  divider.className = "cds-sidebar__divider";
+  divider.setAttribute("aria-hidden", "true");
+
+  const items = carbon("cds-side-nav-items");
+  items.className = "cds-nav";
+  (data.pages ?? []).forEach((page) => {
+    const link = carbon("cds-side-nav-link", page.title) as HTMLElement;
+    const isActive = page.slug === data.active_page;
+    link.className = `cds-nav-item${isActive ? " cds-nav-item--active" : ""}`;
+    link.setAttribute("href", `#${page.slug}`);
+    link.dataset.page = page.slug;
+    link.setAttribute("title", page.title);
+    link.setAttribute("aria-label", page.title);
+    if (isActive) {
+      link.setAttribute("active", "");
+      link.setAttribute("aria-current", "page");
+    }
+    const icon = navigationIcons[page.icon];
+    if (icon) {
+      const iconNode = createCarbonIcon(icon);
+      iconNode.setAttribute("slot", "title-icon");
+      iconNode.setAttribute("aria-hidden", "true");
+      iconNode.classList.add("cds-nav-item__icon");
+      link.appendChild(iconNode);
+    }
+    items.appendChild(link);
+  });
+  sideNav.append(brand, divider, items);
+  root.append(header, sideNav);
+  const manualRailStyle = document.createElement("style");
+  manualRailStyle.textContent = `
+    .cds--side-nav--collapsed {
+      inline-size: 3rem !important;
+      transform: none !important;
+    }
+    @media (max-width: 48rem) {
+      .cds--side-nav--collapsed {
+        inline-size: 16rem !important;
+        transform: translateX(-16rem) !important;
+      }
+    }
+  `;
+  sideNav.shadowRoot?.appendChild(manualRailStyle);
+
+  const mobileQuery = window.matchMedia("(max-width: 48rem)");
+  let wasMobile = mobileQuery.matches;
+  const rootNode = root.getRootNode();
+  const layoutTarget =
+    rootNode instanceof ShadowRoot ? rootNode.host : root;
+  const syncGlobalLayout = () => {
+    layoutTarget.toggleAttribute(
+      "data-ssdc-sidebar-collapsed",
+      !sideNav.hasAttribute("expanded"),
+    );
+  };
+  const navObserver = new MutationObserver(syncGlobalLayout);
+  navObserver.observe(sideNav, { attributes: true, attributeFilter: ["expanded"] });
+  if (wasMobile) {
+    sideNav.removeAttribute("expanded");
+    menu.removeAttribute("active");
+  } else {
+    menu.setAttribute("active", "");
+  }
+
+  const syncResponsiveShell = () => {
+    const isMobile = mobileQuery.matches;
+    if (isMobile && !wasMobile) {
+      sideNav.removeAttribute("expanded");
+      menu.removeAttribute("active");
+    } else if (!isMobile && wasMobile) {
+      sideNav.setAttribute("expanded", "");
+      menu.setAttribute("active", "");
+    }
+    if (isMobile) {
+      sideNav.style.setProperty(
+        "width",
+        sideNav.hasAttribute("expanded") ? "16rem" : "0",
+        "important",
+      );
+    } else {
+      sideNav.style.removeProperty("width");
+    }
+    syncGlobalLayout();
+    wasMobile = isMobile;
+  };
+  syncResponsiveShell();
+  const initialShellTimer = window.setTimeout(() => {
+    if (!mobileQuery.matches) {
+      sideNav.setAttribute("expanded", "");
+      menu.setAttribute("active", "");
+      syncGlobalLayout();
+    }
+  }, 0);
+
+  const onMenu = () => {
+    queueMicrotask(() => {
+      const open = menu.hasAttribute("active");
+      sideNav.toggleAttribute("expanded", open);
+      syncResponsiveShell();
+    });
+  };
+  menu.addEventListener("cds-header-menu-button-toggled", onMenu);
+  mobileQuery.addEventListener("change", syncResponsiveShell);
+
+  const onNavigate = (event: Event) => {
+    const target = event.target as HTMLElement;
+    const page = target.closest<HTMLElement>("[data-page]")?.dataset.page;
+    if (!page) return;
+    event.preventDefault();
+    emit(args, { type: "navigate", page });
+  };
+  sideNav.addEventListener("click", onNavigate);
+
+  return () => {
+    menu.removeEventListener("cds-header-menu-button-toggled", onMenu);
+    mobileQuery.removeEventListener("change", syncResponsiveShell);
+    sideNav.removeEventListener("click", onNavigate);
+    manualRailStyle.remove();
+    window.clearTimeout(initialShellTimer);
+    navObserver.disconnect();
+    layoutTarget.removeAttribute("data-ssdc-sidebar-collapsed");
+  };
+};
+
+const renderPictogram = (root: HTMLElement, data: ComponentData) => {
+  root.appendChild(
+  createPictogram(data.name ?? "", data.label ?? "Piktogram halaman"),
+  );
+};
+
+const renderFilters = (
+  root: HTMLElement,
+  data: ComponentData,
+  args: FrontendRendererArgs,
+) => {
+  const filters = data.filters as FilterValues;
+  const container = document.createElement("div");
+  container.className = "cds-filter-container";
+  const toolbar = document.createElement("div");
+  toolbar.className = "cds-filter-toolbar";
+  const content = document.createElement("div");
+  content.className = "cds-filter-toolbar__content";
+  const title = document.createElement("strong");
+  title.className = "cds-filter-toolbar__title";
+  title.textContent = "Filter global";
+  const summary = document.createElement("div");
+  summary.className = "cds-filter-toolbar__summary";
+  const summaryValues = document.createElement("span");
+  summaryValues.className = "cds-filter-toolbar__summary-values";
+  const activeValues = [filters.company, filters.study_program];
+  [filters.request_status, filters.placement_type].forEach((value) => {
+    if (value && !value.startsWith("All ")) activeValues.push(value);
+  });
+  summaryValues.textContent = activeValues.map(translateFilterValue).join(" · ");
+  const summarySeparator = document.createElement("span");
+  summarySeparator.className = "cds-filter-toolbar__summary-separator";
+  summarySeparator.setAttribute("aria-hidden", "true");
+  summarySeparator.textContent = "\u00a0·\u00a0";
+  const summaryDate = document.createElement("span");
+  summaryDate.className = "cds-filter-toolbar__summary-date";
+  summaryDate.textContent =
+    [filters.date_start, filters.date_end].filter(Boolean).join(" sampai ") ||
+    "Semua tanggal";
+  summary.append(summaryValues, summarySeparator, summaryDate);
+  content.append(title, summary);
+
+  const actions = document.createElement("div");
+  actions.className = "cds-filter-toolbar__actions";
+  const toggle = carbon("cds-button", "Filter") as HTMLElement;
+  toggle.dataset.testid = "global-filter-open";
+  toggle.setAttribute("kind", "primary");
+  toggle.setAttribute("size", "sm");
+  const reset = carbon("cds-button", "Atur ulang") as HTMLElement;
+  reset.dataset.testid = "global-filter-reset";
+  reset.setAttribute("kind", "ghost");
+  reset.setAttribute("size", "sm");
+  actions.append(toggle, reset);
+  toolbar.append(content, actions);
+
+  const panel = document.createElement("div");
+  panel.className = "filter-panel";
+  panel.hidden = true;
+  const controls = document.createElement("div");
+  controls.className = "filter-grid";
+  const optionControls = [
+    optionSelect(
+      "company",
+      "Perusahaan",
+      data.options?.company ?? [],
+      filters.company,
+    ),
+    optionSelect(
+      "study_program",
+      "Program studi",
+      data.options?.study_program ?? [],
+      filters.study_program,
+    ),
+    optionSelect(
+      "request_status",
+      "Status permintaan",
+      data.options?.request_status ?? [],
+      filters.request_status,
+    ),
+    optionSelect(
+      "placement_type",
+      "Jenis penempatan",
+      data.options?.placement_type ?? [],
+      filters.placement_type,
+    ),
+  ];
+  optionControls.forEach(({ wrapper }) => controls.appendChild(wrapper));
+
+  const datePicker = carbon("cds-date-picker") as HTMLElement & {
+    value?: string;
+  };
+  datePicker.setAttribute("date-format", "Y-m-d");
+  datePicker.setAttribute("value", `${filters.date_start}/${filters.date_end}`);
+  const dateFrom = carbon("cds-date-picker-input") as HTMLElement;
+  dateFrom.setAttribute("kind", "from");
+  dateFrom.setAttribute("label-text", "Tanggal mulai");
+  const dateTo = carbon("cds-date-picker-input") as HTMLElement;
+  dateTo.setAttribute("kind", "to");
+  dateTo.setAttribute("label-text", "Tanggal selesai");
+  datePicker.append(dateFrom, dateTo);
+  controls.appendChild(datePicker);
+
+  const apply = carbon("cds-button", "Terapkan filter") as HTMLElement;
+  apply.dataset.testid = "global-filter-apply";
+  apply.setAttribute("kind", "primary");
+  apply.setAttribute("size", "sm");
+  panel.append(controls, apply);
+  container.append(toolbar, panel);
+  root.appendChild(container);
+
+  const onToggle = () => {
+    panel.hidden = !panel.hidden;
+  };
+  const onReset = () => emit(args, { type: "reset_filters" });
+  const onApply = () => {
+    const dateValues = (datePicker.value ?? "").split("/");
+    const result: FilterValues = {
+      date_start: dateValues[0] || filters.date_start,
+      date_end: dateValues[1] || filters.date_end,
+      company:
+        (optionControls[0].select as HTMLElement & { value?: string }).value ??
+        filters.company,
+      study_program:
+        (optionControls[1].select as HTMLElement & { value?: string }).value ??
+        filters.study_program,
+      request_status:
+        (optionControls[2].select as HTMLElement & { value?: string }).value ??
+        filters.request_status,
+      placement_type:
+        (optionControls[3].select as HTMLElement & { value?: string }).value ??
+        filters.placement_type,
+    };
+    emit(args, { type: "apply_filters", filters: result });
+    panel.hidden = true;
+  };
+  toggle.addEventListener("click", onToggle);
+  reset.addEventListener("click", onReset);
+  apply.addEventListener("click", onApply);
+
+  return () => {
+    toggle.removeEventListener("click", onToggle);
+    reset.removeEventListener("click", onReset);
+    apply.removeEventListener("click", onApply);
+  };
+};
+
+const renderKpis = (
+  root: HTMLElement,
+  data: ComponentData,
+  args: FrontendRendererArgs,
+) => {
+  const variant = data.variant ?? "default";
+  const section = document.createElement(
+    data.section_label ? "section" : "div",
+  );
+  section.className = `cds-kpi-section cds-kpi-section--${variant}`;
+  if (data.section_label) {
+    const heading = document.createElement("h2");
+    heading.className = "cds-kpi-section__title";
+    heading.id = `kpi-title-${args.key.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+    heading.textContent = data.section_label;
+    section.setAttribute("aria-labelledby", heading.id);
+    section.appendChild(heading);
+  }
+
+  const grid = document.createElement("div");
+  grid.className = `cds-kpi-grid cds-kpi-grid--${variant}`;
+  if (data.columns_per_row) {
+    grid.style.setProperty("--cds-kpi-columns", String(data.columns_per_row));
+  }
+  const items = data.items ?? [];
+  items.forEach((item, index) => {
+    const tile = carbon("cds-tile") as HTMLElement;
+    const secondaryLast =
+      variant === "secondary" && index === items.length - 1
+        ? " cds-kpi-card--secondary-last"
+        : "";
+    tile.className = `cds-kpi-card cds-kpi-card--${variant}${secondaryLast}`;
+    const label = document.createElement("span");
+    label.className = "cds-kpi-card__label";
+    label.textContent = item.label;
+    const value = document.createElement("strong");
+    value.className = "cds-kpi-card__value";
+    value.textContent = item.value;
+    if (variant === "secondary") {
+      tile.append(value, label);
+    } else {
+      tile.append(label, value);
+    }
+    if (item.delta) {
+      const delta = document.createElement("span");
+      delta.className = `cds-kpi-card__delta cds-kpi-card__delta--${
+        item.delta_kind ?? "neutral"
+      }`;
+      delta.textContent = item.delta;
+      tile.appendChild(delta);
+    }
+    if (item.help) {
+      const help = document.createElement("small");
+      help.className = "cds-kpi-card__help";
+      help.textContent = item.help;
+      tile.appendChild(help);
+    }
+    grid.appendChild(tile);
+  });
+  section.appendChild(grid);
+  root.appendChild(section);
+};
+
+const formatStatusDate = (value?: string) => {
+  const parts = (value ?? "").split("-").map(Number);
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) {
+    return "Tidak tersedia";
+  }
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(parts[0], parts[1] - 1, parts[2])));
+};
+
+const renderDataStatus = (
+  root: HTMLElement,
+  data: ComponentData,
+  args: FrontendRendererArgs,
+) => {
+  const container = document.createElement("section");
+  container.className = "cds-data-status";
+  container.setAttribute("aria-label", "Status data");
+
+  const summary = document.createElement("div");
+  summary.className = "cds-data-status__summary";
+  const meta = document.createElement("span");
+  meta.className = "cds-data-status__meta";
+  meta.textContent = `Diperbarui ${formatStatusDate(data.as_of_date)} · ${(
+    data.record_count ?? 0
+  ).toLocaleString("id-ID")} catatan`;
+
+  const tags = document.createElement("div");
+  tags.className = "cds-data-status__tags";
+  const modeTag = carbon(
+    "cds-tag",
+    data.mode === "prototype" ? "Data prototipe" : "Data lokal",
+  ) as HTMLElement;
+  modeTag.className = "cds-data-status__tag";
+  modeTag.setAttribute(
+    "type",
+    data.mode === "prototype" ? "cool-gray" : "blue",
+  );
+  modeTag.setAttribute("size", "sm");
+  tags.appendChild(modeTag);
+
+  const kpiTag = carbon(
+    "cds-tag",
+    data.kpi_status === "validated"
+      ? "Logika KPI tervalidasi"
+      : "Logika KPI pratinjau",
+  ) as HTMLElement;
+  kpiTag.className = "cds-data-status__tag";
+  kpiTag.setAttribute(
+    "type",
+    data.kpi_status === "validated" ? "green" : "yellow",
+  );
+  kpiTag.setAttribute("size", "sm");
+  tags.appendChild(kpiTag);
+
+  if ((data.warnings?.length ?? 0) > 0 && data.mode !== "prototype") {
+    const warningTag = carbon("cds-tag", "Peringatan data") as HTMLElement;
+    warningTag.className = "cds-data-status__tag";
+    warningTag.setAttribute("type", "yellow");
+    warningTag.setAttribute("size", "sm");
+    tags.appendChild(warningTag);
+  }
+
+  const detailsId = `data-details-${args.key.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const detailsToggle = carbon("cds-button", "Detail data") as HTMLElement;
+  detailsToggle.className = "cds-data-status__toggle";
+  detailsToggle.setAttribute("kind", "ghost");
+  detailsToggle.setAttribute("size", "sm");
+  detailsToggle.setAttribute("aria-expanded", "false");
+  detailsToggle.setAttribute("aria-controls", detailsId);
+  summary.append(meta, tags, detailsToggle);
+
+  const detailsPanel = document.createElement("div");
+  detailsPanel.id = detailsId;
+  detailsPanel.className = "cds-data-status__details";
+  detailsPanel.hidden = true;
+  const detailsList = document.createElement("dl");
+  detailsList.className = "cds-data-status__detail-list";
+  (data.detail_items ?? []).forEach((item) => {
+    const detail = document.createElement("div");
+    detail.className = "cds-data-status__detail";
+    const label = document.createElement("dt");
+    label.textContent = item.label;
+    const value = document.createElement("dd");
+    value.textContent = item.value;
+    detail.append(label, value);
+    detailsList.appendChild(detail);
+  });
+
+  const warningSection = document.createElement("div");
+  warningSection.className = "cds-data-status__warnings";
+  const warningTitle = document.createElement("strong");
+  warningTitle.textContent = "Peringatan kontrak data";
+  warningSection.appendChild(warningTitle);
+  if ((data.warnings ?? []).length) {
+    const warningList = document.createElement("ul");
+    (data.warnings ?? []).forEach((warning) => {
+      const item = document.createElement("li");
+      item.textContent = warning;
+      warningList.appendChild(item);
+    });
+    warningSection.appendChild(warningList);
+  } else {
+    const noWarnings = document.createElement("p");
+    noWarnings.textContent = "Tidak ada peringatan kontrak data.";
+    warningSection.appendChild(noWarnings);
+  }
+  detailsPanel.append(detailsList, warningSection);
+  container.append(summary, detailsPanel);
+  root.appendChild(container);
+
+  const onToggle = () => {
+    const expanded = detailsToggle.getAttribute("aria-expanded") === "true";
+    detailsToggle.setAttribute("aria-expanded", String(!expanded));
+    detailsPanel.hidden = expanded;
+  };
+  detailsToggle.addEventListener("click", onToggle);
+  return () => detailsToggle.removeEventListener("click", onToggle);
+};
+
+const renderFeedback = (root: HTMLElement, data: ComponentData) => {
+  const notification = carbon("cds-inline-notification") as HTMLElement;
+  notification.setAttribute("kind", data.kind ?? "info");
+  notification.setAttribute("low-contrast", "");
+  notification.setAttribute("open", "");
+  notification.setAttribute("title", data.title ?? "Informasi");
+  notification.setAttribute("subtitle", data.subtitle ?? "");
+  root.appendChild(notification);
+};
+
+const renderTable = (
+  root: HTMLElement,
+  data: ComponentData,
+  args: FrontendRendererArgs,
+) => {
+  const surface = document.createElement("div");
+  surface.className = "cds-table-surface";
+
+  if (!(data.rows ?? []).length) {
+    const empty = carbon("cds-tile");
+    empty.className = "cds-table-empty";
+    const emptyTitle = document.createElement("strong");
+    emptyTitle.textContent = data.empty_title ?? "Tidak ada catatan yang cocok";
+    const emptyDetail = document.createElement("p");
+    emptyDetail.textContent =
+      data.empty_detail ?? "Sesuaikan filter aktif lalu coba lagi.";
+    empty.append(emptyTitle, emptyDetail);
+    surface.appendChild(empty);
+    root.appendChild(surface);
+    return;
+  }
+
+  const table = carbon("cds-table") as HTMLElement;
+  const head = carbon("cds-table-head");
+  const headerRow = carbon("cds-table-header-row");
+  (data.columns ?? []).forEach((column) => {
+    const cell = carbon("cds-table-header-cell", column.label);
+    cell.setAttribute("data-key", column.key);
+    headerRow.appendChild(cell);
+  });
+  head.appendChild(headerRow);
+
+  const body = carbon("cds-table-body");
+  (data.rows ?? []).forEach((row, index) => {
+    const tableRow = carbon("cds-table-row") as HTMLElement;
+    tableRow.dataset.row = String(index);
+    (data.columns ?? []).forEach((column) => {
+      tableRow.appendChild(
+        carbon("cds-table-cell", String(row[column.key] ?? "—")),
+      );
+    });
+    body.appendChild(tableRow);
+  });
+  table.append(head, body);
+
+  const pagination = carbon("cds-pagination") as HTMLElement;
+  pagination.setAttribute("aria-label", "Paginasi tabel");
+  pagination.setAttribute("page", String(data.page ?? 1));
+  pagination.setAttribute("page-size", String(data.page_size ?? 50));
+  pagination.setAttribute("total-pages", String(data.total_pages ?? 1));
+  pagination.setAttribute("total-items", String(data.total_rows ?? 0));
+  pagination.setAttribute("start", String(data.row_offset ?? 0));
+  pagination.setAttribute("page-size-input-disabled", "");
+  pagination.setAttribute("items-per-page-text", "Baris per halaman");
+  pagination.setAttribute("forward-text", "Halaman berikutnya");
+  pagination.setAttribute("backward-text", "Halaman sebelumnya");
+  pagination.className = "table-pagination";
+  surface.append(table, pagination);
+  root.appendChild(surface);
+
+  const onRow = (event: Event) => {
+    const row = (event.target as HTMLElement).closest<HTMLElement>("[data-row]")
+      ?.dataset.row;
+    if (row) emit(args, { type: "select_row", row: Number(row) });
+  };
+  const onPageChange = (event: Event) => {
+    const detail = (event as CustomEvent<{ page?: number }>).detail;
+    if (typeof detail?.page === "number") {
+      emit(args, { type: "table_page", page: detail.page });
+    }
+  };
+  body.addEventListener("click", onRow);
+  pagination.addEventListener("cds-pagination-changed-current", onPageChange);
+  return () => {
+    body.removeEventListener("click", onRow);
+    pagination.removeEventListener(
+      "cds-pagination-changed-current",
+      onPageChange,
+    );
+  };
+};
+
+const CarbonComponent: FrontendRenderer<
+  Record<string, unknown>,
+  ComponentData
+> = (args) => {
+  const root = rootFor(args.parentElement);
+  root.replaceChildren();
+  switch (args.data.view) {
+    case "shell":
+      return renderShell(root, args.data, args);
+    case "pictogram":
+      renderPictogram(root, args.data);
+      return;
+    case "filters":
+      return renderFilters(root, args.data, args);
+    case "kpis":
+      renderKpis(root, args.data, args);
+      return;
+    case "feedback":
+      renderFeedback(root, args.data);
+      return;
+    case "data_status":
+      return renderDataStatus(root, args.data, args);
+    case "table":
+      return renderTable(root, args.data, args);
+  }
+};
+
+export default CarbonComponent;

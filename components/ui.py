@@ -1,55 +1,137 @@
-from collections.abc import Iterable
+from collections.abc import Iterator, Iterable
+from contextlib import contextmanager
+from html import escape
 
 import pandas as pd
 import streamlit as st
 
+from components.carbon_ui import render_data_status_surface, render_kpi_row
 from data.loaders import DashboardData
 from services.analytics import dataset_as_of_date
 
 
-def render_page_header(kicker: str, title: str, question: str) -> None:
-    st.markdown(f'<div class="ssdc-kicker">{kicker}</div>', unsafe_allow_html=True)
-    st.title(title)
-    st.caption(question)
+ANALYTICAL_GRID_SPECS = {
+    "equal": (1, 1),
+    "main_supporting": (3, 2),
+    "supporting_main": (1, 2),
+}
 
 
-def render_source_banner(data: DashboardData) -> None:
+def analytical_columns(variant: str = "equal", *, key: str):
+    try:
+        spec = ANALYTICAL_GRID_SPECS[variant]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported analytical grid variant: {variant}") from exc
+    with st.container(key=f"cds-analytical-grid-{key}"):
+        return st.columns(spec, gap="medium")
+
+
+@contextmanager
+def control_group(label: str, *, key: str) -> Iterator[None]:
+    """Render related page controls in one compact, labelled group."""
+    with st.container(key=f"cds-control-group-{key}"):
+        st.markdown(
+            f'<p class="cds-control-group__label">{escape(label)}</p>',
+            unsafe_allow_html=True,
+        )
+        yield
+
+
+def render_page_header(
+    kicker: str,
+    title: str,
+    question: str,
+    *,
+    pictogram: str | None = None,
+) -> None:
+    header = (
+        '<header class="cds-page-header">'
+        f'<p class="cds-kicker">{escape(kicker)}</p>'
+        f'<h1 class="cds-page-title">{escape(title)}</h1>'
+        f'<p class="cds-page-description">{escape(question)}</p>'
+        "</header>"
+    )
+    if pictogram:
+        from components.carbon_ui import render_pictogram
+
+        identity_key = f"cds-page-identity-{title.lower().replace(' ', '-')}"
+        with st.container(
+            key=identity_key,
+            horizontal=True,
+            vertical_alignment="top",
+            gap="small",
+        ):
+            render_pictogram(
+                pictogram,
+                label=f"{title} pictogram",
+                key=f"page-pictogram-{title.lower().replace(' ', '-')}",
+            )
+            st.markdown(header, unsafe_allow_html=True)
+        return
+    st.markdown(header, unsafe_allow_html=True)
+
+
+def render_data_status(
+    data: DashboardData,
+    provisional_note: str,
+    *,
+    key: str,
+) -> None:
     as_of = dataset_as_of_date(data)
     record_count = sum(len(frame) for frame in data.tables.values())
-    as_of_label = as_of.date().isoformat() if not pd.isna(as_of) else "Unavailable"
-    if data.is_mock:
-        st.markdown(
-            f"<div class=\"ssdc-source ssdc-warning\"><strong>Prototype preview:</strong> "
-            f"Local cleaned tables were not found, so this page is using anonymized deterministic data. "
-            f"Records: {record_count:,} | As-of date: {as_of_label}</div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            f"<div class=\"ssdc-source\"><strong>Local cleaned data:</strong> {data.source}. "
-            f"Records: {record_count:,} | As-of date: {as_of_label}.</div>",
-            unsafe_allow_html=True,
-        )
-    if data.warnings:
-        with st.expander("Data contract notes", expanded=False):
-            for warning in data.warnings:
-                st.write(f"- {warning}")
+    as_of_label = as_of.date().isoformat() if not pd.isna(as_of) else ""
+    validation_note = provisional_note.format(as_of_date=as_of_label or "Tidak tersedia")
+    validation_note = f"{validation_note} Menunggu validasi PM/Engineer Data."
+    mode_label = "Pratinjau prototipe" if data.is_mock else "Data lokal terkurasi"
+    render_data_status_surface(
+        mode="prototype" if data.is_mock else "local",
+        record_count=record_count,
+        as_of_date=as_of_label,
+        kpi_status="provisional",
+        detail_items=[
+            {"label": "Mode", "value": mode_label},
+            {"label": "Sumber", "value": data.source},
+            {"label": "Catatan", "value": f"{record_count:,}"},
+            {"label": "Data per", "value": as_of_label or "Tidak tersedia"},
+            {"label": "Status KPI", "value": "Pratinjau"},
+            {"label": "Catatan validasi", "value": validation_note},
+        ],
+        warnings=list(data.warnings),
+        key=key,
+    )
 
 
-def render_kpis(items: Iterable[dict[str, str]], columns_per_row: int | None = None) -> None:
+def render_kpis(
+    items: Iterable[dict[str, str]],
+    columns_per_row: int | None = None,
+    key: str | None = None,
+    *,
+    variant: str = "default",
+    section_label: str | None = None,
+) -> None:
     items = list(items)
-    per_row = columns_per_row or len(items)
-    for start in range(0, len(items), per_row):
-        columns = st.columns(min(per_row, len(items) - start))
-        for column, item in zip(columns, items[start : start + per_row]):
-            with column:
-                st.metric(item["label"], item["value"], help=item.get("help"))
+    if not items:
+        return
+    if variant not in {"default", "primary", "compact", "secondary"}:
+        raise ValueError(f"Unsupported KPI variant: {variant}")
+    render_kpi_row(
+        items,
+        key=key or "carbon-kpis-" + "-".join(item["label"].lower().replace(" ", "-") for item in items),
+        variant=variant,
+        section_label=section_label,
+        columns_per_row=max(1, int(columns_per_row)) if columns_per_row is not None else None,
+    )
 
 
 def render_section(title: str, note: str | None = None) -> None:
-    st.markdown(f'<div class="ssdc-section"><h3>{title}</h3></div>', unsafe_allow_html=True)
-    if note:
-        st.caption(note)
+    note_html = f'<p class="cds-section-note">{escape(note)}</p>' if note else ""
+    st.markdown(
+        '<header class="cds-section-header">'
+        f'<h2 class="cds-section-heading">{escape(title)}</h2>'
+        f"{note_html}"
+        "</header>",
+        unsafe_allow_html=True,
+    )
 
 
 def format_count(value: float | int) -> str:
@@ -61,4 +143,4 @@ def format_percent(value: float) -> str:
 
 
 def format_days(value: float) -> str:
-    return f"{value:.0f} days"
+    return f"{value:.0f} hari"

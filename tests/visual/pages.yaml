@@ -1,0 +1,29 @@
+base_url: "http://127.0.0.1:8501"
+
+pages:
+  - name: executive-overview
+    title: "Ringkasan Eksekutif"
+    path: "/"
+  - name: talent-request-management
+    title: "Manajemen Permintaan Talenta"
+    path: "/talent_request_management"
+  - name: talent-matching
+    title: "Pencocokan Talenta"
+    path: "/talent_matching"
+  - name: selection-monitoring
+    title: "Pemantauan Seleksi"
+    path: "/selection_monitoring"
+  - name: placement-performance
+    title: "Kinerja Penempatan"
+    path: "/placement_performance"
+
+viewports:
+  - name: desktop
+    width: 1440
+    height: 1000
+  - name: laptop
+    width: 1280
+    height: 900
+  - name: tablet
+    width: 768
+    height: 1024

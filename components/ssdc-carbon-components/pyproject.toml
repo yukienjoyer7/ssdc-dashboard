@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ssdc-carbon-components"
+version = "0.0.1"
+description = "Carbon Design System components for the SSDC Streamlit dashboard"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "SSDC Dashboard", email = "dev@ssdc.local" }]
+dependencies = ["streamlit >= 1.51"]
+
+[project.optional-dependencies]
+devel = [
+  "wheel",
+  "pytest==7.4.0",
+  "playwright==1.48.0",
+  "requests==2.31.0",
+  "pytest-playwright-snapshot==1.0",
+  "pytest-rerunfailures==12.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["ssdc_carbon_components*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+ssdc_carbon_components = ["frontend/build/**/*", "pyproject.toml"]
