@@ -42,6 +42,33 @@ source outcome mappings remain explicitly marked as pending upstream validation.
 Carbon data tables use server-side 50-row pagination; downloads still contain
 the full filtered result set.
 
+## Data pipeline
+
+The dashboard works immediately with just the cleaned CSVs, but for best
+performance and full semantic matching, precompute the analytical tables:
+
+```bash
+# Build analytical tables (~1 second)
+uv run python services/analytical_tables.py
+
+# Build semantic scores (~4 hours on CPU, requires GPU for practical use)
+uv run python services/semantic_matching.py
+```
+
+**Without precomputed data:**
+- All pages work using runtime merges from CSVs (~1s slower per page)
+- Semantic matching falls back to rule-based scoring (not Qwen embeddings)
+- The Talent Matching page shows a warning banner
+
+**With precomputed data:**
+- Dashboard reads from `data/processed/*.parquet` (instant page loads)
+- Semantic matching uses Qwen3-Embedding-0.6B precomputed scores
+- Top-K candidate ranking by cosine similarity
+
+The semantic pipeline requires downloading the 0.6B model (~1.2GB) and encoding
+~12,000 requests × ~5,000 eligible students. On CPU this takes ~4 hours; on GPU
+it takes ~10 minutes. The pipeline is not re-run automatically on data updates.
+
 ## Carbon implementation
 
 The app uses a hybrid Carbon architecture: the shell, global filter toolbar,
