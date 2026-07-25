@@ -136,14 +136,16 @@ def main() -> None:
                 show_title=False,
             )
         else:
+            frame = placements.assign(
+                days_band=pd.cut(
+                    placements["time_to_placement_days"],
+                    bins=6,
+                    include_lowest=True,
+                )
+            ).groupby("days_band", observed=True, as_index=False).size().rename(columns={"size": "placements"})
+            frame["days_band"] = frame["days_band"].astype(str)
             render_bar(
-                placements.assign(
-                    days_band=pd.cut(
-                        placements["time_to_placement_days"],
-                        bins=6,
-                        include_lowest=True,
-                    )
-                ).groupby("days_band", observed=True, as_index=False).size().rename(columns={"size": "placements"}),
+                frame,
                 "days_band",
                 "placements",
                 "Distribusi waktu hingga penempatan",
