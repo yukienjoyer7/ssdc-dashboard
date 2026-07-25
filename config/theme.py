@@ -93,7 +93,17 @@ CHART_SEQUENTIAL_BLUE = [
     "#001141",
 ]
 
+# Lighter tint tier for large chart fills (bars/lines/areas), kept distinct
+# from CARBON_STATUS_COLORS["info"] (full-strength brand blue used for
+# links/status/UI chrome) on purpose: saturated color across a whole chart
+# canvas causes eye fatigue that a small UI accent doesn't.
 CHART_PRIMARY = CHART_CATEGORICAL[0]
+
+PLACEMENT_TYPE_COLORS = {
+    "Magang": CHART_CATEGORICAL[0],
+    "Part-time": CHART_CATEGORICAL[1],
+    "Full-time": CHART_CATEGORICAL[2],
+}
 
 EXECUTIVE_OVERVIEW_SERIES_COLORS = {
     "Talent requests": CHART_CATEGORICAL[0],
@@ -108,8 +118,12 @@ CARBON_STATUS_COLORS = {
 }
 
 ACTION_LABEL_COLORS = {
+    # Kurang Kandidat is an active shortfall, not a neutral info state -- it
+    # gets the deeper amber tier so the ramp reads Belum Dikirim (mild) <
+    # Kurang Kandidat (deeper concern) < Belum Terpenuhi (critical), instead
+    # of reusing "info" blue (the same hue as a default, unremarkable series).
     "Belum Dikirim": CARBON_STATUS_COLORS["warning"],
-    "Kurang Kandidat": CARBON_STATUS_COLORS["info"],
+    "Kurang Kandidat": CHART_CATEGORICAL[6],
     "Belum Terpenuhi": CARBON_STATUS_COLORS["error"],
     "Terpenuhi": CARBON_STATUS_COLORS["success"],
     "Closed": TEXT_COLORS["secondary"],
@@ -138,13 +152,17 @@ SELECTION_STAGE_ORDER = [
 SELECTION_STAGE_COLORS = {
     "Submitted": CARBON_STATUS_COLORS["info"],
     "Interview User": "#8a3ffc",
-    "FU 1": "#009d9a",
+    # FU 1-3 step through a light-to-dark teal ramp so escalating follow-up
+    # urgency is visible, instead of three identical bars.
+    "FU 1": "#82cfcd",
     "FU 2": "#009d9a",
-    "FU 3": "#009d9a",
+    "FU 3": "#005d5d",
     "Finish": TEXT_COLORS["secondary"],
     "Placement": CARBON_STATUS_COLORS["success"],
     "Ghosting": CARBON_STATUS_COLORS["error"],
-    "Rejected": "#8d8d8d",
+    # Rejected is a distinct negative outcome from Ghosting, not a neutral
+    # one -- flat gray understated it next to Ghosting's alarm red.
+    "Rejected": CHART_CATEGORICAL[5],
 }
 
 RECOMMENDATION_COLORS = {

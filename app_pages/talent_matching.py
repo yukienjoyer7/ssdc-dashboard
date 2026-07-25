@@ -6,6 +6,7 @@ from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, control_group, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
+from config.theme import RECOMMENDATION_COLORS
 from services.analytics import request_table, semantic_matching_table
 
 
@@ -123,6 +124,7 @@ def main() -> None:
                     "semantic_score",
                     "Distribusi skor relevansi",
                     color="recommendation",
+                    color_map=RECOMMENDATION_COLORS,
                     y_title="Kandidat",
                     show_title=False,
                 )

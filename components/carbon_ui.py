@@ -55,7 +55,7 @@ ALL_FILTER_VALUES = {
     "request_status": "All request statuses",
     "placement_type": "All placement types",
 }
-DEFAULT_TABLE_PAGE_SIZE = 50
+DEFAULT_TABLE_PAGE_SIZE = 5
 
 
 def page_spec_for_title(title: str) -> PageSpec:

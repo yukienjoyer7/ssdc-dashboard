@@ -7,7 +7,7 @@ from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
-from config.theme import CHART_PRIMARY
+from config.theme import CHART_PRIMARY, PLACEMENT_TYPE_COLORS
 from services.analytics import canonical_kpis, placement_table
 
 
@@ -128,6 +128,7 @@ def main() -> None:
                     "placements",
                     "Penempatan berdasarkan jenis",
                     color="placement_type",
+                    color_map=PLACEMENT_TYPE_COLORS,
                     show_title=False,
                     x_title="Jenis penempatan",
                     y_title="Penempatan",

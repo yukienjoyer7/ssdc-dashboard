@@ -11,6 +11,7 @@ from config.theme import (
     CHART_CATEGORICAL,
     FONT_FAMILY,
     PLOTLY_FONT_SIZES,
+    SURFACE_COLORS,
     TEXT_COLORS,
     spacing_px,
 )
@@ -70,7 +71,7 @@ def _localized_order(category_order: list[str] | None) -> list[str] | None:
     return [DISPLAY_LABELS_ID.get(str(label), label) for label in category_order]
 
 
-def _base_layout(figure, height: int = 300):
+def _base_layout(figure, height: int = 300, *, horizontal: bool = False):
     figure.update_layout(
         height=height,
         margin={
@@ -87,10 +88,12 @@ def _base_layout(figure, height: int = 300):
             "color": TEXT_COLORS["primary"],
         },
         colorway=CHART_CATEGORICAL,
+        hovermode="y unified" if horizontal else "x unified",
         xaxis={
-            "gridcolor": "#e0e0e0",
-            "linecolor": "#8d8d8d",
-            "zerolinecolor": "#8d8d8d",
+            "showgrid": horizontal,
+            "gridcolor": SURFACE_COLORS["border_subtle"],
+            "linecolor": SURFACE_COLORS["border_strong"],
+            "zerolinecolor": SURFACE_COLORS["border_strong"],
             "tickfont": {
                 "family": FONT_FAMILY,
                 "size": PLOTLY_FONT_SIZES["axis"],
@@ -98,9 +101,10 @@ def _base_layout(figure, height: int = 300):
             },
         },
         yaxis={
-            "gridcolor": "#e0e0e0",
-            "linecolor": "#8d8d8d",
-            "zerolinecolor": "#8d8d8d",
+            "showgrid": not horizontal,
+            "gridcolor": SURFACE_COLORS["border_subtle"],
+            "linecolor": SURFACE_COLORS["border_strong"],
+            "zerolinecolor": SURFACE_COLORS["border_strong"],
             "tickfont": {
                 "family": FONT_FAMILY,
                 "size": PLOTLY_FONT_SIZES["axis"],
@@ -150,6 +154,17 @@ def _update_axes(
         figure.update_layout(**{axis: {"categoryorder": "array", "categoryarray": category_order}})
     if horizontal:
         figure.update_yaxes(autorange="reversed")
+
+
+def _apply_hover(figure, *, value_axis: str, name_fallback: str | None = None) -> None:
+    """Replace Plotly Express' raw-column-name hover with the axis label already
+    shown on screen. Unified hover mode renders the trace name to the left, so
+    the template only needs the formatted value."""
+    placeholder = "%{y:,.0f}" if value_axis == "y" else "%{x:,.0f}"
+    for trace in figure.data:
+        if not trace.name and name_fallback:
+            trace.update(name=name_fallback)
+        trace.update(hovertemplate=f"{placeholder}<extra></extra>")
 
 
 def _chart_title(title: str) -> None:
@@ -233,9 +248,10 @@ def render_bar(
         color_discrete_map=_localized_color_map(color_map),
         text_auto=True,
     )
-    figure.update_traces(textfont_color=BAR_LABEL_COLOR)
+    figure.update_traces(textfont_color=BAR_LABEL_COLOR, marker_cornerradius=4)
     if series_color:
         figure.update_traces(marker_color=series_color)
+    _apply_hover(figure, value_axis="y", name_fallback=y_title)
     _update_axes(
         figure,
         x_title=x_title,
@@ -280,9 +296,10 @@ def render_horizontal_bar(
         orientation="h",
         text_auto=True,
     )
-    figure.update_traces(textfont_color=BAR_LABEL_COLOR)
+    figure.update_traces(textfont_color=BAR_LABEL_COLOR, marker_cornerradius=4)
     if series_color:
         figure.update_traces(marker_color=series_color)
+    _apply_hover(figure, value_axis="x", name_fallback=x_title)
     _update_axes(
         figure,
         x_title=x_title,
@@ -292,7 +309,7 @@ def render_horizontal_bar(
     )
     if show_legend is not None:
         figure.update_layout(showlegend=show_legend)
-    st.plotly_chart(_base_layout(figure, height), width="stretch", config={"displayModeBar": False})
+    st.plotly_chart(_base_layout(figure, height, horizontal=True), width="stretch", config={"displayModeBar": False})
 
 
 def render_line(
@@ -329,6 +346,15 @@ def render_line(
     )
     if series_color:
         figure.update_traces(line_color=series_color, marker_color=series_color)
+    _apply_hover(figure, value_axis="y", name_fallback=y_title)
+    for trace in figure.data:
+        trace.update(
+            marker={
+                "size": 7,
+                "color": SURFACE_COLORS["background"],
+                "line": {"width": 2, "color": trace.line.color},
+            }
+        )
     _update_axes(
         figure,
         x_title=x_title,
@@ -354,7 +380,7 @@ def render_histogram(
     color_map: Mapping[str, str] | None = None,
     series_color: str | None = None,
     x_title: str | None = None,
-    y_title: str = "Records",
+    y_title: str = "Catatan",
     show_legend: bool | None = None,
 ) -> None:
     if frame.empty:
@@ -362,16 +388,18 @@ def render_histogram(
         return
     if show_title:
         _chart_title(title)
+    frame = _localized_frame(frame)
     figure = px.histogram(
         frame,
         x=x,
         color=color,
         nbins=12,
         color_discrete_sequence=CHART_CATEGORICAL,
-        color_discrete_map=dict(color_map or {}),
+        color_discrete_map=_localized_color_map(color_map),
     )
     if series_color:
         figure.update_traces(marker_color=series_color)
+    _apply_hover(figure, value_axis="y", name_fallback=y_title)
     _update_axes(figure, x_title=x_title, y_title=y_title)
     if show_legend is not None:
         figure.update_layout(showlegend=show_legend)
