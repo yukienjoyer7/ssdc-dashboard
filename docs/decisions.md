@@ -135,3 +135,31 @@ action labels per selection record with cascading priority:
 Selection aging is computed via `compute_selection_aging(last_update, as_of)`,
 mirroring the request aging pattern. The stale threshold (14 days) remains
 configurable. All related tests live in `tests/test_selection_monitoring.py`.
+
+## Dimensional performance tables methodology
+
+Four new pre-aggregated tables compute placement performance by dimension:
+`df_program_performance`, `df_placement_type_performance`,
+`df_sector_performance`, and `df_work_arrangement_performance`. All four
+share a single generic function `_build_dimensional_performance()` in
+`services/analytical_tables.py` to keep rate formulas consistent.
+
+**Headcount deduplication.** `requested_headcount` is derived from
+`df_request` deduplicated by `id_talent_req` before joining back to
+`df_selection`. This avoids double-counting requests that have multiple
+`tracking_company` rows.
+
+**Fulfillment rate scoping.** `fulfillment_rate` per dimension group uses
+the headcount of requests that belong to that group, not the global
+headcount. This means fulfillment rates per dimension sum to more than
+100% when aggregated — they are scoped, not partitioned.
+
+**Join strategy.** `industry_sector` is joined from `company.csv` via
+`id_company` in `df_selection`. `working_arrangement` is joined from
+`df_request` via `id_talent_req`. `study_program` and `placement_type`
+are columns already present in `df_selection`. Missing dimension values
+are mapped to `"Unknown"`.
+
+**Rate denominators.** All rates use the dimension group's
+`total_applications` as the denominator (not global applications),
+matching the KPI dictionary definitions at the group grain.

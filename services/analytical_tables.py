@@ -1,10 +1,14 @@
 """Build analytical tables from validated cleaned CSVs and save as Parquet.
 
 Grain per table:
-  - df_student_profile:       one row per NIM
-  - df_request:               one row per id_talent_req x id_tracking_company
-  - df_selection:             one row per id_tracking_student
-  - df_company_performance:   one row per id_company
+  - df_student_profile:              one row per NIM
+  - df_request:                      one row per id_talent_req x id_tracking_company
+  - df_selection:                    one row per id_tracking_student
+  - df_company_performance:          one row per id_company
+  - df_program_performance:          one row per study_program
+  - df_placement_type_performance:   one row per placement_type
+  - df_sector_performance:           one row per industry_sector
+  - df_work_arrangement_performance: one row per working_arrangement
 
 All aging/freshness values use the dataset as_of_date, not TODAY().
 """
@@ -21,6 +25,7 @@ from data.contracts import EXPECTED_COLUMNS, TABLE_FILES
 from services.analytics import (
     classify_follow_up,
     classify_ghosting,
+    compute_fulfillment_rate,
     compute_headcount_gap,
     compute_request_aging,
     compute_selection_aging,
@@ -348,6 +353,125 @@ def build_company_performance(
     return company_requests[[col for col in columns if col in company_requests.columns]].reset_index(drop=True)
 
 
+def _build_dimensional_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+    dimension_col: str,
+    dimension_label: str | None = None,
+) -> pd.DataFrame:
+    if df_selection.empty or dimension_col not in df_selection.columns:
+        return pd.DataFrame()
+
+    dim_name = dimension_label or dimension_col
+
+    selection = df_selection[[dimension_col, "NIM", "canonical_outcome", "id_talent_req"]].copy()
+    selection[dimension_col] = selection[dimension_col].fillna("Unknown")
+
+    result = selection.groupby(dimension_col, as_index=False).agg(
+        total_applications=("NIM", "size"),
+        unique_candidates=("NIM", "nunique"),
+        placements=("canonical_outcome", lambda s: s.eq("Placement").sum()),
+        ghosting=("canonical_outcome", lambda s: s.eq("Ghosting").sum()),
+        rejected=("canonical_outcome", lambda s: s.eq("Rejected").sum()),
+    )
+
+    if df_request is not None and not df_request.empty and "id_talent_req" in df_request.columns:
+        request_cols = ["id_talent_req"]
+        if "requested_headcount" in df_request.columns:
+            request_cols.append("requested_headcount")
+        request_hc = df_request[request_cols].drop_duplicates("id_talent_req")
+        dim_to_hc = selection.merge(
+            request_hc, on="id_talent_req", how="left"
+        ).drop_duplicates("id_talent_req")
+        if "requested_headcount" in dim_to_hc.columns:
+            headcount_by_dim = (
+                dim_to_hc.groupby(dimension_col, as_index=False)["requested_headcount"].sum()
+            )
+            result = result.merge(headcount_by_dim, on=dimension_col, how="left")
+        else:
+            result["requested_headcount"] = 0
+    else:
+        result["requested_headcount"] = 0
+
+    result["requested_headcount"] = result["requested_headcount"].fillna(0).astype(int)
+
+    apps = result["total_applications"]
+    result["placement_rate"] = (
+        (result["placements"] / apps.replace(0, pd.NA) * 100).fillna(0).round(1)
+    )
+    result["ghosting_rate"] = (
+        (result["ghosting"] / apps.replace(0, pd.NA) * 100).fillna(0).round(1)
+    )
+    result["rejection_rate"] = (
+        (result["rejected"] / apps.replace(0, pd.NA) * 100).fillna(0).round(1)
+    )
+    result["fulfillment_rate"] = compute_fulfillment_rate(
+        result["placements"], result["requested_headcount"]
+    ).round(1)
+
+    columns = [
+        dim_name,
+        "total_applications",
+        "unique_candidates",
+        "requested_headcount",
+        "placements",
+        "ghosting",
+        "rejected",
+        "placement_rate",
+        "ghosting_rate",
+        "rejection_rate",
+        "fulfillment_rate",
+    ]
+    return result[[col for col in columns if col in result.columns]].reset_index(drop=True)
+
+
+def build_program_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+) -> pd.DataFrame:
+    return _build_dimensional_performance(
+        df_selection, df_request, "study_program", "study_program"
+    )
+
+
+def build_placement_type_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+) -> pd.DataFrame:
+    return _build_dimensional_performance(
+        df_selection, df_request, "placement_type", "placement_type"
+    )
+
+
+def build_sector_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+    df_company: pd.DataFrame,
+) -> pd.DataFrame:
+    if df_company is None or "industry_sector" not in df_company.columns or "id_company" not in df_company.columns:
+        return pd.DataFrame()
+    company_sector = df_company[["id_company", "industry_sector"]].drop_duplicates("id_company")
+    selection = df_selection.merge(company_sector, on="id_company", how="left")
+    selection["industry_sector"] = selection["industry_sector"].fillna("Unknown")
+    return _build_dimensional_performance(
+        selection, df_request, "industry_sector", "industry_sector"
+    )
+
+
+def build_work_arrangement_performance(
+    df_selection: pd.DataFrame,
+    df_request: pd.DataFrame,
+) -> pd.DataFrame:
+    if df_request is None or "working_arrangement" not in df_request.columns or "id_talent_req" not in df_request.columns:
+        return pd.DataFrame()
+    request_wa = df_request[["id_talent_req", "working_arrangement"]].drop_duplicates("id_talent_req")
+    selection = df_selection.merge(request_wa, on="id_talent_req", how="left")
+    selection["working_arrangement"] = selection["working_arrangement"].fillna("Unknown")
+    return _build_dimensional_performance(
+        selection, df_request, "working_arrangement", "working_arrangement"
+    )
+
+
 def _load_table(data_dir: Path, filename: str) -> pd.DataFrame:
     path = data_dir / filename
     if not path.exists():
@@ -388,12 +512,20 @@ def build_all(data_dir: str | Path | None = None) -> dict[str, Any]:
         as_of,
     )
     df_company_performance = build_company_performance(df_request, df_selection)
+    df_program_performance = build_program_performance(df_selection, df_request)
+    df_placement_type_performance = build_placement_type_performance(df_selection, df_request)
+    df_sector_performance = build_sector_performance(df_selection, df_request, tables["company.csv"])
+    df_work_arrangement_performance = build_work_arrangement_performance(df_selection, df_request)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     tables_to_save: dict[str, pd.DataFrame] = {
         "df_student_profile": df_student_profile,
         "df_request": df_request,
         "df_selection": df_selection,
         "df_company_performance": df_company_performance,
+        "df_program_performance": df_program_performance,
+        "df_placement_type_performance": df_placement_type_performance,
+        "df_sector_performance": df_sector_performance,
+        "df_work_arrangement_performance": df_work_arrangement_performance,
     }
     for name, table in tables_to_save.items():
         path = PROCESSED_DIR / f"{name}.parquet"
