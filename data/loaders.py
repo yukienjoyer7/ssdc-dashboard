@@ -14,6 +14,10 @@ _ANALYTIC_FILES = {
     "df_request": "df_request.parquet",
     "df_selection": "df_selection.parquet",
     "df_company_performance": "df_company_performance.parquet",
+    "df_program_performance": "df_program_performance.parquet",
+    "df_placement_type_performance": "df_placement_type_performance.parquet",
+    "df_sector_performance": "df_sector_performance.parquet",
+    "df_work_arrangement_performance": "df_work_arrangement_performance.parquet",
 }
 
 
