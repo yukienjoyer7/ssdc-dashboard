@@ -1,0 +1,10 @@
+{
+  "build_timestamp": "2026-07-25T12:54:06.187973+00:00",
+  "model": "Qwen/Qwen3-Embedding-0.6B",
+  "embedding_dim": 1024,
+  "top_k": 10,
+  "num_requests": 12000,
+  "num_students_eligible": 5286,
+  "total_pairs_scored": 120000,
+  "output": "/home/agung/Code/ssdc/ssdc-dashboard/data/processed/semantic_scores.parquet"
+}
