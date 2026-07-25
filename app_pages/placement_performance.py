@@ -7,8 +7,8 @@ from components.states import render_empty
 from components.tables import render_downloadable_table
 from components.ui import analytical_columns, format_count, format_percent, render_divider, render_kpis, render_section
 from app_pages.common import start_page
-from config.theme import CHART_PRIMARY, PLACEMENT_TYPE_COLORS
-from services.analytics import canonical_kpis, placement_table
+from config.theme import CARBON_STATUS_COLORS, CHART_PRIMARY, PLACEMENT_TYPE_COLORS
+from services.analytics import canonical_kpis, dimensional_performance_tables, placement_table
 
 
 def main() -> None:
@@ -167,6 +167,86 @@ def main() -> None:
                 x_title="Hari hingga penempatan",
                 y_title="Penempatan",
                 tick_angle=-20,
+            )
+
+    def _top(frame: pd.DataFrame, metric: str) -> pd.DataFrame:
+        return frame.nlargest(8, metric) if metric in frame.columns else frame
+
+    dimensional = dimensional_performance_tables(data, filters)
+    program_perf = _top(dimensional["program"], "fulfillment_rate")
+    type_perf = _top(dimensional["placement_type"], "placement_rate")
+    sector_perf = _top(dimensional["sector"], "ghosting_rate")
+    work_arrangement_perf = _top(dimensional["work_arrangement"], "fulfillment_rate")
+
+    render_section("Efektivitas berdasarkan dimensi", "Tingkat penempatan, ghosting, dan pemenuhan lamaran kandidat berdasarkan program studi, jenis penempatan, sektor industri, dan penempatan kerja.")
+    left, right = analytical_columns(
+        "equal",
+        key="placement-effectiveness-primary",
+    )
+    with left:
+        with chart_surface(
+            "Tingkat pemenuhan berdasarkan program studi",
+            "Persentase kebutuhan talenta yang terpenuhi per program studi.",
+            key="placement-fulfillment-by-program",
+        ):
+            render_horizontal_bar(
+                program_perf,
+                "fulfillment_rate",
+                "study_program",
+                "Tingkat pemenuhan berdasarkan program studi",
+                show_title=False,
+                x_title="Tingkat pemenuhan (%)",
+                y_title="Program studi",
+            )
+    with right:
+        with chart_surface(
+            "Tingkat penempatan berdasarkan jenis penempatan",
+            "Persentase lamaran kandidat yang berujung penempatan per jenis penempatan.",
+            key="placement-rate-by-type",
+        ):
+            render_horizontal_bar(
+                type_perf,
+                "placement_rate",
+                "placement_type",
+                "Tingkat penempatan berdasarkan jenis penempatan",
+                show_title=False,
+                x_title="Tingkat penempatan (%)",
+                y_title="Jenis penempatan",
+            )
+    left, right = analytical_columns(
+        "equal",
+        key="placement-effectiveness-secondary",
+    )
+    with left:
+        with chart_surface(
+            "Tingkat ghosting berdasarkan sektor industri",
+            "Persentase lamaran kandidat yang berujung ghosting per sektor industri.",
+            key="placement-ghosting-by-sector",
+        ):
+            render_horizontal_bar(
+                sector_perf,
+                "ghosting_rate",
+                "industry_sector",
+                "Tingkat ghosting berdasarkan sektor industri",
+                show_title=False,
+                series_color=CARBON_STATUS_COLORS["error"],
+                x_title="Tingkat ghosting (%)",
+                y_title="Sektor industri",
+            )
+    with right:
+        with chart_surface(
+            "Tingkat pemenuhan berdasarkan penempatan kerja",
+            "Persentase kebutuhan talenta yang terpenuhi per penempatan kerja.",
+            key="placement-fulfillment-by-work-arrangement",
+        ):
+            render_horizontal_bar(
+                work_arrangement_perf,
+                "fulfillment_rate",
+                "working_arrangement",
+                "Tingkat pemenuhan berdasarkan penempatan kerja",
+                show_title=False,
+                x_title="Tingkat pemenuhan (%)",
+                y_title="Penempatan kerja",
             )
 
     render_section("Detail penempatan", "Unduh catatan penempatan terfilter untuk ditinjau.")

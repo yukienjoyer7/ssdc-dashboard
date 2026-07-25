@@ -240,7 +240,7 @@ def test_all_analytical_pages_use_shared_chart_surfaces() -> None:
         "talent_request_management.py": 4,
         "talent_matching.py": 1,
         "selection_monitoring.py": 3,
-        "placement_performance.py": 5,
+        "placement_performance.py": 9,
     }
     overview = Path("app_pages/executive_overview.py").read_text()
 

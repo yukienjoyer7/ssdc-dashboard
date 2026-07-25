@@ -21,7 +21,7 @@ PAGE_GRID_VARIANTS = {
         "equal": 1,
     },
     "placement_performance.py": {
-        "equal": 2,
+        "equal": 4,
     },
 }
 

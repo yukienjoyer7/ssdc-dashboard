@@ -255,6 +255,42 @@ def placement_table(data: DashboardData, filters: FilterState) -> pd.DataFrame:
     return frame
 
 
+def dimensional_performance_tables(
+    data: DashboardData, filters: FilterState
+) -> dict[str, pd.DataFrame]:
+    """Placement/ghosting/rejection/fulfillment rates by study program,
+    placement type, industry sector, and work arrangement.
+
+    Reuses the exact rate formulas from services/analytical_tables.py's
+    precomputed pipeline, but built at request time from the already-filtered
+    selection/request tables -- the precomputed Parquet versions are global,
+    all-time aggregates and would ignore the page's active filters.
+    """
+    from services.analytical_tables import (
+        build_placement_type_performance,
+        build_program_performance,
+        build_sector_performance,
+        build_work_arrangement_performance,
+    )
+
+    selection = selection_table(data, filters)
+    requests = request_table(data, filters)
+    company = data.table("company.csv")
+
+    sector = (
+        build_sector_performance(selection, requests, company)
+        if "id_company" in selection.columns
+        else pd.DataFrame()
+    )
+
+    return {
+        "program": build_program_performance(selection, requests),
+        "placement_type": build_placement_type_performance(selection, requests),
+        "sector": sector,
+        "work_arrangement": build_work_arrangement_performance(selection, requests),
+    }
+
+
 def canonical_kpis(data: DashboardData, filters: FilterState) -> dict[str, float | int | str]:
     """Calculate KPI-01 through KPI-13 at their canonical grains."""
     requests = request_table(data, filters).drop_duplicates("id_talent_req")
