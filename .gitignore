@@ -10,6 +10,7 @@ data/*.csv
 data/raw/
 data/processed/
 *.log
+.agents
 
 # Carbon custom-component development artifacts
 components/ssdc-carbon-components/ssdc_carbon_components/frontend/node_modules/

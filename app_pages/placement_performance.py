@@ -21,10 +21,22 @@ def main() -> None:
     placements = placement_table(data, filters)
     kpis = canonical_kpis(data, filters)
     render_kpis([
-        {"label": "Penempatan", "value": format_count(kpis["KPI-06"])},
-        {"label": "Tingkat penempatan", "value": format_percent(kpis["KPI-07"]), "help": "Penempatan / Lamaran Kandidat"},
-        {"label": "Tingkat pemenuhan", "value": format_percent(kpis["KPI-09"]), "help": "Penempatan / Kebutuhan Talenta"},
-    ])
+        {
+            "label": "Penempatan",
+            "value": format_count(kpis["KPI-06"]),
+            "help": f"{format_percent(kpis['KPI-09'])} dari kebutuhan talenta",
+        },
+        {
+            "label": "Tingkat penempatan",
+            "value": format_percent(kpis["KPI-07"]),
+            "help": f"{format_count(kpis['KPI-06'])} penempatan dari {format_count(kpis['KPI-04'])} lamaran",
+        },
+        {
+            "label": "Tingkat pemenuhan",
+            "value": format_percent(kpis["KPI-09"]),
+            "help": f"{format_count(kpis['KPI-06'])} penempatan dari {format_count(kpis['KPI-03'])} kebutuhan talenta",
+        },
+    ], columns_per_row=3, variant="primary")
     if placements.empty:
         render_empty("Tidak ada penempatan pada tampilan", "Sesuaikan filter global atau pastikan catatan penempatan tersedia.")
         return

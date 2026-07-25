@@ -4,7 +4,7 @@ from components.chart_data import ordered_counts
 from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.states import render_empty
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, control_group, format_count, render_kpis, render_section
+from components.ui import analytical_columns, control_group, format_count, format_percent, render_kpis, render_section
 from app_pages.common import start_page
 from config.theme import CARBON_STATUS_COLORS, SELECTION_STAGE_COLORS, SELECTION_STAGE_ORDER
 from services.analytics import canonical_kpis, selection_table
@@ -41,16 +41,18 @@ def main() -> None:
     ghosting = int(filtered["canonical_outcome"].eq("Ghosting").sum()) if not filtered.empty else 0
     stale = int(filtered["stale_flag"].sum()) if not filtered.empty else 0
     fu_counts = filtered["progress_student"].value_counts()
+    total = len(filtered)
+    share = lambda count: format_percent(count / total * 100) if total else format_percent(0)
     render_kpis([
-        {"label": "Dalam proses", "value": format_count(on_progress)},
-        {"label": "Penempatan", "value": format_count(placements)},
-        {"label": "Ditolak", "value": format_count(rejected)},
-        {"label": "Ghosting", "value": format_count(ghosting)},
-        {"label": "Kasus kedaluwarsa", "value": format_count(stale)},
-        {"label": "TL 1", "value": format_count(fu_counts.get("FU 1", 0))},
-        {"label": "TL 2", "value": format_count(fu_counts.get("FU 2", 0))},
-        {"label": "TL 3", "value": format_count(fu_counts.get("FU 3", 0))},
-    ], columns_per_row=8, variant="compact")
+        {"label": "Dalam proses", "value": format_count(on_progress), "help": f"{share(on_progress)} dari catatan"},
+        {"label": "Penempatan", "value": format_count(placements), "help": f"{share(placements)} dari catatan"},
+        {"label": "Ditolak", "value": format_count(rejected), "help": f"{share(rejected)} dari catatan"},
+        {"label": "Ghosting", "value": format_count(ghosting), "help": f"{share(ghosting)} dari catatan"},
+        {"label": "Kasus kedaluwarsa", "value": format_count(stale), "help": f"{share(stale)} dari catatan"},
+        {"label": "TL 1", "value": format_count(fu_counts.get("FU 1", 0)), "help": f"{share(fu_counts.get('FU 1', 0))} dari catatan"},
+        {"label": "TL 2", "value": format_count(fu_counts.get("FU 2", 0)), "help": f"{share(fu_counts.get('FU 2', 0))} dari catatan"},
+        {"label": "TL 3", "value": format_count(fu_counts.get("FU 3", 0)), "help": f"{share(fu_counts.get('FU 3', 0))} dari catatan"},
+    ], columns_per_row=8, variant="primary")
 
     stages = ordered_counts(filtered["progress_student"], SELECTION_STAGE_ORDER)
     stages = stages.rename(columns={"category": "stage"})

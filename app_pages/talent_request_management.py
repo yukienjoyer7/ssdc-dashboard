@@ -4,7 +4,7 @@ import streamlit as st
 from components.chart_data import REQUEST_LABEL_COLUMN, ordered_counts, with_request_labels
 from components.charts import chart_surface, render_bar, render_horizontal_bar
 from components.tables import render_downloadable_table
-from components.ui import analytical_columns, control_group, format_count, format_days, render_kpis, render_section
+from components.ui import analytical_columns, control_group, format_count, format_days, format_percent, render_kpis, render_section
 from app_pages.common import start_page
 from config.theme import ACTION_LABEL_COLORS, ACTION_LABEL_ORDER, CHART_PRIMARY
 from services.analytics import canonical_kpis, request_table
@@ -34,14 +34,40 @@ def main() -> None:
     average_aging = filtered["aging_days"].mean() if not filtered.empty else 0
     overdue = int(filtered["overdue"].sum()) if not filtered.empty else 0
     unsent = int(filtered["action_label"].eq("Belum Dikirim").sum()) if not filtered.empty else 0
+    filtered_total = len(filtered)
+    share = lambda count: format_percent(count / filtered_total * 100) if filtered_total else format_percent(0)
     render_kpis([
-        {"label": "Total permintaan talenta", "value": format_count(kpis["KPI-02"])},
-        {"label": "Kebutuhan talenta", "value": format_count(kpis["KPI-03"])},
-        {"label": "Kesenjangan kebutuhan", "value": format_count(kpis["KPI-10"])},
-        {"label": "Rata-rata usia aktif", "value": format_days(average_aging)},
-        {"label": "Jumlah permintaan terlambat", "value": format_count(overdue)},
-        {"label": "Jumlah permintaan belum terkirim", "value": format_count(unsent)},
-    ], columns_per_row=6, variant="compact")
+        {
+            "label": "Total permintaan talenta",
+            "value": format_count(kpis["KPI-02"]),
+            "help": f"Dari {format_count(kpis['KPI-01'])} perusahaan",
+        },
+        {
+            "label": "Kebutuhan talenta",
+            "value": format_count(kpis["KPI-03"]),
+            "help": f"Dari {format_count(kpis['KPI-02'])} permintaan talenta",
+        },
+        {
+            "label": "Kesenjangan kebutuhan",
+            "value": format_count(kpis["KPI-10"]),
+            "help": f"{format_percent(kpis['KPI-10'] / kpis['KPI-03'] * 100) if kpis['KPI-03'] else format_percent(0)} dari kebutuhan talenta",
+        },
+        {
+            "label": "Rata-rata usia aktif",
+            "value": format_days(average_aging),
+            "help": f"Dari {format_count(filtered_total)} permintaan terfilter",
+        },
+        {
+            "label": "Jumlah permintaan terlambat",
+            "value": format_count(overdue),
+            "help": f"{share(overdue)} dari permintaan terfilter",
+        },
+        {
+            "label": "Jumlah permintaan belum terkirim",
+            "value": format_count(unsent),
+            "help": f"{share(unsent)} dari permintaan terfilter",
+        },
+    ], columns_per_row=6, variant="primary")
 
     aging = filtered.assign(
         aging_band=pd.cut(

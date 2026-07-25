@@ -39,6 +39,8 @@ def main() -> None:
             {"label": "Posisi", "value": str(request["nama_posisi"])},
             {"label": "Kebutuhan talenta", "value": format_count(request["requested_headcount"])},
         ],
+        columns_per_row=3,
+        variant="primary",
         key="matching-request-context",
     )
     render_feedback(
@@ -74,11 +76,27 @@ def main() -> None:
     eligible_count = int(ranked["eligible"].sum())
     eligibility_rate = eligible_count / len(ranked) * 100 if len(ranked) else 0
     render_kpis([
-        {"label": "Kandidat dievaluasi", "value": format_count(len(ranked))},
-        {"label": "Kandidat memenuhi syarat", "value": format_count(eligible_count)},
-        {"label": "Tingkat kelayakan", "value": format_percent(eligibility_rate)},
-        {"label": "Kandidat teratas", "value": format_count(len(displayed))},
-    ], columns_per_row=4, variant="compact")
+        {
+            "label": "Kandidat dievaluasi",
+            "value": format_count(len(ranked)),
+            "help": f"Untuk permintaan {request_id}",
+        },
+        {
+            "label": "Kandidat memenuhi syarat",
+            "value": format_count(eligible_count),
+            "help": f"{format_percent(eligibility_rate)} dari kandidat dievaluasi",
+        },
+        {
+            "label": "Tingkat kelayakan",
+            "value": format_percent(eligibility_rate),
+            "help": f"{format_count(eligible_count)} dari {format_count(len(ranked))} kandidat",
+        },
+        {
+            "label": "Kandidat teratas",
+            "value": format_count(len(displayed)),
+            "help": f"Skor relevansi ≥ {min_score:.2f}",
+        },
+    ], columns_per_row=4, variant="primary")
 
     render_section("Daftar pendek berperingkat", "Skor relevansi semantik (bukan probabilitas penerimaan). Nilai lebih tinggi = lebih relevan.")
     if displayed.empty:
