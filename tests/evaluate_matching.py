@@ -166,8 +166,22 @@ def _write_review_sheet(per_request: pd.DataFrame, output_dir: Path) -> None:
             review[col] = review[col].astype(object)
         else:
             review[col] = ""
+    review = _load_persisted_labels(review)
     review = review.sort_values(["position_type", "id_talent_req", "semantic_rank"])
     review.to_csv(output_dir / "review_sheet.csv", index=False)
+
+
+def _load_persisted_labels(review: pd.DataFrame) -> pd.DataFrame:
+    labels_path = Path(__file__).resolve().parent / "evaluation_labels_r1.json"
+    if not labels_path.exists():
+        return review
+    persisted = json.loads(labels_path.read_text())
+    labels = persisted.get("labels", {})
+    for idx, row in review.iterrows():
+        key = f"{row['id_talent_req']}:{int(row['NIM'])}"
+        if key in labels and row.get("label_r1") in ("", None):
+            review.at[idx, "label_r1"] = labels[key]
+    return review
 
 
 if __name__ == "__main__":
