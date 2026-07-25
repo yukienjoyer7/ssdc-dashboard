@@ -240,7 +240,7 @@ def test_executive_overview_uses_the_required_kpi_groups() -> None:
     ]
     assert options[0]["variant"] == "primary"
     assert options[0]["section_label"] == "Primary outcomes"
-    assert options[1]["variant"] == "compact"
+    assert options[1]["variant"] == "secondary"
     assert options[1]["section_label"] == "Pipeline volume"
 
 

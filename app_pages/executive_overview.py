@@ -27,13 +27,36 @@ def main() -> None:
     placements = placement_table(data, filters)
     kpis = canonical_kpis(data, filters)
     actions = requests.loc[requests["action_label"].isin(["Belum Dikirim", "Kurang Kandidat", "Belum Terpenuhi"])].copy()
+    ghosting_cases = int(selection["canonical_outcome"].eq("Ghosting").sum())
 
     render_kpis(
         [
-            {"label": "Requested headcount", "value": format_count(kpis["KPI-03"])},
-            {"label": "Placements", "value": format_count(kpis["KPI-06"])},
-            {"label": "Placement rate", "value": format_percent(kpis["KPI-07"])},
-            {"label": "Ghosting rate", "value": format_percent(kpis["KPI-08"])},
+            {
+                "label": "Requested headcount",
+                "value": format_count(kpis["KPI-03"]),
+                "help": f"Across {format_count(kpis['KPI-02'])} talent requests",
+            },
+            {
+                "label": "Placements",
+                "value": format_count(kpis["KPI-06"]),
+                "help": f"{format_percent(kpis['KPI-09'])} of requested headcount",
+            },
+            {
+                "label": "Placement rate",
+                "value": format_percent(kpis["KPI-07"]),
+                "help": (
+                    f"{format_count(kpis['KPI-06'])} placements from "
+                    f"{format_count(kpis['KPI-04'])} applications"
+                ),
+            },
+            {
+                "label": "Ghosting rate",
+                "value": format_percent(kpis["KPI-08"]),
+                "help": (
+                    f"{format_count(ghosting_cases)} ghosting cases from "
+                    f"{format_count(kpis['KPI-04'])} applications"
+                ),
+            },
         ],
         columns_per_row=4,
         variant="primary",
@@ -48,7 +71,7 @@ def main() -> None:
             {"label": "Unique candidates", "value": format_count(kpis["KPI-05"])},
         ],
         columns_per_row=4,
-        variant="compact",
+        variant="secondary",
         section_label="Pipeline volume",
         key="executive-pipeline-volume",
     )

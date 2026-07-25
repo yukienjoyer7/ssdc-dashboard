@@ -112,7 +112,7 @@ def render_kpis(
     items = list(items)
     if not items:
         return
-    if variant not in {"default", "primary", "compact"}:
+    if variant not in {"default", "primary", "compact", "secondary"}:
         raise ValueError(f"Unsupported KPI variant: {variant}")
     render_kpi_row(
         items,

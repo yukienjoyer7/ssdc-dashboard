@@ -47,7 +47,7 @@ type FilterValues = {
 type TableColumn = { key: string; label: string };
 type TableRow = Record<string, string | number | boolean | null>;
 type DetailItem = { label: string; value: string };
-type KpiVariant = "default" | "primary" | "compact";
+type KpiVariant = "default" | "primary" | "compact" | "secondary";
 type KpiItem = {
   label: string;
   value: string;
@@ -527,16 +527,25 @@ const renderKpis = (
   if (data.columns_per_row) {
     grid.style.setProperty("--cds-kpi-columns", String(data.columns_per_row));
   }
-  (data.items ?? []).forEach((item) => {
+  const items = data.items ?? [];
+  items.forEach((item, index) => {
     const tile = carbon("cds-tile") as HTMLElement;
-    tile.className = `cds-kpi-card cds-kpi-card--${variant}`;
+    const secondaryLast =
+      variant === "secondary" && index === items.length - 1
+        ? " cds-kpi-card--secondary-last"
+        : "";
+    tile.className = `cds-kpi-card cds-kpi-card--${variant}${secondaryLast}`;
     const label = document.createElement("span");
     label.className = "cds-kpi-card__label";
     label.textContent = item.label;
     const value = document.createElement("strong");
     value.className = "cds-kpi-card__value";
     value.textContent = item.value;
-    tile.append(label, value);
+    if (variant === "secondary") {
+      tile.append(value, label);
+    } else {
+      tile.append(label, value);
+    }
     if (item.delta) {
       const delta = document.createElement("span");
       delta.className = `cds-kpi-card__delta cds-kpi-card__delta--${
