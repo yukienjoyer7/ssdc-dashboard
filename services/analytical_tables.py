@@ -512,12 +512,20 @@ def build_all(data_dir: str | Path | None = None) -> dict[str, Any]:
         as_of,
     )
     df_company_performance = build_company_performance(df_request, df_selection)
+    df_program_performance = build_program_performance(df_selection, df_request)
+    df_placement_type_performance = build_placement_type_performance(df_selection, df_request)
+    df_sector_performance = build_sector_performance(df_selection, df_request, tables["company.csv"])
+    df_work_arrangement_performance = build_work_arrangement_performance(df_selection, df_request)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     tables_to_save: dict[str, pd.DataFrame] = {
         "df_student_profile": df_student_profile,
         "df_request": df_request,
         "df_selection": df_selection,
         "df_company_performance": df_company_performance,
+        "df_program_performance": df_program_performance,
+        "df_placement_type_performance": df_placement_type_performance,
+        "df_sector_performance": df_sector_performance,
+        "df_work_arrangement_performance": df_work_arrangement_performance,
     }
     for name, table in tables_to_save.items():
         path = PROCESSED_DIR / f"{name}.parquet"
